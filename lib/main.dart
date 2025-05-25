@@ -6,7 +6,7 @@ import 'firebase_options.dart'; // generado por flutterfire
 import 'package:provider/provider.dart';
 import 'features/games/game_controller.dart';
 import 'features/games/game_home_view.dart';
-import 'models/auth_page.dart';
+import 'features/auth/auth_page.dart';
 
 
 void main() async {
