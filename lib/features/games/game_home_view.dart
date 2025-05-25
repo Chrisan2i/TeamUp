@@ -9,7 +9,7 @@ import 'widgets/game_card.dart';
 
 import '../../core/constant/colors.dart';
 import '../../core/constant/app_sizes.dart';
-import '../auth/auth_service.dart';
+import '../auth/services/auth_service.dart';
 
 class GameHomeView extends StatelessWidget {
   const GameHomeView({super.key});
