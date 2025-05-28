@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../models/field_model.dart';
 
-class StepCancha extends StatelessWidget {
+class StepCancha extends StatefulWidget {
   final String? selectedField;
   final String? selectedHour;
-  final Function(String, String) onSelect;
+  final Function(String, String, FieldModel) onSelect; // ✅ aquí se agregó FieldModel
   final VoidCallback onNext;
+  final String selectedZone;
+  final DateTime selectedDate;
 
   const StepCancha({
     super.key,
+    required this.selectedZone,
+    required this.selectedDate,
     required this.selectedField,
     required this.selectedHour,
     required this.onSelect,
@@ -15,42 +21,83 @@ class StepCancha extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final canchas = [
-      {
-        'name': 'Cancha Olímpica de Chacao',
-        'price': 25,
-        'type': ['Fútbol 7', 'Sintética'],
-        'image': 'https://placehold.co/434x150',
-        'hours': ['18:00', '19:00', '20:00', '21:00', '22:00'],
-      },
-      {
-        'name': 'Complejo Deportivo Central',
-        'price': 20,
-        'type': ['Fútbol 5', 'Techada'],
-        'image': 'https://placehold.co/434x150',
-        'hours': ['17:00', '18:00', '19:00', '20:00', '21:00'],
-      },
-      {
-        'name': 'Campo Verde Chacao',
-        'price': 30,
-        'type': ['Fútbol 7', 'Natural'],
-        'image': 'https://placehold.co/434x150',
-        'hours': ['16:00', '17:00', '18:00', '19:00', '20:00'],
-      },
+  State<StepCancha> createState() => _StepCanchaState();
+}
+
+class _StepCanchaState extends State<StepCancha> {
+  List<FieldModel> fields = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFields();
+  }
+
+  Future<void> _loadFields() async {
+    final weekdayKey = _getWeekdayKey(widget.selectedDate);
+    print('🔍 FILTRANDO POR ZONA: ${widget.selectedZone}');
+    print('📅 FILTRANDO POR DÍA: $weekdayKey');
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('fields')
+          .where('zone', isEqualTo: widget.selectedZone)
+          .where('isActive', isEqualTo: true)
+          .get();
+
+      print('📦 Canchas encontradas en la zona: ${snapshot.docs.length}');
+
+      final filtered = snapshot.docs
+          .map((doc) {
+        print('➡️ Cancha: ${doc['name']}');
+        return FieldModel.fromMap(doc.data(), doc.id);
+      })
+          .where((field) {
+        final available = field.availability[weekdayKey];
+        print('  🕐 Disponibilidad ese día: $available');
+        return available != null && available.isNotEmpty;
+      })
+          .toList();
+
+      print('✅ Canchas finales filtradas: ${filtered.length}');
+
+      setState(() {
+        fields = filtered;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('❌ ERROR AL CARGAR CANCHAS: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  String _getWeekdayKey(DateTime date) {
+    const weekdays = [
+      'monday', 'tuesday', 'wednesday',
+      'thursday', 'friday', 'saturday', 'sunday'
     ];
+    return weekdays[date.weekday - 1];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final weekdayKey = _getWeekdayKey(widget.selectedDate);
 
     return ListView.separated(
-      itemCount: canchas.length,
-      padding: const EdgeInsets.only(bottom: 20),
+      itemCount: fields.length,
       separatorBuilder: (_, __) => const SizedBox(height: 20),
+      padding: const EdgeInsets.only(bottom: 20),
       itemBuilder: (context, index) {
-        final cancha = canchas[index];
-        final nombre = cancha['name'] as String;
-        final precio = cancha['price'].toString();
-        final tipos = (cancha['type'] as List<dynamic>).cast<String>();
-        final horas = (cancha['hours'] as List<dynamic>).cast<String>();
-        final imagen = cancha['image'] as String;
+        final cancha = fields[index];
+        final isSelected = widget.selectedField == cancha.name;
+        final availableSlots = cancha.availability[weekdayKey] ?? [];
 
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -58,11 +105,7 @@ class StepCancha extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             boxShadow: const [
-              BoxShadow(
-                color: Color(0x19000000),
-                blurRadius: 6,
-                offset: Offset(0, 4),
-              )
+              BoxShadow(color: Color(0x19000000), blurRadius: 6, offset: Offset(0, 4)),
             ],
           ),
           child: Column(
@@ -70,12 +113,7 @@ class StepCancha extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                child: Image.network(
-                  imagen,
-                  width: double.infinity,
-                  height: 150,
-                  fit: BoxFit.cover,
-                ),
+                child: Image.network(cancha.imageUrl, height: 150, width: double.infinity, fit: BoxFit.cover),
               ),
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -85,81 +123,45 @@ class StepCancha extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          nombre,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF111827),
-                          ),
-                        ),
-                        Text(
-                          '\$$precio/h',
-                          style: const TextStyle(
-                            color: Color(0xFF00C49A),
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                        ),
+                        Text(cancha.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                        Text('\$${cancha.pricePerHour}/h',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF00C49A))),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
-                      children: List.generate(tipos.length, (i) {
-                        return Chip(
-                          label: Text(tipos[i]),
-                          backgroundColor: const Color(0xFFE5E7EB),
-                          labelStyle: const TextStyle(fontSize: 12),
-                          padding: EdgeInsets.zero,
-                        );
-                      }),
+                      children: [cancha.type, cancha.surfaceType]
+                          .map((e) => Chip(label: Text(e), backgroundColor: const Color(0xFFE5E7EB)))
+                          .toList(),
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'Horarios disponibles:',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
+                    const Text('Horarios disponibles:', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: List.generate(horas.length, (i) {
-                        final hour = horas[i];
-                        final isSelected = selectedHour == hour && selectedField == nombre;
+                      children: availableSlots.map((hour) {
+                        final isHourSelected = widget.selectedHour == hour && isSelected;
                         return ChoiceChip(
                           label: Text(hour),
-                          selected: isSelected,
-                          onSelected: (_) => onSelect(nombre, hour),
+                          selected: isHourSelected,
+                          onSelected: (_) => widget.onSelect(cancha.name, hour, cancha), // ✅ se pasa el FieldModel
                           selectedColor: const Color(0xFF004AAD),
-                          labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : const Color(0xFF111827),
-                            fontSize: 12,
-                          ),
+                          labelStyle: TextStyle(color: isHourSelected ? Colors.white : const Color(0xFF111827)),
                           backgroundColor: const Color(0xFFE5E7EB),
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
                         );
-                      }),
+                      }).toList(),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
+                      onPressed: isSelected && widget.selectedHour != null ? widget.onNext : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF004AAD),
                         minimumSize: const Size.fromHeight(45),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      onPressed: selectedHour != null && selectedField == nombre
-                          ? onNext
-                          : null,
-                      child: const Text(
-                        'Seleccionar esta cancha',
-                        style: TextStyle(fontWeight: FontWeight.w500),
-                      ),
+                      child: const Text('Seleccionar esta cancha'),
                     ),
                   ],
                 ),

@@ -2,23 +2,34 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/notification_model.dart';
 
 class NotificationService {
-  final CollectionReference notifications = FirebaseFirestore.instance.collection('notifications');
+  final CollectionReference notifications =
+  FirebaseFirestore.instance.collection('notifications');
 
-  Future<void> createNotification(NotificationModel notification) async {
-    await notifications.doc(notification.notificationId).set(notification.toMap());
+  /// Crear nueva notificación
+  Future<void> sendNotification(NotificationModel notification) async {
+    await notifications.doc(notification.id).set(notification.toMap());
   }
 
-  Stream<List<NotificationModel>> getUserNotifications(String userId) {
+  /// Obtener notificaciones por usuario
+  Stream<List<NotificationModel>> getNotifications(String userId) {
     return notifications
         .where('userId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-        .map((doc) => NotificationModel.fromMap(doc.data() as Map<String, dynamic>))
+        .map((doc) =>
+        NotificationModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
         .toList());
   }
 
+  /// Marcar como leída
   Future<void> markAsRead(String notificationId) async {
-    await notifications.doc(notificationId).update({'read': true});
+    await notifications.doc(notificationId).update({'isRead': true});
+  }
+
+  /// Eliminar notificación
+  Future<void> deleteNotification(String notificationId) async {
+    await notifications.doc(notificationId).delete();
   }
 }
+

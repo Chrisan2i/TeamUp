@@ -28,14 +28,22 @@ class GameCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Imagen del juego
+          // Imagen del juego desde imageUrl
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(kCardRadius)),
             child: Image.network(
-              "https://placehold.co/600x400",
+              game.imageUrl.isNotEmpty
+                  ? game.imageUrl
+                  : 'https://placehold.co/600x400', // fallback
               width: double.infinity,
               height: 200,
               fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                height: 200,
+                width: double.infinity,
+                color: Colors.grey[300],
+                child: const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+              ),
             ),
           ),
 
@@ -56,7 +64,7 @@ class GameCard extends StatelessWidget {
                       children: [
                         Text(
                           game.hour,
-                          style: TextStyle(color: successColor, fontWeight: FontWeight.w500),
+                          style: const TextStyle(color: successColor, fontWeight: FontWeight.w500),
                         ),
                         const SizedBox(height: 2),
                         Text('\$${game.price.toStringAsFixed(2)}', style: bodyGrey),
@@ -138,5 +146,3 @@ class GameCard extends StatelessWidget {
     );
   }
 }
-
-

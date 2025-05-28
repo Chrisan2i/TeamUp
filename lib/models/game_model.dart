@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 class GameModel {
   final String id;
   final String ownerId;
@@ -11,6 +12,7 @@ class GameModel {
   final bool isPublic;
   final double price;
   final String createdAt;
+  final String imageUrl; // NUEVO CAMPO
 
   GameModel({
     required this.id,
@@ -24,6 +26,7 @@ class GameModel {
     required this.isPublic,
     required this.price,
     required this.createdAt,
+    required this.imageUrl, // AÑADIDO
   });
 
   factory GameModel.fromMap(Map<String, dynamic> map) {
@@ -39,6 +42,7 @@ class GameModel {
       isPublic: map['isPublic'] ?? true,
       price: (map['price'] ?? 0).toDouble(),
       createdAt: map['createdAt'] ?? '',
+      imageUrl: map['imageUrl'] ?? '', // AÑADIDO
     );
   }
 
@@ -55,6 +59,37 @@ class GameModel {
       'isPublic': isPublic,
       'price': price,
       'createdAt': createdAt,
+      'imageUrl': imageUrl, // AÑADIDO
     };
+  }
+
+  GameModel copyWith({
+    String? id,
+    String? ownerId,
+    String? zone,
+    String? fieldName,
+    DateTime? date,
+    String? hour,
+    String? description,
+    int? playerCount,
+    bool? isPublic,
+    double? price,
+    String? createdAt,
+    String? imageUrl, // AÑADIDO
+  }) {
+    return GameModel(
+      id: id ?? this.id,
+      ownerId: ownerId ?? this.ownerId,
+      zone: zone ?? this.zone,
+      fieldName: fieldName ?? this.fieldName,
+      date: date ?? this.date,
+      hour: hour ?? this.hour,
+      description: description ?? this.description,
+      playerCount: playerCount ?? this.playerCount,
+      isPublic: isPublic ?? this.isPublic,
+      price: price ?? this.price,
+      createdAt: createdAt ?? this.createdAt,
+      imageUrl: imageUrl ?? this.imageUrl, // AÑADIDO
+    );
   }
 }
