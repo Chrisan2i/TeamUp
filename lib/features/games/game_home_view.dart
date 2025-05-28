@@ -11,6 +11,8 @@ import '../../core/constant/colors.dart';
 import '../../core/constant/app_sizes.dart';
 import '../auth/services/auth_service.dart';
 
+import '../add_games/add_game_view.dart';
+
 class GameHomeView extends StatelessWidget {
   const GameHomeView({super.key});
 
@@ -29,16 +31,16 @@ class GameHomeView extends StatelessWidget {
         elevation: 0.5,
         actions: [
           TextButton(
-              onPressed: () async {
-                await AuthService().singOut();
-              },
-              child: const Text(
-                'Salir',
-                style: TextStyle(
-                    color:Colors.red,
-                    fontWeight: FontWeight.bold
-                ),
-              )
+            onPressed: () async {
+              await AuthService().singOut();
+            },
+            child: const Text(
+              'Salir',
+              style: TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           )
         ],
       ),
@@ -62,12 +64,14 @@ class GameHomeView extends StatelessWidget {
               child: controller.filteredGames.isEmpty
                   ? const Center(child: Text("No games found"))
                   : ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: kPaddingMedium),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: kPaddingMedium),
                 itemCount: controller.filteredGames.length,
                 itemBuilder: (context, index) {
                   final game = controller.filteredGames[index];
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: kSpacingMedium),
+                    padding:
+                    const EdgeInsets.only(bottom: kSpacingMedium),
                     child: GameCard(game: game),
                   );
                 },
@@ -76,18 +80,49 @@ class GameHomeView extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
-        selectedItemColor: primaryColor,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.sports_soccer), label: 'Games'),
-          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Friends'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble), label: 'Messages'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 8,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.sports_soccer),
+              tooltip: 'Games',
+              color: primaryColor,
+            ),
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.people),
+              tooltip: 'Friends',
+              color: Colors.grey,
+            ),
+            const SizedBox(width: 48), // espacio para el botón flotante
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.chat_bubble),
+              tooltip: 'Messages',
+              color: Colors.grey,
+            ),
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.person),
+              tooltip: 'Profile',
+              color: Colors.grey,
+            ),
+          ],
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const AddGameView()));
+        },
+        backgroundColor: primaryColor,
+        child: const Icon(Icons.add),
+        tooltip: 'Crear Partido',
       ),
     );
   }
 }
-

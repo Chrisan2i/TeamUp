@@ -59,7 +59,7 @@ class GameController extends ChangeNotifier {
   void applyFilters() {
     filteredGames = allGames.where((game) {
       // Filtro por pestaña
-      if (currentTab == GameTab.my && game.adminId != currentUserId) return false;
+      if (currentTab == GameTab.my && game.ownerId != currentUserId) return false;
       if (currentTab == GameTab.past && game.date.isAfter(DateTime.now())) return false;
       if (currentTab == GameTab.open && game.date.isBefore(DateTime.now())) return false;
 
@@ -71,9 +71,9 @@ class GameController extends ChangeNotifier {
         if (!sameDay) return false;
       }
 
-      // Filtro por texto
+      // Filtro por texto (por nombre del campo, si aplica)
       if (searchText.isNotEmpty &&
-          !game.title.toLowerCase().contains(searchText.toLowerCase())) {
+          !game.fieldName.toLowerCase().contains(searchText.toLowerCase())) {
         return false;
       }
 

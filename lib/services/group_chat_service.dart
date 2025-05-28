@@ -1,37 +1,41 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/group_chat_model.dart';
-import '../models/message_model.dart';
 
 class GroupChatService {
-  final CollectionReference groupChats = FirebaseFirestore.instance.collection('groupChats');
+  final CollectionReference groupChats =
+  FirebaseFirestore.instance.collection('group_chats');
 
-  Future<void> createGroupChat(GroupChatModel chat) async {
-    await groupChats.doc(chat.chatId).set(chat.toMap());
+  /// Crear un grupo nuevo
+  Future<void> createGroup(GroupChatModel chat) async {
+    await groupChats.doc(chat.id).set(chat.toMap());
   }
 
-  Stream<List<MessageModel>> getMessages(String chatId) {
+  /// Obtener grupo por ID
+  Future<GroupChatModel?> getGroupById(String id) async {
+    final doc = await groupChats.doc(id).get();
+    if (doc.exists) {
+      return GroupChatModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+    }
+    return null;
+  }
+
+  /// Obtener todos los grupos donde esté el usuario
+  Stream<List<GroupChatModel>> getUserGroups(String userId) {
     return groupChats
-        .doc(chatId)
-        .collection('messages')
-        .orderBy('timestamp')
+        .where('members', arrayContains: userId)
+        .orderBy('lastUpdated', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-        .map((doc) => MessageModel.fromMap(doc.data() as Map<String, dynamic>))
+        .map((doc) => GroupChatModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
         .toList());
   }
 
-  Future<void> sendMessage(String chatId, MessageModel message) async {
-    await groupChats
-        .doc(chatId)
-        .collection('messages')
-        .doc(message.messageId)
-        .set(message.toMap());
-  }
-
-  Future<void> markMessageAsRead(String chatId, String messageId, String userId) async {
-    final ref = groupChats.doc(chatId).collection('messages').doc(messageId);
-    await ref.update({
-      'readBy': FieldValue.arrayUnion([userId]),
+  /// Actualizar último mensaje
+  Future<void> updateLastMessage(String groupId, String lastMessage) async {
+    await groupChats.doc(groupId).update({
+      'lastMessage': lastMessage,
+      'lastUpdated': Timestamp.now(),
     });
   }
 }
+
