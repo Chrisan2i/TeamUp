@@ -3,7 +3,6 @@ import '../game_controller.dart';
 
 import '../../../core/constant/colors.dart';
 import '../../../core/constant/app_sizes.dart';
-import '../../../core/theme/typography.dart';
 
 class GameFilterBar extends StatefulWidget {
   final GameTab currentTab;
