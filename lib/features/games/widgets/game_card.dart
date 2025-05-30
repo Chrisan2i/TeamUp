@@ -1,8 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../models/game_model.dart';
 import '../../../core/constant/colors.dart';
 import '../../../core/constant/app_sizes.dart';
 import '../../../core/theme/typography.dart';
+import '../../../services/join_game_service.dart';
+
 
 class GameCard extends StatelessWidget {
   final GameModel game;
@@ -114,7 +117,10 @@ class GameCard extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      await JoinGamesService().JoinGames(game);
+                      //print(FirebaseAuth.instance.currentUser?.email);
+                      //print(game.id);
                       // TODO: Acción de unirse
                     },
                     style: ElevatedButton.styleFrom(

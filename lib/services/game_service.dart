@@ -42,4 +42,6 @@ class GameService {
         .map((snapshot) =>
         snapshot.docs.map((doc) => GameModel.fromMap(doc.data() as Map<String, dynamic>)).toList());
   }
+
+
 }
