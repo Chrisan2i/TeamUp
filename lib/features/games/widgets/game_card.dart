@@ -1,10 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../models/game_model.dart';
 import '../../../core/constant/colors.dart';
 import '../../../core/constant/app_sizes.dart';
 import '../../../core/theme/typography.dart';
-import '../../../core/utils/date_formatters.dart';
-import '../../../core/utils/status_labels.dart';
+import '../../../services/join_game_service.dart';
+
 
 class GameCard extends StatelessWidget {
   final GameModel game;
@@ -13,7 +14,7 @@ class GameCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final remainingSpots = game.maxPlayers - game.playersJoined;
+    final remainingSpots = game.playerCount;
 
     return Container(
       decoration: BoxDecoration(
@@ -30,14 +31,22 @@ class GameCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Imagen del juego
+          // Imagen del juego desde imageUrl
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(kCardRadius)),
             child: Image.network(
-              "https://placehold.co/600x400",
+              game.imageUrl.isNotEmpty
+                  ? game.imageUrl
+                  : 'https://placehold.co/600x400', // fallback
               width: double.infinity,
               height: 200,
               fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                height: 200,
+                width: double.infinity,
+                color: Colors.grey[300],
+                child: const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+              ),
             ),
           ),
 
@@ -51,14 +60,14 @@ class GameCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
-                      child: Text(game.title, style: heading2),
+                      child: Text(game.fieldName, style: heading2),
                     ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          formatTimeRange(game.date, game.durationMinutes),
-                          style: TextStyle(color: successColor, fontWeight: FontWeight.w500),
+                          game.hour,
+                          style: const TextStyle(color: successColor, fontWeight: FontWeight.w500),
                         ),
                         const SizedBox(height: 2),
                         Text('\$${game.price.toStringAsFixed(2)}', style: bodyGrey),
@@ -67,7 +76,7 @@ class GameCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 4),
-                const Text('Field #2', style: bodyGrey), // Puedes mejorar esto después
+                Text(game.zone, style: bodyGrey),
                 const SizedBox(height: 8),
 
                 // Lugar y distancia
@@ -75,7 +84,7 @@ class GameCard extends StatelessWidget {
                   children: [
                     const Icon(Icons.location_on, size: 16, color: iconGrey),
                     const SizedBox(width: 4),
-                    Expanded(child: Text(game.address, style: bodyGrey)),
+                    Expanded(child: Text(game.fieldName, style: bodyGrey)),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -83,7 +92,7 @@ class GameCard extends StatelessWidget {
                 // Chips de estado
                 Row(
                   children: [
-                    _buildChip(gameStatusLabel(game.status)),
+                    _buildChip(game.isPublic ? 'Público' : 'Privado'),
                     const SizedBox(width: 8),
                     _buildChip('$remainingSpots Spot${remainingSpots == 1 ? '' : 's'} left!'),
                   ],
@@ -108,7 +117,10 @@ class GameCard extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      await JoinGamesService().JoinGames(game);
+                      //print(FirebaseAuth.instance.currentUser?.email);
+                      //print(game.id);
                       // TODO: Acción de unirse
                     },
                     style: ElevatedButton.styleFrom(
@@ -140,4 +152,3 @@ class GameCard extends StatelessWidget {
     );
   }
 }
-

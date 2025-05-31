@@ -2,41 +2,45 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 
 class MessageModel {
-  final String messageId;
+  final String id;
   final String senderId;
-  final String text;
-  final String type; // 'text', 'image', 'system'
+  final String receiverId; // puede ser un grupo o usuario
+  final String content;
   final DateTime timestamp;
-  final List<String> readBy;
+  final bool isGroup;
+  final bool seen;
 
   MessageModel({
-    required this.messageId,
+    required this.id,
     required this.senderId,
-    required this.text,
-    required this.type,
+    required this.receiverId,
+    required this.content,
     required this.timestamp,
-    required this.readBy,
+    required this.isGroup,
+    required this.seen,
   });
 
   factory MessageModel.fromMap(Map<String, dynamic> map) {
     return MessageModel(
-      messageId: map['messageId'],
-      senderId: map['senderId'],
-      text: map['text'],
-      type: map['type'],
+      id: map['id'] ?? '',
+      senderId: map['senderId'] ?? '',
+      receiverId: map['receiverId'] ?? '',
+      content: map['content'] ?? '',
       timestamp: (map['timestamp'] as Timestamp).toDate(),
-      readBy: List<String>.from(map['readBy']),
+      isGroup: map['isGroup'] ?? false,
+      seen: map['seen'] ?? false,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'messageId': messageId,
+      'id': id,
       'senderId': senderId,
-      'text': text,
-      'type': type,
+      'receiverId': receiverId,
+      'content': content,
       'timestamp': timestamp,
-      'readBy': readBy,
+      'isGroup': isGroup,
+      'seen': seen,
     };
   }
 }
