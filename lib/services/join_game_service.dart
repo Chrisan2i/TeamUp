@@ -6,6 +6,7 @@ import '../features/games/widgets/game_card.dart';
 import '../models/game_model.dart';
 
 class JoinGamesService{
+
   Future <void> JoinGames (GameModel game) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -26,4 +27,33 @@ class JoinGamesService{
     print('Usuario agregado correctamente');
 
   }
+  Future <void> exitGames (GameModel game) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    DocumentSnapshot doc = await FirebaseFirestore.instance.collection('games').doc(game.id).get();
+
+    List<String> usersJoined = List<String>.from(doc['usersjoined']?? []);
+
+    if(usersJoined.contains(user.uid)) {
+      print('El usuario ya esta en la lista');
+      await FirebaseFirestore.instance.collection('games').doc(game.id).update({
+      'usersjoined' : FieldValue.arrayRemove([user.uid])
+    });
 }
+    }
+  
+  Future <bool> checkplayer (GameModel game) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
+
+    DocumentSnapshot doc = await FirebaseFirestore.instance.collection('games').doc(game.id).get();
+
+    List<String> usersJoined = List<String>.from(doc['usersjoined']?? []);
+
+    if(usersJoined.contains(user.uid)) {
+      return true;
+    }
+
+    else{return false;}
+}}
