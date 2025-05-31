@@ -26,11 +26,7 @@ class GroupChatService {
         .orderBy('lastUpdated', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-<<<<<<< HEAD
-        .map((doc) => MessageModel.fromMap(doc.data()))
-=======
         .map((doc) => GroupChatModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
->>>>>>> origin/luis2
         .toList());
   }
 
@@ -42,4 +38,3 @@ class GroupChatService {
     });
   }
 }
-

@@ -33,11 +33,6 @@ class PrivateChatService {
     return privateChats
         .where('userA', isEqualTo: userId)
         .snapshots()
-<<<<<<< HEAD
-        .map((snapshot) => snapshot.docs
-        .map((doc) => MessageModel.fromMap(doc.data()))
-        .toList());
-=======
         .asyncMap((snapshot) async {
       final userAChats = snapshot.docs
           .map((doc) =>
@@ -54,7 +49,6 @@ class PrivateChatService {
 
       return [...userAChats, ...userBChats];
     });
->>>>>>> origin/luis2
   }
 
   /// Actualizar último mensaje
