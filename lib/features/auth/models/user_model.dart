@@ -10,7 +10,6 @@ class UserModel {
   final double rating;
   final int totalRentsMade;
   final int totalRentsReceived;
-  final String role;
   final bool blocked;
   final String? banReason;
   final int reports;
@@ -30,7 +29,6 @@ class UserModel {
     required this.rating,
     required this.totalRentsMade,
     required this.totalRentsReceived,
-    required this.role,
     required this.blocked,
     this.banReason,
     required this.reports,
@@ -52,7 +50,7 @@ class UserModel {
       rating: (map['rating'] ?? 0).toDouble(),
       totalRentsMade: map['totalRentsMade'] ?? 0,
       totalRentsReceived: map['totalRentsReceived'] ?? 0,
-      role: map['role'] ?? 'user',
+      
       blocked: map['blocked'] ?? false,
       banReason: map['banReason'],
       reports: map['reports'] ?? 0,
@@ -75,7 +73,6 @@ class UserModel {
       'rating': rating,
       'totalRentsMade': totalRentsMade,
       'totalRentsReceived': totalRentsReceived,
-      'role': role,
       'blocked': blocked,
       'banReason': banReason,
       'reports': reports,
@@ -99,7 +96,6 @@ class UserModel {
       rating: rating,
       totalRentsMade: totalRentsMade,
       totalRentsReceived: totalRentsReceived,
-      role: role,
       blocked: blocked,
       banReason: banReason,
       reports: reports,
