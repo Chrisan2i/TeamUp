@@ -64,6 +64,7 @@ class _AddGameViewState extends State<AddGameView> {
       price: selectedField!.pricePerHour,
       createdAt: DateTime.now().toIso8601String(),
       imageUrl: selectedField!.imageUrl, // ✅ Usa la imagen de la cancha
+      usersjoined: [],
     );
 
     final docRef = await FirebaseFirestore.instance.collection('games').add(newGame.toMap());

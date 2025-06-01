@@ -13,6 +13,7 @@ class GameModel {
   final double price;
   final String createdAt;
   final String imageUrl; // NUEVO CAMPO
+  final List<String> usersjoined;
 
   GameModel({
     required this.id,
@@ -27,6 +28,7 @@ class GameModel {
     required this.price,
     required this.createdAt,
     required this.imageUrl, // AÑADIDO
+    required this.usersjoined,
   });
 
   factory GameModel.fromMap(Map<String, dynamic> map) {
@@ -43,6 +45,7 @@ class GameModel {
       price: (map['price'] ?? 0).toDouble(),
       createdAt: map['createdAt'] ?? '',
       imageUrl: map['imageUrl'] ?? '', // AÑADIDO
+      usersjoined: List<String>.from(map['usersjoined']?? [])
     );
   }
 
@@ -60,6 +63,7 @@ class GameModel {
       'price': price,
       'createdAt': createdAt,
       'imageUrl': imageUrl, // AÑADIDO
+      'usersjoined': usersjoined,
     };
   }
 
@@ -76,6 +80,7 @@ class GameModel {
     double? price,
     String? createdAt,
     String? imageUrl, // AÑADIDO
+    List<String>? usersjoined,
   }) {
     return GameModel(
       id: id ?? this.id,
@@ -90,6 +95,7 @@ class GameModel {
       price: price ?? this.price,
       createdAt: createdAt ?? this.createdAt,
       imageUrl: imageUrl ?? this.imageUrl, // AÑADIDO
+      usersjoined: usersjoined ?? this.usersjoined,
     );
   }
 }
