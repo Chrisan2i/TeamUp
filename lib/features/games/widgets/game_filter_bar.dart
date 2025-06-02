@@ -29,7 +29,7 @@ class _GameFilterBarState extends State<GameFilterBar> {
       child: Container(
         height: 40,
         decoration: BoxDecoration(
-          color: chipBackground,
+          color: Colors.white, // Cambia aquí el fondo de la barra
           borderRadius: BorderRadius.circular(kBorderRadius),
         ),
         child: Row(
@@ -41,7 +41,7 @@ class _GameFilterBarState extends State<GameFilterBar> {
                 child: Container(
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
-                    color: isSelected ? Colors.white : Colors.transparent,
+                    color: isSelected ? Color(0xFF0CC0DF) : Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   alignment: Alignment.center,

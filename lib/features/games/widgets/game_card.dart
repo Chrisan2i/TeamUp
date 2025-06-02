@@ -67,7 +67,7 @@ class GameCard extends StatelessWidget {
                       children: [
                         Text(
                           game.hour,
-                          style: const TextStyle(color: successColor, fontWeight: FontWeight.w500),
+                          style: const TextStyle(color:Color(0xFF0CC0DF), fontWeight: FontWeight.w500),
                         ),
                         const SizedBox(height: 2),
                         Text('\$${game.price.toStringAsFixed(2)}', style: bodyGrey),
@@ -124,7 +124,9 @@ class GameCard extends StatelessWidget {
                       // TODO: Acción de unirse
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
+                      backgroundColor: Color(0xFF0CC0DF),
+                      foregroundColor: Colors.white,
+                      
                       minimumSize: const Size.fromHeight(kButtonHeight),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(kBorderRadius),

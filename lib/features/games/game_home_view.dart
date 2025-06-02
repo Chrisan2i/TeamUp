@@ -19,29 +19,44 @@ class GameHomeView extends StatelessWidget {
     final controller = Provider.of<GameController>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Games',
-          style: TextStyle(fontWeight: FontWeight.bold),
+  backgroundColor: const Color(0xFFC9C9C9),
+  appBar: AppBar(
+    title: const Center(
+      child: Text(
+        'Games',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0.5,
-        actions: [
-          TextButton(
-            onPressed: () async {
-              await AuthService().singOut();
-            },
-            child: const Text(
-              'Salir',
-              style: TextStyle(
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          )
-        ],
       ),
+    ),
+    centerTitle: true,
+    backgroundColor: Colors.white,
+    foregroundColor: Colors.black,
+    elevation: 0.5,
+    leading: IconButton(
+      icon: const Icon(Icons.notifications),
+      color: Colors.grey, // Color gris estático
+      onPressed: () {
+        // Lógica de notificaciones (sin cambio de color)
+      },
+    ),
+    actions: [
+      TextButton(
+        onPressed: () async {
+          await AuthService().singOut();
+        },
+        child: const Text(
+          'Salir',
+          style: TextStyle(
+            color: Colors.red,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    ],
+  ),
+  // ... (resto del cuerpo de tu Scaffold)
+
       body: SafeArea(
         child: Column(
           children: [
@@ -97,7 +112,7 @@ class GameHomeView extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const AddGameView()),
           );
         },
-        backgroundColor: primaryColor,
+        backgroundColor: const Color(0xFF0CC0DF) ,
         child: const Icon(Icons.add),
         tooltip: 'Crear Partido',
       ),
@@ -126,23 +141,23 @@ class CustomBottomNavBar extends StatelessWidget {
           IconButton(
             onPressed: () => onTap(0),
             icon: const Icon(Icons.sports_soccer),
-            color: currentIndex == 0 ? primaryColor : Colors.grey,
+            color: currentIndex == 0 ?const Color(0xFF0CC0DF)  : Colors.grey,
           ),
           IconButton(
             onPressed: () => onTap(1),
             icon: const Icon(Icons.people),
-            color: currentIndex == 1 ? primaryColor : Colors.grey,
+            color: currentIndex == 1 ? const Color(0xFF0CC0DF)  : Colors.grey,
           ),
           const SizedBox(width: 48), // Espacio para el FAB
           IconButton(
             onPressed: () => onTap(2),
             icon: const Icon(Icons.chat_bubble),
-            color: currentIndex == 2 ? primaryColor : Colors.grey,
+            color: currentIndex == 2 ? const Color(0xFF0CC0DF)  : Colors.grey,
           ),
           IconButton(
             onPressed: () => onTap(3),
             icon: const Icon(Icons.person),
-            color: currentIndex == 3 ? primaryColor : Colors.grey,
+            color: currentIndex == 3 ? const Color(0xFF0CC0DF) : Colors.grey,
           ),
         ],
       ),
