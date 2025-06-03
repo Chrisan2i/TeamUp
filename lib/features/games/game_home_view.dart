@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'game_controller.dart';
-import 'widgets/game_filter_bar.dart';
 import 'widgets/game_date_selector.dart';
 import 'widgets/game_search_bar.dart';
 import 'widgets/game_card.dart';
@@ -37,7 +36,7 @@ class GameHomeView extends StatelessWidget {
         elevation: 0.5,
         leading: IconButton(
           icon: const Icon(Icons.notifications),
-          color: Colors.grey, // Color gris estático
+          color: Colors.grey,
           onPressed: () {
             // Lógica de notificaciones (sin cambio de color)
           },
@@ -64,10 +63,6 @@ class GameHomeView extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            GameFilterBar(
-              currentTab: controller.currentTab,
-              onTabChanged: controller.setTab,
-            ),
             const SizedBox(height: kSpacingSmall),
             GameDateSelector(
               onDateSelected: controller.setDate,
@@ -96,7 +91,7 @@ class GameHomeView extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: 0, // Home es el índice 0
+        currentIndex: 0,
         onTap: (index) {
           if (index == 3) {
             Navigator.push(
@@ -104,7 +99,6 @@ class GameHomeView extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const ProfileView()),
             );
           }
-          // Agrega lógica para otros índices si es necesario
         },
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
