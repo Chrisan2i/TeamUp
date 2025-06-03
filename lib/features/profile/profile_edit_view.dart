@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProfileEditor extends StatefulWidget {
   const ProfileEditor({super.key});
@@ -8,16 +10,14 @@ class ProfileEditor extends StatefulWidget {
 }
 
 class _ProfileEditorState extends State<ProfileEditor> {
-  // Variables de estado para cada campo
-  String fullName = 'Ana Orozco';
-  String email = 'aniorozco25@gmail.com';
-  String country = 'United States';
-  String skillLevel = 'Beginner';
-  String position = 'Not specified';
-  String birthday = 'February 25, 2003';
-  String gender = 'Female';
+  String fullName = '';
+  String email = '';
+  String country = '';
+  String skillLevel = '';
+  String position = '';
+  String birthday = '';
+  String gender = '';
 
-  // Controladores para los campos de texto
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -26,6 +26,54 @@ class _ProfileEditorState extends State<ProfileEditor> {
   final TextEditingController _positionController = TextEditingController();
   final TextEditingController _birthdayController = TextEditingController();
   final TextEditingController _genderController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final snapshot = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final data = snapshot.data();
+
+    if (data != null) {
+      setState(() {
+        fullName = data['fullName'] ?? '';
+        email = data['email'] ?? '';
+        country = data['country'] ?? '';
+        position = data['position'] ?? '';
+        skillLevel = data['position'] ?? ''; // usamos mismo campo
+        birthday = data['birthday'] ?? '';
+        gender = data['gender'] ?? '';
+      });
+    }
+  }
+
+
+  Future<void> _saveProfileChanges() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'fullName': fullName,
+      'email': email,
+      'country': country,
+      'position': position,
+      'birthday': birthday,
+      'gender': gender,
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile updated successfully')),
+      );
+      Navigator.pop(context);
+    }
+  }
 
   @override
   void dispose() {
@@ -40,7 +88,6 @@ class _ProfileEditorState extends State<ProfileEditor> {
     super.dispose();
   }
 
-  // Diálogo para editar nombre
   void _showNameEditorDialog(BuildContext context) {
     final names = fullName.split(' ');
     _firstNameController.text = names.isNotEmpty ? names.first : '';
@@ -55,33 +102,13 @@ class _ProfileEditorState extends State<ProfileEditor> {
           description: 'Providing your real name helps build trust among players and facilities.',
           content: Column(
             children: [
-              const Text(
-                'First Name',
-                style: TextStyle(
-                  color: Color(0xFF374151),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              const Text('First Name', style: TextStyle(color: Color(0xFF374151), fontSize: 16, fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
-              TextField(
-                controller: _firstNameController,
-                decoration: _inputDecoration('Enter your first name'),
-              ),
+              TextField(controller: _firstNameController, decoration: _inputDecoration('Enter your first name')),
               const SizedBox(height: 24),
-              const Text(
-                'Last Name',
-                style: TextStyle(
-                  color: Color(0xFF374151),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              const Text('Last Name', style: TextStyle(color: Color(0xFF374151), fontSize: 16, fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
-              TextField(
-                controller: _lastNameController,
-                decoration: _inputDecoration('Enter your last name'),
-              ),
+              TextField(controller: _lastNameController, decoration: _inputDecoration('Enter your last name')),
             ],
           ),
           onSave: () {
@@ -94,10 +121,8 @@ class _ProfileEditorState extends State<ProfileEditor> {
     );
   }
 
-  // Diálogo para editar email
   void _showEmailEditorDialog(BuildContext context) {
     _emailController.text = email;
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -120,10 +145,8 @@ class _ProfileEditorState extends State<ProfileEditor> {
     );
   }
 
-  // Diálogo para editar país
   void _showCountryEditorDialog(BuildContext context) {
     _countryController.text = country;
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -145,10 +168,8 @@ class _ProfileEditorState extends State<ProfileEditor> {
     );
   }
 
-  // Diálogo para editar nivel de habilidad
   void _showSkillEditorDialog(BuildContext context) {
     _skillController.text = skillLevel;
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -170,10 +191,8 @@ class _ProfileEditorState extends State<ProfileEditor> {
     );
   }
 
-  // Diálogo para editar posición
   void _showPositionEditorDialog(BuildContext context) {
     _positionController.text = position;
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -195,10 +214,8 @@ class _ProfileEditorState extends State<ProfileEditor> {
     );
   }
 
-  // Diálogo para editar cumpleaños
   void _showBirthdayEditorDialog(BuildContext context) {
     _birthdayController.text = birthday;
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -220,10 +237,8 @@ class _ProfileEditorState extends State<ProfileEditor> {
     );
   }
 
-  // Diálogo para editar género
   void _showGenderEditorDialog(BuildContext context) {
     _genderController.text = gender;
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -245,102 +260,62 @@ class _ProfileEditorState extends State<ProfileEditor> {
     );
   }
 
-  // Widget genérico para construir diálogos de edición
-  Widget _buildEditDialog(
-    BuildContext context, {
-    required String title,
-    required String description,
-    required Widget content,
-    required VoidCallback onSave,
-  }) {
+  Widget _buildEditDialog(BuildContext context,
+      {required String title,
+        required String description,
+        required Widget content,
+        required VoidCallback onSave}) {
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Color(0xFF111827),
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                description,
-                style: const TextStyle(
-                  color: Color(0xFF6B7280),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              const SizedBox(height: 32),
-              content,
-              const SizedBox(height: 32),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: const BorderSide(color: Color(0xFFE5E7EB)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          color: Color(0xFF374151),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: const TextStyle(color: Color(0xFF111827), fontSize: 28, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 16),
+            Text(description, style: const TextStyle(color: Color(0xFF6B7280), fontSize: 16)),
+            const SizedBox(height: 32),
+            content,
+            const SizedBox(height: 32),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: const BorderSide(color: Color(0xFFE5E7EB)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
+                    child: const Text('Cancel', style: TextStyle(color: Color(0xFF374151), fontSize: 16, fontWeight: FontWeight.w600)),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        onSave();
-                        Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0CC0DF),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Save',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      onSave();
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0CC0DF),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
+                    child: const Text('Save', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // Decoración común para los campos de texto
   InputDecoration _inputDecoration(String hintText) {
     return InputDecoration(
       hintText: hintText,
@@ -376,14 +351,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
                       const CircleAvatar(
                         radius: 60,
                         backgroundColor: Color(0xFF10B981),
-                        child: Text(
-                          'A',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 48,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        child: Text('A', style: TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold)),
                       ),
                       Positioned(
                         bottom: 0,
@@ -395,115 +363,104 @@ class _ProfileEditorState extends State<ProfileEditor> {
                             decoration: BoxDecoration(
                               color: const Color(0xFFF59E0B),
                               shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 2,
-                              ),
+                              border: Border.all(color: Colors.white, width: 2),
                             ),
-                            child: const Icon(
-                              Icons.edit,
-                              color: Colors.white,
-                              size: 16,
-                            ),
+                            child: const Icon(Icons.edit, color: Colors.white, size: 16),
                           ),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    "$fullName's profile",
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text("$fullName's profile", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   const Text(
                     'Your profile details helps personalize your Plei experience and connects you with the right games and players.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.grey, fontSize: 14),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 32),
-            
-            _buildProfileField(
-              label: 'MY NAME',
-              value: fullName,
-              onEdit: () => _showNameEditorDialog(context),
-            ),
-            _buildProfileField(
-              label: 'EMAIL',
-              value: email,
-              onEdit: () => _showEmailEditorDialog(context),
-            ),
-            _buildProfileField(
-              label: 'COUNTRY I REPRESENT',
-              value: country,
-              onEdit: () => _showCountryEditorDialog(context),
-            ),
-            _buildProfileField(
-              label: 'MY SKILL LEVEL',
-              value: skillLevel,
-              onEdit: () => _showSkillEditorDialog(context),
-            ),
+            _buildProfileField(label: 'MY NAME', value: fullName, onEdit: () => _showNameEditorDialog(context)),
+            _buildProfileField(label: 'EMAIL', value: email, onEdit: () => _showEmailEditorDialog(context)),
+            _buildProfileField(label: 'COUNTRY I REPRESENT', value: country, onEdit: () => _showCountryEditorDialog(context)),
+            _buildProfileField(label: 'MY SKILL LEVEL', value: skillLevel, onEdit: () => _showSkillEditorDialog(context)),
             _buildProfileField(
               label: 'PREFERRED POSITION',
               value: position,
               onEdit: () => _showPositionEditorDialog(context),
               extraWidget: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF59E0B),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Text(
-                  'Missing info',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                  ),
-                ),
+                decoration: BoxDecoration(color: const Color(0xFFF59E0B), borderRadius: BorderRadius.circular(12)),
+                child: const Text('Missing info', style: TextStyle(color: Colors.white, fontSize: 12)),
               ),
             ),
-            _buildProfileField(
-              label: 'MY BIRTHDAY',
-              value: birthday,
-              onEdit: () => _showBirthdayEditorDialog(context),
-            ),
-            _buildProfileField(
-              label: 'MY GENDER',
-              value: gender,
-              onEdit: () => _showGenderEditorDialog(context),
-              isLast: true,
-            ),
-            
+            _buildProfileField(label: 'MY BIRTHDAY', value: birthday, onEdit: () => _showBirthdayEditorDialog(context)),
+            _buildProfileField(label: 'MY GENDER', value: gender, onEdit: () => _showGenderEditorDialog(context), isLast: true),
             const SizedBox(height: 32),
+            // Dentro del Column antes del botón "Done":
+            const SizedBox(height: 32),
+            const SizedBox(height: 32),
+            Center(
+              child: Column(
+                children: [
+                  TextButton(
+                    onPressed: () async {
+                      await FirebaseAuth.instance.signOut();
+                      if (context.mounted) {
+                        Navigator.of(context).popUntil((route) => route.isFirst);
+                      }
+                    },
+                    child: const Text(
+                      'Log Out',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontSize: 16,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () async {
+                      final user = FirebaseAuth.instance.currentUser;
+                      if (user != null) {
+                        await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
+                        await user.delete();
+                        if (context.mounted) {
+                          Navigator.of(context).popUntil((route) => route.isFirst);
+                        }
+                      }
+                    },
+                    child: const Text(
+                      'Delete Account',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: _saveProfileChanges,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF10B981),
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                child: const Text(
-                  'Done',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: const Text('Done', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
+
             const SizedBox(height: 32),
           ],
         ),
@@ -523,9 +480,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
         color: Colors.white,
         border: Border(
           top: const BorderSide(color: Color(0xFFE5E7EB)),
-          bottom: isLast 
-              ? const BorderSide(color: Color(0xFFE5E7EB))
-              : BorderSide.none,
+          bottom: isLast ? const BorderSide(color: Color(0xFFE5E7EB)) : BorderSide.none,
         ),
       ),
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
@@ -536,24 +491,11 @@ class _ProfileEditorState extends State<ProfileEditor> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.6,
-                  ),
-                ),
+                Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w500, letterSpacing: 0.6)),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Text(
-                      value,
-                      style: const TextStyle(
-                        fontSize: 16,
-                      ),
-                    ),
+                    Text(value, style: const TextStyle(fontSize: 16)),
                     if (extraWidget != null) ...[
                       const SizedBox(width: 8),
                       extraWidget,
@@ -570,9 +512,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
               foregroundColor: const Color(0xFF0CC0DF),
               elevation: 0,
               padding: const EdgeInsets.all(8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             child: const Icon(Icons.edit_outlined, size: 20),
           ),
