@@ -13,7 +13,7 @@ class UserModel {
   final int totalGamesJoined;
   final double rating;
   final String position;
-  final String skillLevel; // ✅ Nuevo campo agregado
+  final String skillLevel;
   final DateTime lastLoginAt;
   final DateTime createdAt;
   final String notesByAdmin;

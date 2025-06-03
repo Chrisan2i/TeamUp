@@ -60,8 +60,8 @@ class _RegisterStep4State extends State<RegisterStep4> {
       totalGamesCreated: 0,
       totalGamesJoined: 0,
       rating: 0.0,
-      position: _skill!,
-      skillLevel: _skill!, // ✅ línea agregada correctamente
+      position: '',
+      skillLevel: _skill!,
       lastLoginAt: DateTime.now(),
       createdAt: DateTime.now(),
       notesByAdmin: '',
