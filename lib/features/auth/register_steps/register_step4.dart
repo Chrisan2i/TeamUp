@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'models/user_model.dart';
-import '../games/game_home_view.dart';
+import '../models/user_model.dart';
+import '../../games/game_home_view.dart';
 
 class RegisterStep4 extends StatefulWidget {
   final String firstName;
@@ -61,6 +61,7 @@ class _RegisterStep4State extends State<RegisterStep4> {
       totalGamesJoined: 0,
       rating: 0.0,
       position: _skill!,
+      skillLevel: _skill!, // ✅ línea agregada correctamente
       lastLoginAt: DateTime.now(),
       createdAt: DateTime.now(),
       notesByAdmin: '',
@@ -123,3 +124,4 @@ class _RegisterStep4State extends State<RegisterStep4> {
     );
   }
 }
+

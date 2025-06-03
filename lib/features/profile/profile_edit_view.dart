@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:teamup/features/auth/welcome_screen.dart';
 
 class ProfileEditor extends StatefulWidget {
   const ProfileEditor({super.key});
@@ -51,8 +52,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
         gender = data['gender'] ?? '';
       });
     }
-  }
-
+}
 
   Future<void> _saveProfileChanges() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -74,6 +74,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
       Navigator.pop(context);
     }
   }
+
 
   @override
   void dispose() {
@@ -375,7 +376,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
                   Text("$fullName's profile", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   const Text(
-                    'Your profile details helps personalize your Plei experience and connects you with the right games and players.',
+                    'Your profile details helps personalize your TeamUp experience and connects you with the right games and players.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey, fontSize: 14),
                   ),
@@ -400,8 +401,6 @@ class _ProfileEditorState extends State<ProfileEditor> {
             _buildProfileField(label: 'MY BIRTHDAY', value: birthday, onEdit: () => _showBirthdayEditorDialog(context)),
             _buildProfileField(label: 'MY GENDER', value: gender, onEdit: () => _showGenderEditorDialog(context), isLast: true),
             const SizedBox(height: 32),
-            // Dentro del Column antes del botón "Done":
-            const SizedBox(height: 32),
             const SizedBox(height: 32),
             Center(
               child: Column(
@@ -412,6 +411,10 @@ class _ProfileEditorState extends State<ProfileEditor> {
                       if (context.mounted) {
                         Navigator.of(context).popUntil((route) => route.isFirst);
                       }
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                      );
                     },
                     child: const Text(
                       'Log Out',
@@ -432,6 +435,10 @@ class _ProfileEditorState extends State<ProfileEditor> {
                         if (context.mounted) {
                           Navigator.of(context).popUntil((route) => route.isFirst);
                         }
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                        );
                       }
                     },
                     child: const Text(
@@ -447,7 +454,6 @@ class _ProfileEditorState extends State<ProfileEditor> {
               ),
             ),
             const SizedBox(height: 24),
-
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -460,7 +466,6 @@ class _ProfileEditorState extends State<ProfileEditor> {
                 child: const Text('Done', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
-
             const SizedBox(height: 32),
           ],
         ),

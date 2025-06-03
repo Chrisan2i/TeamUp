@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../auth/models/user_model.dart';
-import 'profile_edit.dart';
+import '../../auth/models/user_model.dart';
+import 'package:teamup/features/profile/profile_edit_view.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -170,9 +170,6 @@ class _ProfileState extends State<Profile> {
   }
 
   Widget _labelValue(String label, String value) {
-    final isSkill = label == 'Skill Level';
-    final displayValue = value.isNotEmpty ? value : 'Select level';
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -189,22 +186,21 @@ class _ProfileState extends State<Profile> {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           alignment: Alignment.centerLeft,
           decoration: BoxDecoration(
-            color: isSkill ? const Color(0xFFD9D9D9) : Colors.white,
+            color: label == 'Skill Level' ? const Color(0xFFD9D9D9) : Colors.white,
             border: Border.all(color: const Color(0xFFE5E7EB)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            displayValue,
+            value,
             style: TextStyle(
               fontSize: 16,
-              color: isSkill ? Colors.black : const Color(0xFF9CA3AF),
+              color: label == 'Skill Level' ? Colors.black : const Color(0xFF9CA3AF),
             ),
           ),
         ),
       ],
     );
   }
-
 
   Widget _statsCard(UserModel user) {
     return Container(
@@ -255,4 +251,3 @@ class _ProfileState extends State<Profile> {
     );
   }
 }
-

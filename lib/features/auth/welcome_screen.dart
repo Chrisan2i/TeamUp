@@ -1,59 +1,90 @@
 import 'package:flutter/material.dart';
-import 'phone_login_screen.dart'; // después lo creamos
+import '../auth/phone_login_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            const Spacer(flex: 2),
             const Text(
               'Bienvenido a',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
             ),
-            const SizedBox(height: 20),
-            Image.asset(
-              'assets/logo.png', // tu logo aquí
-              width: 100,
-              height: 100,
+            const SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Image.network(
+                  'https://res.cloudinary.com/drnkgp6xe/image/upload/v1748954791/1_j0qqtg.png',
+                  width: 80,
+                  height: 80,
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text(
+                      'TeamUp',
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Let´s play',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
-            const Text(
-              'TeamUp',
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-            ),
-            const Text(
-              'Let´s play',
-              style: TextStyle(fontSize: 18, color: Colors.grey),
-            ),
-            const SizedBox(height: 40),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.cyanAccent.shade700,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+            const Spacer(flex: 3),
+            SizedBox(
+              width: width * 0.8,
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0CC0DF),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const PhoneLoginScreen()),
+                  );
+                },
+                child: const Text(
+                  'Get Started',
+                  style: TextStyle(fontSize: 16, color: Colors.black),
                 ),
               ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const PhoneLoginScreen()),
-                );
-              },
-              child: const Text('Get Started', style: TextStyle(fontSize: 16)),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             const Text(
-              'By signing up, you agree to the Terms of Service\nPrivacy Policy',
+              'By signing up, you agree to the Terms of Service',
+              style: TextStyle(fontSize: 11),
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
+            const Text(
+              'Privacy Policy',
+              style: TextStyle(fontSize: 11),
+              textAlign: TextAlign.center,
+            ),
+            const Spacer(),
           ],
         ),
       ),

@@ -5,18 +5,19 @@ class UserModel {
   final String email;
   final String phone;
   final String profileImageUrl;
-  final String position;
   final bool isVerified;
-  final double rating;
-  final int totalRentsMade;
-  final int totalRentsReceived;
-  final String role;
   final bool blocked;
   final String? banReason;
   final int reports;
-  final String lastLoginAt;
-  final String createdAt;
+  final int totalGamesCreated;
+  final int totalGamesJoined;
+  final double rating;
+  final String position;
+  final String skillLevel; // ✅ Nuevo campo agregado
+  final DateTime lastLoginAt;
+  final DateTime createdAt;
   final String notesByAdmin;
+  final VerificationData verification;
 
   UserModel({
     required this.uid,
@@ -25,87 +26,97 @@ class UserModel {
     required this.email,
     required this.phone,
     required this.profileImageUrl,
-    required this.position,
     required this.isVerified,
-    required this.rating,
-    required this.totalRentsMade,
-    required this.totalRentsReceived,
-    required this.role,
     required this.blocked,
     this.banReason,
     required this.reports,
+    required this.totalGamesCreated,
+    required this.totalGamesJoined,
+    required this.rating,
+    required this.position,
+    required this.skillLevel, // ✅ constructor actualizado
     required this.lastLoginAt,
     required this.createdAt,
     required this.notesByAdmin,
+    required this.verification,
   });
 
-  factory UserModel.fromMap(Map<String, dynamic> map) {
+  factory UserModel.fromMap(Map<String, dynamic> map, String uid) {
     return UserModel(
-      uid: map['uid'] ?? '',
+      uid: uid,
       fullName: map['fullName'] ?? '',
       username: map['username'] ?? '',
       email: map['email'] ?? '',
       phone: map['phone'] ?? '',
       profileImageUrl: map['profileImageUrl'] ?? '',
-      position: map['position'] ?? '',
       isVerified: map['isVerified'] ?? false,
-      rating: (map['rating'] ?? 0).toDouble(),
-      totalRentsMade: map['totalRentsMade'] ?? 0,
-      totalRentsReceived: map['totalRentsReceived'] ?? 0,
-      role: map['role'] ?? 'user',
       blocked: map['blocked'] ?? false,
       banReason: map['banReason'],
       reports: map['reports'] ?? 0,
-      lastLoginAt: map['lastLoginAt'] ?? '',
-      createdAt: map['createdAt'] ?? '',
+      totalGamesCreated: map['totalGamesCreated'] ?? 0,
+      totalGamesJoined: map['totalGamesJoined'] ?? 0,
+      rating: (map['rating'] ?? 0).toDouble(),
+      position: map['position'] ?? '',
+      skillLevel: map['skillLevel'] ?? '',
+      lastLoginAt: DateTime.parse(map['lastLoginAt']),
+      createdAt: DateTime.parse(map['createdAt']),
       notesByAdmin: map['notesByAdmin'] ?? '',
+      verification: VerificationData.fromMap(map['verification']),
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'uid': uid,
       'fullName': fullName,
       'username': username,
       'email': email,
       'phone': phone,
       'profileImageUrl': profileImageUrl,
-      'position': position,
       'isVerified': isVerified,
-      'rating': rating,
-      'totalRentsMade': totalRentsMade,
-      'totalRentsReceived': totalRentsReceived,
-      'role': role,
       'blocked': blocked,
       'banReason': banReason,
       'reports': reports,
-      'lastLoginAt': lastLoginAt,
-      'createdAt': createdAt,
+      'totalGamesCreated': totalGamesCreated,
+      'totalGamesJoined': totalGamesJoined,
+      'rating': rating,
+      'position': position,
+      'skillLevel': skillLevel,
+      'lastLoginAt': lastLoginAt.toIso8601String(),
+      'createdAt': createdAt.toIso8601String(),
       'notesByAdmin': notesByAdmin,
+      'verification': verification.toMap(),
     };
   }
+}
 
-  // Para clonar con cambios (muy útil para AuthService)
-  UserModel copyWith({String? uid}) {
-    return UserModel(
-      uid: uid ?? this.uid,
-      fullName: fullName,
-      username: username,
-      email: email,
-      phone: phone,
-      profileImageUrl: profileImageUrl,
-      position: position,
-      isVerified: isVerified,
-      rating: rating,
-      totalRentsMade: totalRentsMade,
-      totalRentsReceived: totalRentsReceived,
-      role: role,
-      blocked: blocked,
-      banReason: banReason,
-      reports: reports,
-      lastLoginAt: lastLoginAt,
-      createdAt: createdAt,
-      notesByAdmin: notesByAdmin,
+class VerificationData {
+  final String idCardUrl;
+  final String faceImageUrl;
+  final String status; // e.g. 'pending', 'approved', 'rejected'
+  final String? rejectionReason;
+
+  VerificationData({
+    required this.idCardUrl,
+    required this.faceImageUrl,
+    required this.status,
+    this.rejectionReason,
+  });
+
+  factory VerificationData.fromMap(Map<String, dynamic> map) {
+    return VerificationData(
+      idCardUrl: map['idCardUrl'] ?? '',
+      faceImageUrl: map['faceImageUrl'] ?? '',
+      status: map['status'] ?? 'pending',
+      rejectionReason: map['rejectionReason'],
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'idCardUrl': idCardUrl,
+      'faceImageUrl': faceImageUrl,
+      'status': status,
+      'rejectionReason': rejectionReason,
+    };
   }
 }
