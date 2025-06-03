@@ -9,7 +9,6 @@ import 'features/games/game_home_view.dart';
 import 'features/auth/auth_page.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
