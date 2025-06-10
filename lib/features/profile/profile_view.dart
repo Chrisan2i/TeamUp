@@ -56,8 +56,8 @@ class ProfileView extends StatelessWidget {
               );
             },
             backgroundColor: const Color(0xFF0CC0DF),
-            child: const Icon(Icons.add),
             tooltip: 'Crear Partido',
+            child: const Icon(Icons.add),
           ),
           floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
           bottomNavigationBar: CustomBottomNavBar(

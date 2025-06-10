@@ -61,8 +61,8 @@ class GameController extends ChangeNotifier {
       if (searchText.isNotEmpty) {
         final search = searchText.toLowerCase();
         final matchesField = game.fieldName.toLowerCase().contains(search);
-        final matchesDescription = game.description?.toLowerCase().contains(search) ?? false;
-        final matchesZone = game.zone?.toLowerCase().contains(search) ?? false;
+        final matchesDescription = game.description.toLowerCase().contains(search) ?? false;
+        final matchesZone = game.zone.toLowerCase().contains(search) ?? false;
 
         if (!matchesField && !matchesDescription && !matchesZone) {
           return false;

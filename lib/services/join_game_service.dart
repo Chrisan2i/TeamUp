@@ -20,7 +20,7 @@ class JoinGamesService{
     }
 
     await FirebaseFirestore.instance.collection('games').doc(game.id).update({
-      'usersjoined' : FieldValue.arrayUnion([user?.uid])
+      'usersjoined' : FieldValue.arrayUnion([user.uid])
 
     });
     print('Usuario agregado correctamente');
