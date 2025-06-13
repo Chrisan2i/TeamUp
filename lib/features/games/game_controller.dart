@@ -1,10 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
 import '../../models/game_model.dart';
-
-/// Tabs principales de la sección de juegos
-enum GameTab { open, my, past }
 
 class GameController extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -12,7 +8,6 @@ class GameController extends ChangeNotifier {
   List<GameModel> allGames = [];
   List<GameModel> filteredGames = [];
 
-  GameTab currentTab = GameTab.open;
   DateTime? selectedDate;
   String searchText = '';
 
@@ -34,13 +29,6 @@ class GameController extends ChangeNotifier {
     }
   }
 
-  /// 📤 Cambiar tab actual (Open / My / Past)
-  void setTab(GameTab tab) {
-    currentTab = tab;
-    applyFilters();
-    notifyListeners();
-  }
-
   /// 📅 Cambiar fecha seleccionada
   void setDate(DateTime date) {
     selectedDate = date;
@@ -55,15 +43,13 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 🧠 Aplicar filtros activos: tab, fecha y búsqueda
+  /// 🧠 Aplicar filtros activos: fecha y búsqueda
   void applyFilters() {
     filteredGames = allGames.where((game) {
-      // Filtro por pestaña
-      if (currentTab == GameTab.my && game.adminId != currentUserId) return false;
-      if (currentTab == GameTab.past && game.date.isAfter(DateTime.now())) return false;
-      if (currentTab == GameTab.open && game.date.isBefore(DateTime.now())) return false;
+      // ✅ Mostrar solo juegos futuros
+      if (game.date.isBefore(DateTime.now())) return false;
 
-      // Filtro por fecha exacta
+      // 📅 Filtro por fecha exacta
       if (selectedDate != null) {
         final sameDay = game.date.year == selectedDate!.year &&
             game.date.month == selectedDate!.month &&
@@ -71,10 +57,16 @@ class GameController extends ChangeNotifier {
         if (!sameDay) return false;
       }
 
-      // Filtro por texto
-      if (searchText.isNotEmpty &&
-          !game.title.toLowerCase().contains(searchText.toLowerCase())) {
-        return false;
+      // 🔍 Filtro por texto múltiple
+      if (searchText.isNotEmpty) {
+        final search = searchText.toLowerCase();
+        final matchesField = game.fieldName.toLowerCase().contains(search);
+        final matchesDescription = game.description.toLowerCase().contains(search) ?? false;
+        final matchesZone = game.zone.toLowerCase().contains(search) ?? false;
+
+        if (!matchesField && !matchesDescription && !matchesZone) {
+          return false;
+        }
       }
 
       return true;

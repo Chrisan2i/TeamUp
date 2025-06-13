@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import 'game_controller.dart';
-import 'widgets/game_filter_bar.dart';
 import 'widgets/game_date_selector.dart';
 import 'widgets/game_search_bar.dart';
 import 'widgets/game_card.dart';
-
 import '../../core/constant/colors.dart';
 import '../../core/constant/app_sizes.dart';
 import '../auth/services/auth_service.dart';
+import '../add_games/add_game_view.dart';
+import '../profile/profile_view.dart';
+import 'package:teamup/core/widgets/custom_botton_navbar.dart';
+import 'package:teamup/features/auth/welcome_screen.dart';
 
 class GameHomeView extends StatelessWidget {
   const GameHomeView({super.key});
@@ -19,36 +20,49 @@ class GameHomeView extends StatelessWidget {
     final controller = Provider.of<GameController>(context);
 
     return Scaffold(
+      backgroundColor: const Color(0xFFC9C9C9),
       appBar: AppBar(
-        title: const Text(
-          'Games',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: const Center(
+          child: Text(
+            'Games',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
+        centerTitle: true,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0.5,
+        leading: IconButton(
+          icon: const Icon(Icons.notifications),
+          color: Colors.grey,
+          onPressed: () {
+            // Lógica de notificaciones (sin cambio de color)
+          },
+        ),
         actions: [
           TextButton(
-              onPressed: () async {
-                await AuthService().singOut();
-              },
-              child: const Text(
-                'Salir',
-                style: TextStyle(
-                    color:Colors.red,
-                    fontWeight: FontWeight.bold
-                ),
-              )
-          )
+            onPressed: () async {
+              await AuthService().signOut();
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+              );
+            },
+            child: const Text(
+              'Salir',
+              style: TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ],
       ),
       body: SafeArea(
         child: Column(
           children: [
-            GameFilterBar(
-              currentTab: controller.currentTab,
-              onTabChanged: controller.setTab,
-            ),
             const SizedBox(height: kSpacingSmall),
             GameDateSelector(
               onDateSelected: controller.setDate,
@@ -76,18 +90,29 @@ class GameHomeView extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: CustomBottomNavBar(
         currentIndex: 0,
-        selectedItemColor: primaryColor,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.sports_soccer), label: 'Games'),
-          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Friends'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble), label: 'Messages'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
+        onTap: (index) {
+          if (index == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfileView()),
+            );
+          }
+        },
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AddGameView()),
+          );
+        },
+        backgroundColor: const Color(0xFF0CC0DF),
+        tooltip: 'Crear Partido',
+        child: const Icon(Icons.add),
       ),
     );
   }
 }
-

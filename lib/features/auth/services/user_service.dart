@@ -1,26 +1,56 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/user_model.dart';
+import '../models/user_model.dart'; // ajusta el path según tu proyecto
 
 class UserService {
-  final CollectionReference users = FirebaseFirestore.instance.collection('users');
+  final _db = FirebaseFirestore.instance;
+  final _collection = 'users';
 
-  Future<void> createUser(UserModel user) async {
-    await users.doc(user.uid).set(user.toMap());
-  }
-
-  Future<UserModel?> getUser(String uid) async {
-    final doc = await users.doc(uid).get();
+  // Obtener un usuario por su UID
+  Future<UserModel?> getUserById(String uid) async {
+    final doc = await _db.collection(_collection).doc(uid).get();
     if (doc.exists) {
-      return UserModel.fromMap(doc.data() as Map<String, dynamic>);
+      return UserModel.fromMap(doc.data()!, doc.id);
     }
     return null;
   }
 
-  Future<void> updateUser(UserModel user) async {
-    await users.doc(user.uid).update(user.toMap());
+  // Crear o actualizar usuario
+  Future<void> createOrUpdateUser(UserModel user) async {
+    await _db.collection(_collection).doc(user.uid).set(user.toMap(), SetOptions(merge: true));
   }
 
-  Future<void> deleteUser(String uid) async {
-    await users.doc(uid).delete();
+  // Escuchar cambios en tiempo real de un usuario
+  Stream<UserModel?> streamUser(String uid) {
+    return _db.collection(_collection).doc(uid).snapshots().map((doc) {
+      if (doc.exists) {
+        return UserModel.fromMap(doc.data()!, doc.id);
+      }
+      return null;
+    });
+  }
+
+  // Actualizar estado de verificación
+  Future<void> updateVerificationStatus(String uid, String status, {String? rejectionReason}) async {
+    await _db.collection(_collection).doc(uid).update({
+      'isVerified': status == 'approved',
+      'verification.status': status,
+      'verification.rejectionReason': rejectionReason,
+    });
+  }
+
+  // Banear usuario
+  Future<void> banUser(String uid, String reason) async {
+    await _db.collection(_collection).doc(uid).update({
+      'blocked': true,
+      'banReason': reason,
+    });
+  }
+
+  // Desbanear usuario
+  Future<void> unbanUser(String uid) async {
+    await _db.collection(_collection).doc(uid).update({
+      'blocked': false,
+      'banReason': null,
+    });
   }
 }
