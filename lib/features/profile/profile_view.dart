@@ -8,6 +8,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:teamup/core/widgets/custom_botton_navbar.dart';
 import 'package:teamup/features/add_games/add_game_view.dart';
 import 'package:teamup/features/games/game_home_view.dart';
+import 'package:teamup/features/settings/setting_view.dart';
+
 
 class ProfileView extends StatelessWidget {
   final List<String> initialSelectedCategories;
@@ -46,6 +48,20 @@ class ProfileView extends StatelessWidget {
             centerTitle: true,
             backgroundColor: Colors.white,
             elevation: 1,
+            actions: [
+    IconButton(
+      icon: const Icon(Icons.settings, color: Colors.black),
+      tooltip: 'Configuración',
+      onPressed: () {
+        
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SettingView()),
+        );
+      },
+    ),
+  ],
+            
           ),
           body: const Profile(),
           floatingActionButton: FloatingActionButton(
