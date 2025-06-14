@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:teamup/features/auth/welcome_screen.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 
 class ProfileEditor extends StatefulWidget {
   const ProfileEditor({super.key});
@@ -15,8 +20,8 @@ class _ProfileEditorState extends State<ProfileEditor> {
   String country = '';
   String skillLevel = '';
   String position = '';
-  String birthday = '';
-  String gender = '';
+  String? profileImageUrl;
+
 
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
@@ -46,10 +51,45 @@ class _ProfileEditorState extends State<ProfileEditor> {
         email = data['email'] ?? '';
         country = data['country'] ?? '';
         position = data['position'] ?? '';
-        skillLevel = data['position'] ?? ''; // usamos mismo campo
-        birthday = data['birthday'] ?? '';
-        gender = data['gender'] ?? '';
+        skillLevel = data['skillLevel'] ?? '';
+        profileImageUrl = data['profileImage'];
       });
+    }
+  }
+  Future<void> _changeProfileImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile == null) return;
+
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('https://api.cloudinary.com/v1_1/drnkgp6xe/image/upload'),
+    )
+      ..fields['upload_preset'] = 'TeamUp' // <- tu preset unsigned
+      ..files.add(await http.MultipartFile.fromPath('file', pickedFile.path));
+
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      final responseData = await response.stream.bytesToString();
+      final imageUrl = json.decode(responseData)['secure_url'];
+
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        await FirebaseFirestore.instance.collection('users').doc(uid).update({
+          'profileImage': imageUrl,
+        });
+        setState(() {
+          profileImageUrl = imageUrl;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Foto actualizada')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al subir imagen')),
+      );
     }
   }
 
@@ -63,8 +103,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
       'email': email,
       'country': country,
       'position': position,
-      'birthday': birthday,
-      'gender': gender,
+      'skillLevel': skillLevel,
     });
 
     if (mounted) {
@@ -83,8 +122,6 @@ class _ProfileEditorState extends State<ProfileEditor> {
     _countryController.dispose();
     _skillController.dispose();
     _positionController.dispose();
-    _birthdayController.dispose();
-    _genderController.dispose();
     super.dispose();
   }
 
@@ -214,51 +251,6 @@ class _ProfileEditorState extends State<ProfileEditor> {
     );
   }
 
-  void _showBirthdayEditorDialog(BuildContext context) {
-    _birthdayController.text = birthday;
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return _buildEditDialog(
-          context,
-          title: 'When is your birthday?',
-          description: 'Your age helps us match you with appropriate games and players.',
-          content: TextField(
-            controller: _birthdayController,
-            decoration: _inputDecoration('Enter your birthday'),
-          ),
-          onSave: () {
-            setState(() {
-              birthday = _birthdayController.text;
-            });
-          },
-        );
-      },
-    );
-  }
-
-  void _showGenderEditorDialog(BuildContext context) {
-    _genderController.text = gender;
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return _buildEditDialog(
-          context,
-          title: 'What is your gender?',
-          description: 'This helps us match you with appropriate games and players.',
-          content: TextField(
-            controller: _genderController,
-            decoration: _inputDecoration('Enter your gender'),
-          ),
-          onSave: () {
-            setState(() {
-              gender = _genderController.text;
-            });
-          },
-        );
-      },
-    );
-  }
 
   Widget _buildEditDialog(BuildContext context,
       {required String title,
@@ -348,16 +340,24 @@ class _ProfileEditorState extends State<ProfileEditor> {
                 children: [
                   Stack(
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 60,
-                        backgroundColor: Color(0xFF10B981),
-                        child: Text('A', style: TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold)),
+                        backgroundColor: const Color(0xFF10B981),
+                        backgroundImage: profileImageUrl != null && profileImageUrl!.isNotEmpty
+                            ? NetworkImage(profileImageUrl!)
+                            : null,
+                        child: (profileImageUrl == null || profileImageUrl!.isEmpty)
+                            ? const Text(
+                          'A',
+                          style: TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold),
+                        )
+                            : null,
                       ),
                       Positioned(
                         bottom: 0,
                         right: 0,
                         child: GestureDetector(
-                          onTap: () {},
+                            onTap: _changeProfileImage,
                           child: Container(
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
@@ -375,7 +375,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
                   Text("$fullName's profile", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   const Text(
-                    'Your profile details helps personalize your Plei experience and connects you with the right games and players.',
+                    'Your profile details helps personalize your TeamUp experience and connects you with the right games and players.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey, fontSize: 14),
                   ),
@@ -385,7 +385,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
             const SizedBox(height: 32),
             _buildProfileField(label: 'MY NAME', value: fullName, onEdit: () => _showNameEditorDialog(context)),
             _buildProfileField(label: 'EMAIL', value: email, onEdit: () => _showEmailEditorDialog(context)),
-            _buildProfileField(label: 'COUNTRY I REPRESENT', value: country, onEdit: () => _showCountryEditorDialog(context)),
+            _buildProfileField(label: 'COUNTRY', value: country, onEdit: () => _showCountryEditorDialog(context)),
             _buildProfileField(label: 'MY SKILL LEVEL', value: skillLevel, onEdit: () => _showSkillEditorDialog(context)),
             _buildProfileField(
               label: 'PREFERRED POSITION',
@@ -397,10 +397,6 @@ class _ProfileEditorState extends State<ProfileEditor> {
                 child: const Text('Missing info', style: TextStyle(color: Colors.white, fontSize: 12)),
               ),
             ),
-            _buildProfileField(label: 'MY BIRTHDAY', value: birthday, onEdit: () => _showBirthdayEditorDialog(context)),
-            _buildProfileField(label: 'MY GENDER', value: gender, onEdit: () => _showGenderEditorDialog(context), isLast: true),
-            const SizedBox(height: 32),
-            // Dentro del Column antes del botón "Done":
             const SizedBox(height: 32),
             const SizedBox(height: 32),
             Center(
@@ -412,6 +408,10 @@ class _ProfileEditorState extends State<ProfileEditor> {
                       if (context.mounted) {
                         Navigator.of(context).popUntil((route) => route.isFirst);
                       }
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                      );
                     },
                     child: const Text(
                       'Log Out',
@@ -432,6 +432,10 @@ class _ProfileEditorState extends State<ProfileEditor> {
                         if (context.mounted) {
                           Navigator.of(context).popUntil((route) => route.isFirst);
                         }
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                        );
                       }
                     },
                     child: const Text(
@@ -447,7 +451,6 @@ class _ProfileEditorState extends State<ProfileEditor> {
               ),
             ),
             const SizedBox(height: 24),
-
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -460,7 +463,6 @@ class _ProfileEditorState extends State<ProfileEditor> {
                 child: const Text('Done', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
-
             const SizedBox(height: 32),
           ],
         ),

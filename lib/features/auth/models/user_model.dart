@@ -119,4 +119,8 @@ class VerificationData {
       'rejectionReason': rejectionReason,
     };
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> ana

@@ -27,6 +27,34 @@ class UserService {
       }
       return null;
     });
+<<<<<<< HEAD
+=======
+  }
+
+  // Actualizar estado de verificación
+  Future<void> updateVerificationStatus(String uid, String status, {String? rejectionReason}) async {
+    await _db.collection(_collection).doc(uid).update({
+      'isVerified': status == 'approved',
+      'verification.status': status,
+      'verification.rejectionReason': rejectionReason,
+    });
+  }
+
+  // Banear usuario
+  Future<void> banUser(String uid, String reason) async {
+    await _db.collection(_collection).doc(uid).update({
+      'blocked': true,
+      'banReason': reason,
+    });
+  }
+
+  // Desbanear usuario
+  Future<void> unbanUser(String uid) async {
+    await _db.collection(_collection).doc(uid).update({
+      'blocked': false,
+      'banReason': null,
+    });
+>>>>>>> ana
   }
 
   // Actualizar estado de verificación

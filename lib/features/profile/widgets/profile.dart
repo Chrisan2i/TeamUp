@@ -250,4 +250,8 @@ class _ProfileState extends State<Profile> {
       ],
     );
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> ana

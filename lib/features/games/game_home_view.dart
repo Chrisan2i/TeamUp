@@ -11,10 +11,13 @@ import '../add_games/add_game_view.dart';
 import '../profile/profile_view.dart';
 import 'package:teamup/core/widgets/custom_botton_navbar.dart';
 import 'package:teamup/features/auth/welcome_screen.dart';
+<<<<<<< HEAD
 import 'package:teamup/features/auth/services/auth_service.dart';
 import 'package:teamup/features/profile/profile_edit_view.dart';
 import 'package:teamup/features/profile/profile_view.dart';
 import 'package:teamup/core/widgets/custom_botton_navbar.dart';
+=======
+>>>>>>> ana
 
 class GameHomeView extends StatelessWidget {
   const GameHomeView({super.key});
@@ -119,4 +122,8 @@ class GameHomeView extends StatelessWidget {
       ),
     );
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> ana
