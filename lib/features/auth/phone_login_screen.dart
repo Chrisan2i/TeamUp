@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'services/phone_auth_service.dart';
 import '../games/game_home_view.dart';
-import 'register_step1.dart';
+import 'register_steps/register_step1.dart';
 
 class PhoneLoginScreen extends StatefulWidget {
   const PhoneLoginScreen({super.key});
