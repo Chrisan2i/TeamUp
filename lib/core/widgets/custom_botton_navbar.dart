@@ -25,7 +25,7 @@ class CustomBottomNavBar extends StatelessWidget {
           ),
           IconButton(
             onPressed: () => onTap(1),
-            icon: const Icon(Icons.people),
+            icon: const Icon(Icons.bookmark),
             color: currentIndex == 1 ? const Color(0xFF0CC0DF) : Colors.grey,
           ),
           const SizedBox(width: 48),
