@@ -3,8 +3,7 @@ import '../../../models/game_model.dart';
 import '../../../core/constant/colors.dart';
 import '../../../core/constant/app_sizes.dart';
 import '../../../core/theme/typography.dart';
-import '../../../services/join_game_service.dart';
-
+import 'join_game_botton.dart';
 
 class GameCard extends StatelessWidget {
   final GameModel game;
@@ -116,12 +115,17 @@ class GameCard extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () async {
-                      await JoinGamesService().JoinGames(game);
-                      //print(FirebaseAuth.instance.currentUser?.email);
-                      //print(game.id);
-                      // TODO: Acción de unirse
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                        ),
+                        builder: (_) => JoinGameBottom(game: game),
+                      );
                     },
+
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF0CC0DF),
                       foregroundColor: Colors.white,

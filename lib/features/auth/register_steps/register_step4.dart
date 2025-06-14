@@ -123,9 +123,5 @@ class _RegisterStep4State extends State<RegisterStep4> {
       ),
     );
   }
-<<<<<<< HEAD
-}
-=======
 }
 
->>>>>>> ana

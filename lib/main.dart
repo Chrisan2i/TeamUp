@@ -4,18 +4,12 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:teamup/features/games/game_home_view.dart';
-
-
 import 'firebase_options.dart';
 import 'features/games/game_controller.dart';
 import 'features/auth/welcome_screen.dart';
-<<<<<<< HEAD
 import 'package:teamup/core/theme/theme_provider.dart';
-=======
-import 'features/games/game_home_view.dart';
-import 'features/profile/profile_view.dart';
-import 'core/providers/theme_provider.dart'; 
->>>>>>> ana
+
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

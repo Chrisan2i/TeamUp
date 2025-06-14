@@ -4,6 +4,8 @@ import '../../models/game_model.dart';
 
 class GameController extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  bool isLoading = false;
+
 
   List<GameModel> allGames = [];
   List<GameModel> filteredGames = [];
@@ -18,16 +20,29 @@ class GameController extends ChangeNotifier {
     loadGames();
   }
 
-  /// 🔄 Cargar todos los partidos desde Firebase
   Future<void> loadGames() async {
+    isLoading = true;
+    notifyListeners();
+
     try {
       final snapshot = await _firestore.collection('games').orderBy('date').get();
-      allGames = snapshot.docs.map((doc) => GameModel.fromMap(doc.data())).toList();
+      debugPrint('🎮 Juegos encontrados: ${snapshot.docs.length}');
+
+      allGames = snapshot.docs.map((doc) {
+        final data = doc.data();
+        debugPrint("📄 Game doc: $data");
+        return GameModel.fromMap(data);
+      }).toList();
+
       applyFilters();
     } catch (e) {
-      debugPrint('Error cargando juegos: $e');
+      debugPrint('❌ Error cargando juegos: $e');
     }
+
+    isLoading = false;
+    notifyListeners();
   }
+
 
   /// 📅 Cambiar fecha seleccionada
   void setDate(DateTime date) {
@@ -45,9 +60,14 @@ class GameController extends ChangeNotifier {
 
   /// 🧠 Aplicar filtros activos: fecha y búsqueda
   void applyFilters() {
+    final now = DateTime.now();
+
     filteredGames = allGames.where((game) {
-      // ✅ Mostrar solo juegos futuros
-      if (game.date.isBefore(DateTime.now())) return false;
+      // ✅ Mostrar solo juegos de hoy o futuros (ignorando la hora)
+      final gameDay = DateTime(game.date.year, game.date.month, game.date.day);
+      final today = DateTime(now.year, now.month, now.day);
+
+      if (gameDay.isBefore(today)) return false;
 
       // 📅 Filtro por fecha exacta
       if (selectedDate != null) {
@@ -61,8 +81,8 @@ class GameController extends ChangeNotifier {
       if (searchText.isNotEmpty) {
         final search = searchText.toLowerCase();
         final matchesField = game.fieldName.toLowerCase().contains(search);
-        final matchesDescription = game.description.toLowerCase().contains(search) ?? false;
-        final matchesZone = game.zone.toLowerCase().contains(search) ?? false;
+        final matchesDescription = game.description.toLowerCase().contains(search);
+        final matchesZone = game.zone.toLowerCase().contains(search);
 
         if (!matchesField && !matchesDescription && !matchesZone) {
           return false;
@@ -71,5 +91,8 @@ class GameController extends ChangeNotifier {
 
       return true;
     }).toList();
+
+    notifyListeners();
   }
+
 }

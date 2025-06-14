@@ -127,3 +127,10 @@ class StepFecha extends StatelessWidget {
   }
 }
 
+/// ✅ Esta función se usa para obtener el día completo ("Monday", "Saturday", etc.)
+String getFullEnglishWeekday(DateTime date) {
+  const weekdays = [
+    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+  ];
+  return weekdays[date.weekday - 1];
+}

@@ -43,8 +43,4 @@ class CustomBottomNavBar extends StatelessWidget {
       ),
     );
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> ana
