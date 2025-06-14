@@ -7,8 +7,15 @@ import 'join_game_botton.dart';
 
 class GameCard extends StatelessWidget {
   final GameModel game;
+  final bool showLeaveButton;
+  final void Function(GameModel)? onLeave;
 
-  const GameCard({super.key, required this.game});
+  const GameCard({
+    super.key,
+    required this.game,
+    this.showLeaveButton = false,
+    this.onLeave,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,13 +36,13 @@ class GameCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Imagen del juego desde imageUrl
+          // Imagen
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(kCardRadius)),
             child: Image.network(
               game.imageUrl.isNotEmpty
                   ? game.imageUrl
-                  : 'https://placehold.co/600x400', // fallback
+                  : 'https://placehold.co/600x400',
               width: double.infinity,
               height: 200,
               fit: BoxFit.cover,
@@ -57,16 +64,12 @@ class GameCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: Text(game.fieldName, style: heading2),
-                    ),
+                    Expanded(child: Text(game.fieldName, style: heading2)),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          game.hour,
-                          style: const TextStyle(color:Color(0xFF0CC0DF), fontWeight: FontWeight.w500),
-                        ),
+                        Text(game.hour,
+                            style: const TextStyle(color: Color(0xFF0CC0DF), fontWeight: FontWeight.w500)),
                         const SizedBox(height: 2),
                         Text('\$${game.price.toStringAsFixed(2)}', style: bodyGrey),
                       ],
@@ -77,7 +80,7 @@ class GameCard extends StatelessWidget {
                 Text(game.zone, style: bodyGrey),
                 const SizedBox(height: 8),
 
-                // Lugar y distancia
+                // Lugar
                 Row(
                   children: [
                     const Icon(Icons.location_on, size: 16, color: iconGrey),
@@ -87,7 +90,7 @@ class GameCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
 
-                // Chips de estado
+                // Chips
                 Row(
                   children: [
                     _buildChip(game.isPublic ? 'Público' : 'Privado'),
@@ -97,7 +100,7 @@ class GameCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
 
-                // Duración y formato
+                // Info adicional
                 Row(
                   children: const [
                     Icon(Icons.access_time, size: 20, color: iconGrey),
@@ -111,10 +114,23 @@ class GameCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Botón
+                // Botón dinámico
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
+                  child: showLeaveButton && onLeave != null
+                      ? ElevatedButton(
+                    onPressed: () => onLeave!(game),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(kButtonHeight),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(kBorderRadius),
+                      ),
+                    ),
+                    child: const Text('Salir del Partido'),
+                  )
+                      : ElevatedButton(
                     onPressed: () {
                       showModalBottomSheet(
                         context: context,
@@ -125,11 +141,9 @@ class GameCard extends StatelessWidget {
                         builder: (_) => JoinGameBottom(game: game),
                       );
                     },
-
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF0CC0DF),
+                      backgroundColor: const Color(0xFF0CC0DF),
                       foregroundColor: Colors.white,
-                      
                       minimumSize: const Size.fromHeight(kButtonHeight),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(kBorderRadius),

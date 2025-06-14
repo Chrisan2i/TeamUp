@@ -1,29 +1,27 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-import '../features/auth/services/auth_service.dart';
-import '../features/games/widgets/game_card.dart';
 import '../models/game_model.dart';
 
-class JoinGamesService{
-  Future <void> JoinGames (GameModel game) async {
+class JoinGamesService {
+  Future<bool> joinGame(GameModel game) async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (user == null) return false;
 
-    DocumentSnapshot doc = await FirebaseFirestore.instance.collection('games').doc(game.id).get();
+    final gameRef = FirebaseFirestore.instance.collection('games').doc(game.id);
+    final doc = await gameRef.get();
 
-    List<String> usersJoined = List<String>.from(doc['usersjoined']?? []);
+    List<String> usersJoined = List<String>.from(doc['usersjoined'] ?? []);
 
-    if(usersJoined.contains(user.uid)) {
-      print('El usuario ya esta en la lista');
-      return;
+    if (usersJoined.contains(user.uid)) {
+      print('❌ El usuario ya está unido al partido.');
+      return false;
     }
 
-    await FirebaseFirestore.instance.collection('games').doc(game.id).update({
-      'usersjoined' : FieldValue.arrayUnion([user.uid])
-
+    await gameRef.update({
+      'usersjoined': FieldValue.arrayUnion([user.uid]),
     });
-    print('Usuario agregado correctamente');
 
+    print('✅ Usuario unido correctamente al partido.');
+    return true;
   }
 }
