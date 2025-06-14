@@ -8,13 +8,31 @@ import '../../core/constant/app_sizes.dart';
 import '../auth/services/auth_service.dart';
 import '../add_games/add_game_view.dart';
 import '../profile/profile_view.dart';
+import '../bookings/bookings_view.dart';
 import 'package:teamup/core/widgets/custom_botton_navbar.dart';
 import 'package:teamup/features/auth/welcome_screen.dart';
 
-
-
 class GameHomeView extends StatelessWidget {
   const GameHomeView({super.key});
+
+  void _handleNavigation(BuildContext context, int index) {
+    if (index == 0) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const GameHomeView()),
+      );
+    } else if (index == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const BookingsView()),
+      );
+    } else if (index == 3) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProfileView()),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,14 +111,7 @@ class GameHomeView extends StatelessWidget {
       ),
       bottomNavigationBar: CustomBottomNavBar(
         currentIndex: 0,
-        onTap: (index) {
-          if (index == 3) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ProfileView()),
-            );
-          }
-        },
+        onTap: (index) => _handleNavigation(context, index),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(

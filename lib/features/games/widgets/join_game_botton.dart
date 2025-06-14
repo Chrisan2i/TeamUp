@@ -121,7 +121,7 @@ class _JoinGameBottomState extends State<JoinGameBottom> {
                   ),
                 );
                 if (confirmed == true) {
-                  await JoinGamesService().JoinGames(game);
+                  await JoinGamesService().joinGame(game);
                   Navigator.pop(context);
                 }
               } : null,

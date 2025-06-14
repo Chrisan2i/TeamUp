@@ -69,7 +69,7 @@ class ProfileHeader extends StatelessWidget {
                 children: [
                   _navButton(Icons.group, "Friends"),
                   const SizedBox(width: 12),
-                  _navButton(Icons.history, "Match History"),
+                  _navButton(Icons.history, "Created Games"),
                 ],
               ),
             ],
