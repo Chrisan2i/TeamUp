@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:teamup/features/settings/theme_selection_view.dart';
 import 'package:teamup/features/settings/language_selection_view.dart';
+import 'package:teamup/features/settings/help_view.dart';
 
 class SettingView extends StatelessWidget {
   const SettingView({super.key});
@@ -60,7 +61,10 @@ class SettingView extends StatelessWidget {
             title: 'Ayuda',
             iconColor: Colors.black,
             onTap: () {
-              // Acción para ayuda
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const HelpFormView()),
+              );
             },
           ),
 
