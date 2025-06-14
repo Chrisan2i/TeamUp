@@ -41,6 +41,34 @@ class BookingsGameList extends StatelessWidget {
               game: game,
               showLeaveButton: onLeave != null && isUpcoming,
               onLeave: onLeave,
+
+              // 👉 Estos son los nuevos parámetros
+              showReportIcon: !isUpcoming,
+              onReport: (reportedGame) {
+                showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text('Reportar partido'),
+                    content: const Text('¿Deseas reportar este partido o un jugador?'),
+                    actions: [
+                      TextButton(
+                        child: const Text('Cancelar'),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      TextButton(
+                        child: const Text('Reportar'),
+                        onPressed: () {
+                          // Aquí puedes guardar el reporte o navegar
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Reporte enviado')),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
             if (!isUpcoming)
               const Padding(
@@ -56,4 +84,3 @@ class BookingsGameList extends StatelessWidget {
     );
   }
 }
-
