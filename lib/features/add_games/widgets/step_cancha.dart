@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../models/field_model.dart';
+import 'step_fecha.dart'; // Necesario para getFullEnglishWeekday
 
 class StepCancha extends StatefulWidget {
   final String? selectedField;
   final String? selectedHour;
-  final Function(String, String, FieldModel) onSelect; // ✅ aquí se agregó FieldModel
+  final Function(String, String, FieldModel) onSelect;
   final VoidCallback onNext;
   final String selectedZone;
   final DateTime selectedDate;
@@ -35,7 +36,7 @@ class _StepCanchaState extends State<StepCancha> {
   }
 
   Future<void> _loadFields() async {
-    final weekdayKey = _getWeekdayKey(widget.selectedDate);
+    final weekdayKey = getFullEnglishWeekday(widget.selectedDate);
     print('🔍 FILTRANDO POR ZONA: ${widget.selectedZone}');
     print('📅 FILTRANDO POR DÍA: $weekdayKey');
 
@@ -74,21 +75,13 @@ class _StepCanchaState extends State<StepCancha> {
     }
   }
 
-  String _getWeekdayKey(DateTime date) {
-    const weekdays = [
-      'monday', 'tuesday', 'wednesday',
-      'thursday', 'friday', 'saturday', 'sunday'
-    ];
-    return weekdays[date.weekday - 1];
-  }
-
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final weekdayKey = _getWeekdayKey(widget.selectedDate);
+    final weekdayKey = getFullEnglishWeekday(widget.selectedDate);
 
     return ListView.separated(
       itemCount: fields.length,
@@ -146,7 +139,7 @@ class _StepCanchaState extends State<StepCancha> {
                         return ChoiceChip(
                           label: Text(hour),
                           selected: isHourSelected,
-                          onSelected: (_) => widget.onSelect(cancha.name, hour, cancha), // ✅ se pasa el FieldModel
+                          onSelected: (_) => widget.onSelect(cancha.name, hour, cancha),
                           selectedColor: const Color(0xFF004AAD),
                           labelStyle: TextStyle(color: isHourSelected ? Colors.white : const Color(0xFF111827)),
                           backgroundColor: const Color(0xFFE5E7EB),

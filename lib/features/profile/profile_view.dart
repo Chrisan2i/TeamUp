@@ -1,15 +1,11 @@
+// 📁 profile_view.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'widgets/profile.dart';
-import 'package:teamup/core/widgets/custom_botton_navbar.dart'; // Ajusta esta ruta si es diferente
-import 'package:teamup/features/add_games/add_game_view.dart'; // si usarás el FAB
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:teamup/features/profile/widgets/profile.dart';
 import 'package:teamup/core/widgets/custom_botton_navbar.dart';
 import 'package:teamup/features/add_games/add_game_view.dart';
 import 'package:teamup/features/games/game_home_view.dart';
 import 'package:teamup/features/settings/setting_view.dart';
-
 
 class ProfileView extends StatelessWidget {
   final List<String> initialSelectedCategories;
@@ -26,7 +22,7 @@ class ProfileView extends StatelessWidget {
         MaterialPageRoute(builder: (_) => const GameHomeView()),
       );
     }
-    // Agrega aquí lógica para otros índices si tienes más pantallas
+    // Puedes agregar aquí lógica para más índices (por ejemplo, index == 1 para ir a otra vista)
   }
 
   @override
@@ -37,7 +33,7 @@ class ProfileView extends StatelessWidget {
         return Scaffold(
           backgroundColor: const Color(0xFFF9FAFB),
           appBar: AppBar(
-            automaticallyImplyLeading: false, // Oculta la flecha
+            automaticallyImplyLeading: false,
             title: const Text(
               'Perfil',
               style: TextStyle(
@@ -49,19 +45,17 @@ class ProfileView extends StatelessWidget {
             backgroundColor: Colors.white,
             elevation: 1,
             actions: [
-    IconButton(
-      icon: const Icon(Icons.settings, color: Colors.black),
-      tooltip: 'Configuración',
-      onPressed: () {
-        
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const SettingView()),
-        );
-      },
-    ),
-  ],
-            
+              IconButton(
+                icon: const Icon(Icons.settings, color: Colors.black),
+                tooltip: 'Configuración',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SettingView()),
+                  );
+                },
+              ),
+            ],
           ),
           body: const Profile(),
           floatingActionButton: FloatingActionButton(
@@ -85,4 +79,6 @@ class ProfileView extends StatelessWidget {
     );
   }
 }
+
+
 

@@ -34,7 +34,7 @@ class UserModel {
     required this.totalGamesJoined,
     required this.rating,
     required this.position,
-    required this.skillLevel, // ✅ constructor actualizado
+    required this.skillLevel,
     required this.lastLoginAt,
     required this.createdAt,
     required this.notesByAdmin,
@@ -119,4 +119,6 @@ class VerificationData {
       'rejectionReason': rejectionReason,
     };
   }
+
 }
+

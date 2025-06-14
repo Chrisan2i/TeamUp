@@ -16,7 +16,8 @@ class UserService {
 
   // Crear o actualizar usuario
   Future<void> createOrUpdateUser(UserModel user) async {
-    await _db.collection(_collection).doc(user.uid).set(user.toMap(), SetOptions(merge: true));
+    await _db.collection(_collection).doc(user.uid).set(
+        user.toMap(), SetOptions(merge: true));
   }
 
   // Escuchar cambios en tiempo real de un usuario
@@ -27,30 +28,31 @@ class UserService {
       }
       return null;
     });
-  }
 
-  // Actualizar estado de verificación
-  Future<void> updateVerificationStatus(String uid, String status, {String? rejectionReason}) async {
-    await _db.collection(_collection).doc(uid).update({
-      'isVerified': status == 'approved',
-      'verification.status': status,
-      'verification.rejectionReason': rejectionReason,
-    });
-  }
+    // Actualizar estado de verificación
+    Future<void> updateVerificationStatus(String uid, String status,
+        {String? rejectionReason}) async {
+      await _db.collection(_collection).doc(uid).update({
+        'isVerified': status == 'approved',
+        'verification.status': status,
+        'verification.rejectionReason': rejectionReason,
+      });
+    }
 
-  // Banear usuario
-  Future<void> banUser(String uid, String reason) async {
-    await _db.collection(_collection).doc(uid).update({
-      'blocked': true,
-      'banReason': reason,
-    });
-  }
+    // Banear usuario
+    Future<void> banUser(String uid, String reason) async {
+      await _db.collection(_collection).doc(uid).update({
+        'blocked': true,
+        'banReason': reason,
+      });
+    }
 
-  // Desbanear usuario
-  Future<void> unbanUser(String uid) async {
-    await _db.collection(_collection).doc(uid).update({
-      'blocked': false,
-      'banReason': null,
-    });
+    // Desbanear usuario
+    Future<void> unbanUser(String uid) async {
+      await _db.collection(_collection).doc(uid).update({
+        'blocked': false,
+        'banReason': null,
+      });
+    }
   }
 }

@@ -4,13 +4,14 @@ import 'game_controller.dart';
 import 'widgets/game_date_selector.dart';
 import 'widgets/game_search_bar.dart';
 import 'widgets/game_card.dart';
-import '../../core/constant/colors.dart';
 import '../../core/constant/app_sizes.dart';
 import '../auth/services/auth_service.dart';
 import '../add_games/add_game_view.dart';
 import '../profile/profile_view.dart';
 import 'package:teamup/core/widgets/custom_botton_navbar.dart';
 import 'package:teamup/features/auth/welcome_screen.dart';
+
+
 
 class GameHomeView extends StatelessWidget {
   const GameHomeView({super.key});

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
 import '../games/game_home_view.dart';
-import 'package:teamup/features/auth/register_steps/register_step1.dart';
+import 'register_steps/register_step1.dart';
 import 'package:teamup/features/auth/services/phone_auth_service.dart';
+
 
 class PhoneLoginScreen extends StatefulWidget {
   const PhoneLoginScreen({super.key});
