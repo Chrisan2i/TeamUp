@@ -11,7 +11,7 @@ class edit_player {
     Future<UserModel> getplayerinfo(String uid) async {
         final DocumentSnapshot playerdocumento = await players.doc(uid).get();
         Map <String, dynamic> playermap = playerdocumento.data() as Map<String, dynamic>;
-        UserModel player = UserModel.fromMap(playermap);
+        UserModel player = UserModel.fromMap(playermap, uid);
 
         return player;
 
