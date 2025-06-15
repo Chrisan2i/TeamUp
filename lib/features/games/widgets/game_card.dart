@@ -1,17 +1,18 @@
+// Archivo: game_card.dart
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../models/game_model.dart';
 import '../../../core/constant/colors.dart';
 import '../../../core/constant/app_sizes.dart';
 import '../../../core/theme/typography.dart';
-import 'join_game_botton.dart';
+import 'game_card_buttons.dart';
+import 'game_card_info.dart';
+import 'game_card_rating_dialog.dart';
 
 class GameCard extends StatelessWidget {
   final GameModel game;
   final bool showLeaveButton;
   final void Function(GameModel)? onLeave;
-
-  // NUEVOS PARAMETROS
-  final bool showReportIcon;
   final void Function(GameModel)? onReport;
 
   const GameCard({
@@ -19,12 +20,20 @@ class GameCard extends StatelessWidget {
     required this.game,
     this.showLeaveButton = false,
     this.onLeave,
-    this.showReportIcon = false,
     this.onReport,
   });
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final isPast = game.date.isBefore(now);
+
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final userParticipated = game.usersjoined.contains(currentUserId);
+
+    final showPastBanner = isPast && userParticipated;
+    final showReport = isPast && userParticipated;
+
     final remainingSpots = game.playerCount;
 
     return Stack(
@@ -44,13 +53,11 @@ class GameCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Imagen
+              // Imagen del partido
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(kCardRadius)),
                 child: Image.network(
-                  game.imageUrl.isNotEmpty
-                      ? game.imageUrl
-                      : 'https://placehold.co/600x400',
+                  game.imageUrl.isNotEmpty ? game.imageUrl : 'https://placehold.co/600x400',
                   width: double.infinity,
                   height: 200,
                   fit: BoxFit.cover,
@@ -63,102 +70,26 @@ class GameCard extends StatelessWidget {
                 ),
               ),
 
+              // Info + Botones
               Padding(
                 padding: const EdgeInsets.all(kPaddingMedium),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Título y hora/precio
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(child: Text(game.fieldName, style: heading2)),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(game.hour,
-                                style: const TextStyle(color: Color(0xFF0CC0DF), fontWeight: FontWeight.w500)),
-                            const SizedBox(height: 2),
-                            Text('\$${game.price.toStringAsFixed(2)}', style: bodyGrey),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(game.zone, style: bodyGrey),
-                    const SizedBox(height: 8),
-
-                    // Lugar
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on, size: 16, color: iconGrey),
-                        const SizedBox(width: 4),
-                        Expanded(child: Text(game.fieldName, style: bodyGrey)),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Chips
-                    Row(
-                      children: [
-                        _buildChip(game.isPublic ? 'Público' : 'Privado'),
-                        const SizedBox(width: 8),
-                        _buildChip('$remainingSpots Spot${remainingSpots == 1 ? '' : 's'} left!'),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Info adicional
-                    Row(
-                      children: const [
-                        Icon(Icons.access_time, size: 20, color: iconGrey),
-                        SizedBox(width: 6),
-                        Text('1h', style: bodyGrey),
-                        SizedBox(width: 16),
-                        Icon(Icons.group, size: 20, color: iconGrey),
-                        SizedBox(width: 6),
-                        Text('7v7', style: bodyGrey),
-                      ],
-                    ),
+                    GameCardInfo(game: game, remainingSpots: remainingSpots),
                     const SizedBox(height: 16),
-
-                    // Botón dinámico
-                    SizedBox(
-                      width: double.infinity,
-                      child: showLeaveButton && onLeave != null
-                          ? ElevatedButton(
-                        onPressed: () => onLeave!(game),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(kButtonHeight),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(kBorderRadius),
-                          ),
-                        ),
-                        child: const Text('Salir del Partido'),
-                      )
-                          : ElevatedButton(
-                        onPressed: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            shape: const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                            ),
-                            builder: (_) => JoinGameBottom(game: game),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0CC0DF),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(kButtonHeight),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(kBorderRadius),
-                          ),
-                        ),
-                        child: const Text('Join Game'),
-                      ),
+                    GameCardButtons(
+                      game: game,
+                      isPast: isPast,
+                      showLeaveButton: !isPast && showLeaveButton,
+                      onLeave: onLeave,
+                      showRateButton: isPast && userParticipated,
+                      onRate: (game) {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => GameCardRatingDialog(game: game),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -167,10 +98,31 @@ class GameCard extends StatelessWidget {
           ),
         ),
 
-        // ICONO DE REPORTAR
-        if (showReportIcon)
+        // 🔴 Bandera "Finalizado"
+        if (showPastBanner)
           Positioned(
             top: 8,
+            right: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(8),
+                  topRight: Radius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Finalizado',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+
+// 🏴 Ícono de reporte (espaciado debajo de la bandera)
+        if (showReport)
+          Positioned(
+            top: 44, // ⬅️ Espaciado vertical para que no se pegue
             right: 8,
             child: IconButton(
               icon: const Icon(Icons.flag, color: Colors.red),
@@ -179,17 +131,6 @@ class GameCard extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-
-  Widget _buildChip(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: chipBackground,
-        borderRadius: BorderRadius.circular(100),
-      ),
-      child: Text(label, style: chipLabel),
     );
   }
 }

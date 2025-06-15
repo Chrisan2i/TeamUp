@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'game_controller.dart';
 import 'widgets/game_date_selector.dart';
 import 'widgets/game_search_bar.dart';
@@ -10,7 +11,6 @@ import '../add_games/add_game_view.dart';
 import '../profile/profile_view.dart';
 import '../bookings/bookings_view.dart';
 import 'package:teamup/core/widgets/custom_botton_navbar.dart';
-import 'package:teamup/features/auth/welcome_screen.dart';
 
 class GameHomeView extends StatelessWidget {
   const GameHomeView({super.key});
@@ -38,44 +38,36 @@ class GameHomeView extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Provider.of<GameController>(context);
 
+    // ✅ Corrección para evitar notifyListeners() durante build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null && controller.currentUserId.isEmpty) {
+        controller.setCurrentUser(user.uid);
+      }
+    });
+
     return Scaffold(
       backgroundColor: const Color(0xFFC9C9C9),
       appBar: AppBar(
-        title: const Center(
-          child: Text(
-            'Games',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
+        title: const Text(
+          'Games',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
           ),
         ),
         centerTitle: true,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0.5,
-        leading: IconButton(
-          icon: const Icon(Icons.notifications),
-          color: Colors.grey,
-          onPressed: () {
-            // Lógica de notificaciones (sin cambio de color)
-          },
-        ),
         actions: [
-          TextButton(
-            onPressed: () async {
-              await AuthService().signOut();
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            color: Colors.grey,
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('No hay notificaciones nuevas')),
               );
             },
-            child: const Text(
-              'Salir',
-              style: TextStyle(
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
           ),
         ],
       ),

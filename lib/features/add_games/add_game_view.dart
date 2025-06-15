@@ -51,30 +51,32 @@ class _AddGameViewState extends State<AddGameView> {
 
     final gameService = GameService();
 
+    // 1️⃣ Crear instancia del nuevo partido
     final newGame = GameModel(
       id: '',
       ownerId: user.uid,
       zone: selectedZone!,
       fieldName: selectedField!.name,
-      date: selectedDate!,
+      date: selectedDate!, // asegurado como DateTime
       hour: selectedHour!,
       description: description ?? '',
       playerCount: numberOfPlayers ?? 0,
       isPublic: isPublic,
       price: selectedField!.pricePerHour,
-      createdAt: DateTime.now().toIso8601String(),
+      createdAt: DateTime.now().toIso8601String(), // opcional: puedes usar Timestamp.now()
       imageUrl: selectedField!.imageUrl,
       usersjoined: [],
     );
 
+    // 2️⃣ Publicar el partido en Firestore
     final docRef = await FirebaseFirestore.instance.collection('games').add(newGame.toMap());
 
-    // Actualizar ID del partido
-    await gameService.updateGame(newGame.copyWith(id: docRef.id));
+    // 3️⃣ Actualizar el ID dentro del documento
+    await docRef.update({'id': docRef.id});
 
-    // 🔴 ELIMINAR HORA RESERVADA DE LA CANCHA
+    // 4️⃣ Opcional: actualizar disponibilidad de la cancha
     try {
-      final weekdayKey = getFullEnglishWeekday(selectedDate!); // Ej: Monday
+      final weekdayKey = getFullEnglishWeekday(selectedDate!); // Ej: "Monday"
       final fieldRef = FirebaseFirestore.instance.collection('fields').doc(selectedField!.id);
 
       await FirebaseFirestore.instance.runTransaction((transaction) async {
@@ -83,7 +85,7 @@ class _AddGameViewState extends State<AddGameView> {
 
         final data = snapshot.data() as Map<String, dynamic>;
         final availability = Map<String, dynamic>.from(data['availability'] ?? {});
-        final List<dynamic> hours = List<String>.from(availability[weekdayKey] ?? []);
+        final List<String> hours = List<String>.from(availability[weekdayKey] ?? []);
 
         if (hours.contains(selectedHour)) {
           hours.remove(selectedHour);
@@ -98,12 +100,13 @@ class _AddGameViewState extends State<AddGameView> {
       print('❌ Error al eliminar la hora de disponibilidad: $e');
     }
 
-    // Feedback UI
+    // 5️⃣ Feedback visual
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('✅ Partido creado con éxito')),
     );
     Navigator.pop(context);
   }
+
 
 
   @override

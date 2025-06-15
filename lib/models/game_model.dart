@@ -12,7 +12,7 @@ class GameModel {
   final bool isPublic;
   final double price;
   final String createdAt;
-  final String imageUrl; // NUEVO CAMPO
+  final String imageUrl;
   final List<String> usersjoined;
 
   GameModel({
@@ -62,14 +62,14 @@ class GameModel {
       'ownerId': ownerId,
       'zone': zone,
       'fieldName': fieldName,
-      'date': date.toIso8601String(),
+      'date': Timestamp.fromDate(date),
       'hour': hour,
       'description': description,
       'playerCount': playerCount,
       'isPublic': isPublic,
       'price': price,
-      'createdAt': createdAt,
-      'imageUrl': imageUrl, // AÑADIDO
+      'createdAt': createdAt, // Puedes usar Timestamp.now().toDate().toIso8601String() si es string
+      'imageUrl': imageUrl,
       'usersjoined': usersjoined,
     };
   }

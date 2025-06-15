@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../models/game_model.dart';
@@ -5,7 +6,6 @@ import '../../models/game_model.dart';
 class GameController extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   bool isLoading = false;
-
 
   List<GameModel> allGames = [];
   List<GameModel> filteredGames = [];
@@ -16,33 +16,36 @@ class GameController extends ChangeNotifier {
   /// Debería ser proporcionado por AuthService al iniciar sesión
   String currentUserId = '';
 
+  StreamSubscription? _gamesSubscription;
+
   GameController() {
-    loadGames();
+    _listenToGames();
   }
 
-  Future<void> loadGames() async {
+  /// 🔄 Escucha en tiempo real los cambios en Firestore
+  void _listenToGames() {
     isLoading = true;
     notifyListeners();
 
-    try {
-      final snapshot = await _firestore.collection('games').orderBy('date').get();
-      debugPrint('🎮 Juegos encontrados: ${snapshot.docs.length}');
-
+    _gamesSubscription = _firestore
+        .collection('games')
+        .orderBy('date')
+        .snapshots()
+        .listen((snapshot) {
       allGames = snapshot.docs.map((doc) {
         final data = doc.data();
-        debugPrint("📄 Game doc: $data");
         return GameModel.fromMap(data);
       }).toList();
 
       applyFilters();
-    } catch (e) {
-      debugPrint('❌ Error cargando juegos: $e');
-    }
-
-    isLoading = false;
-    notifyListeners();
+      isLoading = false;
+      notifyListeners();
+    }, onError: (e) {
+      debugPrint('❌ Error escuchando juegos: $e');
+      isLoading = false;
+      notifyListeners();
+    });
   }
-
 
   /// 📅 Cambiar fecha seleccionada
   void setDate(DateTime date) {
@@ -58,26 +61,27 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 🧠 Aplicar filtros activos: fecha y búsqueda
   void applyFilters() {
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
 
     filteredGames = allGames.where((game) {
-      // ✅ Mostrar solo juegos de hoy o futuros (ignorando la hora)
+      // 🔧 Normalizamos la fecha del partido
       final gameDay = DateTime(game.date.year, game.date.month, game.date.day);
-      final today = DateTime(now.year, now.month, now.day);
 
+      // ⛔ Ocultar partidos pasados
       if (gameDay.isBefore(today)) return false;
 
-      // 📅 Filtro por fecha exacta
+      // ⛔ Ocultar si ya está unido
+      if (game.usersjoined.contains(currentUserId)) return false;
+
+      // 📅 Filtro por fecha exacta (también normalizado)
       if (selectedDate != null) {
-        final sameDay = game.date.year == selectedDate!.year &&
-            game.date.month == selectedDate!.month &&
-            game.date.day == selectedDate!.day;
-        if (!sameDay) return false;
+        final selectedDay = DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day);
+        if (gameDay != selectedDay) return false;
       }
 
-      // 🔍 Filtro por texto múltiple
+      // 🔍 Filtro por texto
       if (searchText.isNotEmpty) {
         final search = searchText.toLowerCase();
         final matchesField = game.fieldName.toLowerCase().contains(search);
@@ -95,4 +99,17 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setCurrentUser(String uid) {
+    currentUserId = uid;
+    applyFilters(); // Para que se actualice la lista al asignar el UID
+  }
+
+
+  /// ✅ Cancelar la suscripción al cerrar la app
+  @override
+  void dispose() {
+    _gamesSubscription?.cancel();
+    super.dispose();
+  }
 }
+

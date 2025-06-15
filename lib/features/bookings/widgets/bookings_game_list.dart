@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:teamup/features/bookings/widgets/bookings_empty_card.dart';
 import 'package:teamup/features/games/widgets/game_card.dart';
 import 'package:teamup/models/game_model.dart';
@@ -7,12 +8,14 @@ class BookingsGameList extends StatelessWidget {
   final List<GameModel> games;
   final String emptyMessage;
   final void Function(GameModel)? onLeave;
+  final void Function(GameModel)? onReport;
 
   const BookingsGameList({
     super.key,
     required this.games,
     required this.emptyMessage,
     this.onLeave,
+    this.onReport,
   });
 
   @override
@@ -22,6 +25,7 @@ class BookingsGameList extends StatelessWidget {
     }
 
     final now = DateTime.now();
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return ListView.separated(
       padding: const EdgeInsets.all(16),
@@ -30,57 +34,17 @@ class BookingsGameList extends StatelessWidget {
       itemBuilder: (context, index) {
         final game = games[index];
 
-        final isUpcoming = game.date.isAfter(now) ||
-            (game.date.year == now.year &&
-                game.date.month == now.month &&
-                game.date.day == now.day);
+        final isPast = game.date.isBefore(now);
+        final userParticipated = game.usersjoined.contains(currentUserId);
 
-        return Column(
-          children: [
-            GameCard(
-              game: game,
-              showLeaveButton: onLeave != null && isUpcoming,
-              onLeave: onLeave,
-
-              // 👉 Estos son los nuevos parámetros
-              showReportIcon: !isUpcoming,
-              onReport: (reportedGame) {
-                showDialog(
-                  context: context,
-                  builder: (_) => AlertDialog(
-                    title: const Text('Reportar partido'),
-                    content: const Text('¿Deseas reportar este partido o un jugador?'),
-                    actions: [
-                      TextButton(
-                        child: const Text('Cancelar'),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      TextButton(
-                        child: const Text('Reportar'),
-                        onPressed: () {
-                          // Aquí puedes guardar el reporte o navegar
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Reporte enviado')),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-            if (!isUpcoming)
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text(
-                  '✅ Partido finalizado',
-                  style: TextStyle(color: Colors.grey, fontSize: 14),
-                ),
-              ),
-          ],
+        return GameCard(
+          game: game,
+          showLeaveButton: !isPast && onLeave != null,
+          onLeave: onLeave,
+          onReport: onReport,
         );
       },
     );
   }
 }
+

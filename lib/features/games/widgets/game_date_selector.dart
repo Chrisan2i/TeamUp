@@ -17,7 +17,14 @@ class GameDateSelector extends StatefulWidget {
 class _GameDateSelectorState extends State<GameDateSelector> {
   int selectedIndex = 0;
 
-  final List<DateTime> days = List.generate(7, (i) => DateTime.now().add(Duration(days: i)));
+  final List<DateTime> days = List.generate(
+    7,
+        (i) {
+      final now = DateTime.now().add(Duration(days: i));
+      return DateTime(now.year, now.month, now.day); // ⏱️ Normalizado
+    },
+  );
+
 
   @override
   Widget build(BuildContext context) {
