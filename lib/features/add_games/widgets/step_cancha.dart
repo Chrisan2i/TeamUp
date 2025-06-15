@@ -122,12 +122,11 @@ class _StepCanchaState extends State<StepCancha> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: [cancha.type, cancha.surfaceType]
-                          .map((e) => Chip(label: Text(e), backgroundColor: const Color(0xFFE5E7EB)))
-                          .toList(),
-                    ),
+                    Text('Formato: ${cancha.format}', style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
+                    Text('Duración: ${cancha.duration} h', style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
+                    Text('Descripción: ${cancha.description}', style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
+                    Text('Calzado permitido: ${cancha.footwear}', style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
+                    Text('Contacto: ${cancha.contact}', style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
                     const SizedBox(height: 12),
                     const Text('Horarios disponibles:', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
                     const SizedBox(height: 8),

@@ -17,12 +17,19 @@ class GameDateSelector extends StatefulWidget {
 class _GameDateSelectorState extends State<GameDateSelector> {
   int selectedIndex = 0;
 
-  final List<DateTime> days = List.generate(7, (i) => DateTime.now().add(Duration(days: i)));
+  final List<DateTime> days = List.generate(
+    7,
+        (i) {
+      final now = DateTime.now().add(Duration(days: i));
+      return DateTime(now.year, now.month, now.day); // ⏱️ Normalizado
+    },
+  );
+
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 80,
+      height: 50,
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: kPaddingMedium),
         scrollDirection: Axis.horizontal,
@@ -40,36 +47,35 @@ class _GameDateSelectorState extends State<GameDateSelector> {
               widget.onDateSelected(day);
             },
             child: Container(
-              width: 64,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: cardBackground,
-                borderRadius: BorderRadius.circular(kBorderRadius),
-                boxShadow: const [
-                  BoxShadow(
-                    color: shadowColor,
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
-                ],
+                color: isSelected ? Colors.black : Colors.white,
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isSelected ? const Color(0xFF0CC0DF)  : Colors.transparent,
-                  width: 2,
+                  color: Colors.grey.shade300,
                 ),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    DateFormat.E().format(day),
-                    style: smallText,
+                    DateFormat.E().format(day), // Ej: Tue
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w500,
+                      color: isSelected ? Colors.white : Colors.grey.shade800,
+                      height: 1.1, // 🧠 para evitar desborde vertical
+                    ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
-                    DateFormat.d().format(day),
-                    style: const TextStyle(
-                      color: Color(0xFF111827),
-                      fontSize: 16,
+                    DateFormat.d().format(day), // Ej: 2
+                    style: TextStyle(
+                      fontSize: 13.5,
                       fontWeight: FontWeight.bold,
+                      color: isSelected ? Colors.white : Colors.grey.shade800,
+                      height: 1.1,
                     ),
                   ),
                 ],

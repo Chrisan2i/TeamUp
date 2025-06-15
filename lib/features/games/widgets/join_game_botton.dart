@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:teamup/models/game_model.dart';
-import 'package:teamup/services/join_game_service.dart';
+import 'package:teamup/services/game_players_service.dart';
 import 'package:flutter/services.dart';
 
 class JoinGameBottom extends StatefulWidget {
@@ -121,8 +121,15 @@ class _JoinGameBottomState extends State<JoinGameBottom> {
                   ),
                 );
                 if (confirmed == true) {
-                  await JoinGamesService().joinGame(game);
-                  Navigator.pop(context);
+                  // Se une al partido y se agrega en gamePlayers
+                  final success = await GamePlayersService().joinGame(game);
+
+                  if (success) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Te uniste al partido.")));
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Hubo un error al unirte.")));
+                  }
                 }
               } : null,
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
