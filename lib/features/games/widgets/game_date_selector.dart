@@ -52,7 +52,7 @@ class _GameDateSelectorState extends State<GameDateSelector> {
                   ),
                 ],
                 border: Border.all(
-                  color: isSelected ? primaryColor : Colors.transparent,
+                  color: isSelected ? const Color(0xFF0CC0DF)  : Colors.transparent,
                   width: 2,
                 ),
               ),

@@ -27,25 +27,32 @@ class GameModel {
     required this.isPublic,
     required this.price,
     required this.createdAt,
-    required this.imageUrl, // AÑADIDO
+    required this.imageUrl,
     required this.usersjoined,
   });
 
   factory GameModel.fromMap(Map<String, dynamic> map) {
+    // 🔍 Convertir date de forma segura
+    DateTime parseDate(dynamic value) {
+      if (value is Timestamp) return value.toDate();
+      if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+      return DateTime.now(); // fallback
+    }
+
     return GameModel(
       id: map['id'] ?? '',
       ownerId: map['ownerId'] ?? '',
       zone: map['zone'] ?? '',
       fieldName: map['fieldName'] ?? '',
-      date: DateTime.tryParse(map['date']) ?? DateTime.now(),
+      date: parseDate(map['date']),
       hour: map['hour'] ?? '',
       description: map['description'] ?? '',
       playerCount: map['playerCount'] ?? 0,
       isPublic: map['isPublic'] ?? true,
       price: (map['price'] ?? 0).toDouble(),
       createdAt: map['createdAt'] ?? '',
-      imageUrl: map['imageUrl'] ?? '', // AÑADIDO
-      usersjoined: List<String>.from(map['usersjoined']?? [])
+      imageUrl: map['imageUrl'] ?? '',
+      usersjoined: List<String>.from(map['usersjoined'] ?? []),
     );
   }
 
@@ -79,7 +86,7 @@ class GameModel {
     bool? isPublic,
     double? price,
     String? createdAt,
-    String? imageUrl, // AÑADIDO
+    String? imageUrl,
     List<String>? usersjoined,
   }) {
     return GameModel(

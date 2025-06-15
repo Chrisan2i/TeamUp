@@ -63,14 +63,42 @@ class _AddGameViewState extends State<AddGameView> {
       isPublic: isPublic,
       price: selectedField!.pricePerHour,
       createdAt: DateTime.now().toIso8601String(),
-      imageUrl: selectedField!.imageUrl, // ✅ Usa la imagen de la cancha
+      imageUrl: selectedField!.imageUrl,
       usersjoined: [],
     );
 
     final docRef = await FirebaseFirestore.instance.collection('games').add(newGame.toMap());
 
+    // Actualizar ID del partido
     await gameService.updateGame(newGame.copyWith(id: docRef.id));
 
+    // 🔴 ELIMINAR HORA RESERVADA DE LA CANCHA
+    try {
+      final weekdayKey = getFullEnglishWeekday(selectedDate!); // Ej: Monday
+      final fieldRef = FirebaseFirestore.instance.collection('fields').doc(selectedField!.id);
+
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final snapshot = await transaction.get(fieldRef);
+        if (!snapshot.exists) return;
+
+        final data = snapshot.data() as Map<String, dynamic>;
+        final availability = Map<String, dynamic>.from(data['availability'] ?? {});
+        final List<dynamic> hours = List<String>.from(availability[weekdayKey] ?? []);
+
+        if (hours.contains(selectedHour)) {
+          hours.remove(selectedHour);
+          availability[weekdayKey] = hours;
+          transaction.update(fieldRef, {'availability': availability});
+          print('🕒 Hora eliminada correctamente de la disponibilidad');
+        } else {
+          print('⚠️ Hora no encontrada en la disponibilidad');
+        }
+      });
+    } catch (e) {
+      print('❌ Error al eliminar la hora de disponibilidad: $e');
+    }
+
+    // Feedback UI
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('✅ Partido creado con éxito')),
     );
