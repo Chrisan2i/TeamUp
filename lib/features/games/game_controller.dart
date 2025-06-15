@@ -66,16 +66,18 @@ class GameController extends ChangeNotifier {
     final today = DateTime(now.year, now.month, now.day);
 
     filteredGames = allGames.where((game) {
-      // 🔧 Normalizamos la fecha del partido
       final gameDay = DateTime(game.date.year, game.date.month, game.date.day);
 
       // ⛔ Ocultar partidos pasados
       if (gameDay.isBefore(today)) return false;
 
-      // ⛔ Ocultar si ya está unido
+      // ⛔ Ocultar partidos privados
+      if (!game.isPublic) return false;
+
+      // ⛔ Ocultar si ya está unido (opcional)
       if (game.usersjoined.contains(currentUserId)) return false;
 
-      // 📅 Filtro por fecha exacta (también normalizado)
+      // 📅 Filtro por fecha exacta
       if (selectedDate != null) {
         final selectedDay = DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day);
         if (gameDay != selectedDay) return false;
@@ -98,6 +100,7 @@ class GameController extends ChangeNotifier {
 
     notifyListeners();
   }
+
 
   void setCurrentUser(String uid) {
     currentUserId = uid;

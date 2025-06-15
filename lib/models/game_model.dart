@@ -11,9 +11,20 @@ class GameModel {
   final int playerCount;
   final bool isPublic;
   final double price;
+  final double duration;
   final String createdAt;
   final String imageUrl;
   final List<String> usersjoined;
+
+  final String skillLevel;
+  final String type;
+  final String format;
+  final String footwear; // ✅ NUEVO
+  final String status;
+  final int minPlayersToConfirm; // ✅ NUEVO
+  final String? privateCode;
+  final double? fieldRating;
+  final String? report;
 
   GameModel({
     required this.id,
@@ -26,17 +37,26 @@ class GameModel {
     required this.playerCount,
     required this.isPublic,
     required this.price,
+    required this.duration,
     required this.createdAt,
     required this.imageUrl,
     required this.usersjoined,
+    required this.skillLevel,
+    required this.type,
+    required this.format,
+    required this.footwear, // ✅
+    required this.status,
+    required this.minPlayersToConfirm, // ✅
+    this.privateCode,
+    this.fieldRating,
+    this.report,
   });
 
   factory GameModel.fromMap(Map<String, dynamic> map) {
-    // 🔍 Convertir date de forma segura
     DateTime parseDate(dynamic value) {
       if (value is Timestamp) return value.toDate();
       if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
-      return DateTime.now(); // fallback
+      return DateTime.now();
     }
 
     return GameModel(
@@ -50,9 +70,19 @@ class GameModel {
       playerCount: map['playerCount'] ?? 0,
       isPublic: map['isPublic'] ?? true,
       price: (map['price'] ?? 0).toDouble(),
+      duration: (map['duration'] ?? 1.0).toDouble(),
       createdAt: map['createdAt'] ?? '',
       imageUrl: map['imageUrl'] ?? '',
       usersjoined: List<String>.from(map['usersjoined'] ?? []),
+      skillLevel: map['skillLevel'] ?? '',
+      type: map['type'] ?? '',
+      format: map['format'] ?? '7v7',
+      footwear: map['footwear'] ?? 'any', // ✅ default
+      status: map['status'] ?? 'waiting',
+      minPlayersToConfirm: map['minPlayersToConfirm'] ?? 0,
+      privateCode: map['privateCode'],
+      fieldRating: map['fieldRating'] != null ? (map['fieldRating'] as num).toDouble() : null,
+      report: map['report'],
     );
   }
 
@@ -68,9 +98,19 @@ class GameModel {
       'playerCount': playerCount,
       'isPublic': isPublic,
       'price': price,
-      'createdAt': createdAt, // Puedes usar Timestamp.now().toDate().toIso8601String() si es string
+      'duration': duration,
+      'createdAt': createdAt,
       'imageUrl': imageUrl,
       'usersjoined': usersjoined,
+      'skillLevel': skillLevel,
+      'type': type,
+      'format': format,
+      'footwear': footwear, // ✅
+      'status': status,
+      'minPlayersToConfirm': minPlayersToConfirm, // ✅
+      'privateCode': privateCode,
+      'fieldRating': fieldRating,
+      'report': report,
     };
   }
 
@@ -85,9 +125,19 @@ class GameModel {
     int? playerCount,
     bool? isPublic,
     double? price,
+    double? duration,
     String? createdAt,
     String? imageUrl,
     List<String>? usersjoined,
+    String? skillLevel,
+    String? type,
+    String? format,
+    String? footwear, // ✅
+    String? status,
+    int? minPlayersToConfirm, // ✅
+    String? privateCode,
+    double? fieldRating,
+    String? report,
   }) {
     return GameModel(
       id: id ?? this.id,
@@ -100,9 +150,19 @@ class GameModel {
       playerCount: playerCount ?? this.playerCount,
       isPublic: isPublic ?? this.isPublic,
       price: price ?? this.price,
+      duration: duration ?? this.duration,
       createdAt: createdAt ?? this.createdAt,
-      imageUrl: imageUrl ?? this.imageUrl, // AÑADIDO
+      imageUrl: imageUrl ?? this.imageUrl,
       usersjoined: usersjoined ?? this.usersjoined,
+      skillLevel: skillLevel ?? this.skillLevel,
+      type: type ?? this.type,
+      format: format ?? this.format,
+      footwear: footwear ?? this.footwear, // ✅
+      status: status ?? this.status,
+      minPlayersToConfirm: minPlayersToConfirm ?? this.minPlayersToConfirm, // ✅
+      privateCode: privateCode ?? this.privateCode,
+      fieldRating: fieldRating ?? this.fieldRating,
+      report: report ?? this.report,
     );
   }
 }

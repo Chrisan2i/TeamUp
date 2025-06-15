@@ -6,73 +6,115 @@ import '../../../core/theme/typography.dart';
 
 class GameCardInfo extends StatelessWidget {
   final GameModel game;
-  final int remainingSpots; // ✅ Agrega esto
+  final int remainingSpots;
 
   const GameCardInfo({
     super.key,
     required this.game,
-    required this.remainingSpots, // ✅ Y agrégalo al constructor
+    required this.remainingSpots,
   });
+
+  String _buildTimeRange(String startHour, double duration) {
+    try {
+      final parts = startHour.split(':');
+      final hour = int.parse(parts[0]);
+      final minute = int.parse(parts[1]);
+      final start = TimeOfDay(hour: hour, minute: minute);
+
+      final totalMinutes = (duration * 60).toInt();
+      final endMinute = minute + totalMinutes;
+      final endHour = hour + endMinute ~/ 60;
+      final finalMinute = endMinute % 60;
+
+      final end = TimeOfDay(hour: endHour, minute: finalMinute);
+
+      String format(TimeOfDay t) =>
+          '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+      return '${format(start)} – ${format(end)}';
+    } catch (_) {
+      return startHour; // fallback
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final remainingSpots = game.playerCount;
-
     return Padding(
       padding: const EdgeInsets.all(kPaddingMedium),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Título y hora/precio
+          // 🎉 Título
+          Text(
+            game.description,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 6),
+
+          // 📍 Lugar y grupo
+          Text(
+            '@${game.fieldName} | ${game.zone}',
+            style: const TextStyle(
+              fontSize: 13,
+              color: Colors.black54,
+            ),
+          ),
+
+          const SizedBox(height: 6),
+
+          // ⏰ Hora
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(child: Text(game.fieldName, style: heading2)),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(game.hour,
-                      style: const TextStyle(color: Color(0xFF0CC0DF), fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 2),
-                  Text('\$${game.price.toStringAsFixed(2)}', style: bodyGrey),
-                ],
+              const Icon(Icons.access_time, size: 18, color: Colors.black54),
+              const SizedBox(width: 6),
+              Text(
+                _buildTimeRange(game.hour, game.duration),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(game.zone, style: bodyGrey),
-          const SizedBox(height: 8),
 
-          // Lugar
-          Row(
-            children: [
-              const Icon(Icons.location_on, size: 16, color: iconGrey),
-              const SizedBox(width: 4),
-              Expanded(child: Text(game.fieldName, style: bodyGrey)),
-            ],
-          ),
           const SizedBox(height: 12),
 
-          // Chips
+          // ✅ Estado y cupos
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildChip(game.isPublic ? 'Público' : 'Privado'),
-              const SizedBox(width: 8),
-              _buildChip('$remainingSpots Spot${remainingSpots == 1 ? '' : 's'} left!'),
+              Text(
+                game.status.toUpperCase(),
+                style: const TextStyle(
+                  color: Colors.green,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                '$remainingSpots Spot${remainingSpots == 1 ? '' : 's'} left!',
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
+
           const SizedBox(height: 12),
 
-          // Info adicional
-          Row(
-            children: const [
-              Icon(Icons.access_time, size: 20, color: iconGrey),
-              SizedBox(width: 6),
-              Text('1h', style: bodyGrey),
-              SizedBox(width: 16),
-              Icon(Icons.group, size: 20, color: iconGrey),
-              SizedBox(width: 6),
-              Text('7v7', style: bodyGrey),
+          // 🏷️ Etiquetas
+          Wrap(
+            spacing: 12,
+            children: [
+              _buildTag(game.skillLevel),
+              _buildTag('${game.duration}h'),
+              _buildTag(game.format),
+              _buildTag('Price: \$${game.price.toStringAsFixed(2)}'),
             ],
           ),
         ],
@@ -80,14 +122,20 @@ class GameCardInfo extends StatelessWidget {
     );
   }
 
-  Widget _buildChip(String label) {
+  Widget _buildTag(String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: chipBackground,
-        borderRadius: BorderRadius.circular(100),
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(label, style: chipLabel),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
     );
   }
 }

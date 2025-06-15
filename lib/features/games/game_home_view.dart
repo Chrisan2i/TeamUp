@@ -11,6 +11,7 @@ import '../add_games/add_game_view.dart';
 import '../profile/profile_view.dart';
 import '../bookings/bookings_view.dart';
 import 'package:teamup/core/widgets/custom_botton_navbar.dart';
+import 'package:teamup/features/game_details/game_detail_view.dart';
 
 class GameHomeView extends StatelessWidget {
   const GameHomeView({super.key});
@@ -49,20 +50,21 @@ class GameHomeView extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFC9C9C9),
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        automaticallyImplyLeading: false,
         title: const Text(
-          'Games',
+          'Discover',
           style: TextStyle(
+            color: Colors.black,
             fontWeight: FontWeight.bold,
+            fontSize: 20,
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0.5,
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications),
-            color: Colors.grey,
+            icon: const Icon(Icons.notifications_none),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('No hay notificaciones nuevas')),
@@ -93,7 +95,17 @@ class GameHomeView extends StatelessWidget {
                   final game = controller.filteredGames[index];
                   return Padding(
                     padding: const EdgeInsets.only(bottom: kSpacingMedium),
-                    child: GameCard(game: game),
+                    child: GameCard(
+                      game: game,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => GameDetailView(game: game),
+                          ),
+                        );
+                      },
+                    ),
                   );
                 },
               ),

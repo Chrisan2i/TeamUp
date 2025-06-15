@@ -1,9 +1,10 @@
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../models/game_model.dart';
-import '../../models/field_model.dart'; // Asegúrate de importar esto
+import '../../models/field_model.dart';
 
 import 'widgets/step_zona.dart';
 import 'widgets/step_fecha.dart';
@@ -28,6 +29,13 @@ class _AddGameViewState extends State<AddGameView> {
   String? description;
   int? numberOfPlayers;
   bool isPublic = true;
+  String? privateCode;
+
+  String selectedSkillLevel = 'Beginner';
+  double selectedDuration = 1.0;
+  String selectedType = 'Amistoso';
+  String selectedFormat = '7v7';
+  int? minPlayersToConfirm;
 
   void nextStep() {
     if (_currentStep < 3) {
@@ -51,32 +59,35 @@ class _AddGameViewState extends State<AddGameView> {
 
     final gameService = GameService();
 
-    // 1️⃣ Crear instancia del nuevo partido
     final newGame = GameModel(
       id: '',
       ownerId: user.uid,
       zone: selectedZone!,
       fieldName: selectedField!.name,
-      date: selectedDate!, // asegurado como DateTime
+      date: selectedDate!,
       hour: selectedHour!,
       description: description ?? '',
       playerCount: numberOfPlayers ?? 0,
       isPublic: isPublic,
       price: selectedField!.pricePerHour,
-      createdAt: DateTime.now().toIso8601String(), // opcional: puedes usar Timestamp.now()
+      duration: selectedField!.duration,
+      skillLevel: selectedSkillLevel,
+      type: selectedType,
+      format: selectedField!.format,
+      footwear: selectedField!.footwear,
+      createdAt: DateTime.now().toIso8601String(),
       imageUrl: selectedField!.imageUrl,
       usersjoined: [],
+      privateCode: isPublic ? null : privateCode,
+      status: 'waiting',
+      minPlayersToConfirm: minPlayersToConfirm!,
     );
 
-    // 2️⃣ Publicar el partido en Firestore
     final docRef = await FirebaseFirestore.instance.collection('games').add(newGame.toMap());
-
-    // 3️⃣ Actualizar el ID dentro del documento
     await docRef.update({'id': docRef.id});
 
-    // 4️⃣ Opcional: actualizar disponibilidad de la cancha
     try {
-      final weekdayKey = getFullEnglishWeekday(selectedDate!); // Ej: "Monday"
+      final weekdayKey = getFullEnglishWeekday(selectedDate!);
       final fieldRef = FirebaseFirestore.instance.collection('fields').doc(selectedField!.id);
 
       await FirebaseFirestore.instance.runTransaction((transaction) async {
@@ -97,17 +108,14 @@ class _AddGameViewState extends State<AddGameView> {
         }
       });
     } catch (e) {
-      print('❌ Error al eliminar la hora de disponibilidad: $e');
+      print('❌ Error al eliminar la hora de disponibilidad: \$e');
     }
 
-    // 5️⃣ Feedback visual
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('✅ Partido creado con éxito')),
     );
     Navigator.pop(context);
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +145,6 @@ class _AddGameViewState extends State<AddGameView> {
                   },
                   onNext: nextStep,
                 );
-              case 1:
               case 1:
                 return StepFecha(
                   selectedDate: selectedDate,
@@ -174,9 +181,23 @@ class _AddGameViewState extends State<AddGameView> {
                   description: description,
                   numberOfPlayers: numberOfPlayers,
                   isPublic: isPublic,
+                  privateCode: privateCode,
+                  selectedSkillLevel: selectedSkillLevel,
+                  selectedDuration: selectedField?.duration ?? 1.0,
+                  selectedType: selectedType,
+                  selectedFormat: selectedField?.format ?? '7v7',
+                  selectedFootwear: selectedField?.footwear ?? 'any',
+                  minPlayersToConfirm: minPlayersToConfirm,
                   onDescriptionChanged: (value) => setState(() => description = value),
                   onPlayersChanged: (value) => setState(() => numberOfPlayers = int.tryParse(value)),
-                  onPublicChanged: (value) => setState(() => isPublic = value),
+                  onMinPlayersChanged: (value) => setState(() => minPlayersToConfirm = int.tryParse(value)),
+                  onPublicChanged: (value) => setState(() {
+                    isPublic = value;
+                    if (value) privateCode = null;
+                  }),
+                  onPrivateCodeChanged: (value) => setState(() => privateCode = value),
+                  onSkillLevelChanged: (value) => setState(() => selectedSkillLevel = value),
+                  onTypeChanged: (value) => setState(() => selectedType = value),
                   onPublish: publishGame,
                   canPublish: _canPublish(),
                 );
