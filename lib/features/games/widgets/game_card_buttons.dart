@@ -34,9 +34,9 @@ class GameCardButtons extends StatelessWidget {
     final isUserJoined = game.usersJoined.contains(currentUserId);
     final isUserPaid = game.usersPaid.contains(currentUserId);
 
-    // --- Lógica de renderizado de botones ---
 
-    // 1. Si el partido ya pasó
+
+    // Si el partido ya pasó
     if (isPast) {
       if (showRateButton && isUserJoined && onRate != null) {
         return _buildRateButton(context);
@@ -44,7 +44,7 @@ class GameCardButtons extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    // 2. Si el usuario está unido al partido (y el partido es futuro)
+
     if (isUserJoined) {
       final bool needsToPay = game.price > 0 && !isUserPaid && onPay != null;
       if (needsToPay) {
@@ -53,8 +53,7 @@ class GameCardButtons extends StatelessWidget {
       if (showLeaveButton && onLeave != null) {
         return _buildLeaveButton(context);
       }
-      // Muestra un texto indicando que el usuario ya está unido.
-      // Le damos una altura mínima para que no colapse el layout de la tarjeta.
+
       return Container(
         alignment: Alignment.center,
         height: 48,
@@ -65,18 +64,15 @@ class GameCardButtons extends StatelessWidget {
       );
     }
 
-    // 3. Si el usuario NO está unido al partido
     final bool isGameFull = game.usersJoined.length >= game.playerCount;
 
     if (!isGameFull) {
-      // Si el juego NO está lleno, muestra el botón para unirse.
+
       return _buildJoinButton(context);
     } else {
-      // Si el juego SÍ está lleno...
-      // ✅ CORRECCIÓN: Usamos un Container con altura fija en lugar de un Center.
-      // Esto evita que el widget ocupe toda la pantalla si se usa en un contexto incorrecto.
+
       return Container(
-        height: 48, // Misma altura que el botón para consistencia visual
+        height: 48,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: Colors.grey.shade200,
@@ -93,7 +89,6 @@ class GameCardButtons extends StatelessWidget {
     }
   }
 
-  // --- Widgets de construcción de botones (sin cambios) ---
 
   Widget _buildPayButton(BuildContext context) {
     return ElevatedButton.icon(

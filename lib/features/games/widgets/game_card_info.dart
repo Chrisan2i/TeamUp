@@ -5,10 +5,10 @@ import '../../../core/constant/app_sizes.dart';
 class GameCardInfo extends StatelessWidget {
   final GameModel game;
 
-  // MODIFICADO: El constructor ya no necesita `remainingSpots`
+
   const GameCardInfo({super.key, required this.game});
 
-  // La función de formato de hora se mantiene igual
+
   String _buildTimeRange(String startHour, double duration) {
     try {
       final parts = startHour.split(':');
@@ -31,17 +31,17 @@ class GameCardInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     final remainingSpots = game.playerCount - game.usersJoined.length;
 
-    // MODIFICADO: El padding se controla desde el widget padre
+
     return Padding(
       padding: const EdgeInsets.only(top: kPaddingMedium, bottom: kPaddingMedium),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // NUEVO: Layout en fila para info principal vs estado
+
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Columna izquierda: Info del juego
+              // Info del juego
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,7 +64,7 @@ class GameCardInfo extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              // Columna derecha: Estado del juego
+              // Estado del juego
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -82,13 +82,13 @@ class GameCardInfo extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          // NUEVO: Sección "GAME DETAILS"
+          // "GAME DETAILS"
           const Text(
             'GAME DETAILS',
             style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
           ),
           const SizedBox(height: 8),
-          // MODIFICADO: Fila para etiquetas y precio
+          // Fila para etiquetas y precio
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -112,12 +112,12 @@ class GameCardInfo extends StatelessWidget {
     );
   }
 
-  // MODIFICADO: Las etiquetas ahora son texto plano
+  // Las etiquetas ahora son texto plano
   Widget _buildTag(String label) {
     return Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black87));
   }
 
-  // NUEVO: Separador para las etiquetas
+  // Separador para las etiquetas
   Widget _buildSeparator() {
     return const Padding(
       padding: EdgeInsets.symmetric(horizontal: 8.0),

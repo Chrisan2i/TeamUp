@@ -23,7 +23,7 @@ class GameStatusSection extends StatelessWidget {
     final containerWidth = MediaQuery.of(context).size.width - 32;
     final progressWidth = containerWidth * progressPercent;
 
-    // ✅ Mapear los estados desde String
+
     final currentStatus = game.status.toLowerCase();
 
     return Padding(

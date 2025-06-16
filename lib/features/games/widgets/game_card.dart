@@ -8,7 +8,7 @@ import 'game_card_buttons.dart';
 import 'game_card_info.dart';
 import 'game_card_rating_dialog.dart';
 
-// NUEVO: Un clipper para crear la forma de la etiqueta "New Facility"
+
 class FacilityBannerClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
@@ -43,7 +43,7 @@ class GameCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // --- Lógica original que se mantiene intacta ---
+
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final gameDay = DateTime(game.date.year, game.date.month, game.date.day);
@@ -59,12 +59,12 @@ class GameCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        // MODIFICADO: Estilo del contenedor principal para que coincida con el diseño
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), // Añade margen
+
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: Colors.white, // Fondo blanco
           borderRadius: BorderRadius.circular(kCardRadius),
-          border: Border.all(color: Colors.grey.shade300, width: 1.0), // Borde gris
+          border: Border.all(color: Colors.grey.shade300, width: 1.0),
           boxShadow: const [
             BoxShadow(
               color: shadowColor,
@@ -76,16 +76,16 @@ class GameCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // MODIFICADO: Stack para la imagen y los elementos superpuestos
+
             Stack(
-              clipBehavior: Clip.none, // Permite que los elementos se salgan un poco si es necesario
+              clipBehavior: Clip.none,
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(kCardRadius)),
                   child: Image.network(
                     game.imageUrl.isNotEmpty ? game.imageUrl : 'https://placehold.co/600x400',
                     width: double.infinity,
-                    height: 180, // Altura ajustada
+                    height: 180,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
                       height: 180,
@@ -96,7 +96,7 @@ class GameCard extends StatelessWidget {
                   ),
                 ),
 
-                // NUEVO: Logo del grupo superpuesto
+                // Logo del grupo superpuesto
                 Positioned(
                   bottom: 12,
                   left: 12,
@@ -113,7 +113,7 @@ class GameCard extends StatelessWidget {
                   ),
                 ),
 
-                // NUEVO: Banner "New Facility"
+                // Banner "New Facility"
                 Positioned(
                   top: 0,
                   right: 12,
@@ -133,7 +133,7 @@ class GameCard extends StatelessWidget {
                   ),
                 ),
 
-                // NUEVO: Botón de ubicación/mapa
+                // Botón de ubicación/mapa
                 Positioned(
                     bottom: 12,
                     right: 12,
@@ -154,7 +154,7 @@ class GameCard extends StatelessWidget {
                     )
                 ),
 
-                // Banner "Finalizado" (lógica existente, posición ajustada)
+                // Banner "Finalizado"
                 if (showPastBanner)
                   Positioned(
                     top: 8,
@@ -166,7 +166,7 @@ class GameCard extends StatelessWidget {
                     ),
                   ),
 
-                // Icono de reporte (lógica existente, posición ajustada)
+                // Icono de reporte
                 if (showReport)
                   Positioned(
                     top: 44,
@@ -180,20 +180,20 @@ class GameCard extends StatelessWidget {
               ],
             ),
 
-            // Contenido principal con el StreamBuilder para datos en tiempo real
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: kPaddingMedium),
               child: StreamBuilder<DocumentSnapshot>(
                 stream: FirebaseFirestore.instance.collection('games').doc(game.id).snapshots(),
                 builder: (context, snapshot) {
-                  // Usa el `game` inicial si el stream no ha emitido datos
+
                   final updatedGame = snapshot.hasData && snapshot.data!.exists
                       ? GameModel.fromMap(snapshot.data!.data() as Map<String, dynamic>)
                       : game;
 
                   return Column(
                     children: [
-                      GameCardInfo(game: updatedGame), // Pasa el juego actualizado
+                      GameCardInfo(game: updatedGame),
                       const Divider(height: 1, color: Color(0xFFEEEEEE)),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: kPaddingMedium),

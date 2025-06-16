@@ -1,9 +1,6 @@
-// lib/features/game_details/widgets/game_detail_header.dart
-
 import 'package:flutter/material.dart';
 import 'package:teamup/models/game_model.dart';
 
-// MODIFICADO: Ahora este widget es SOLO la tarjeta de información flotante.
 class GameDetailHeader extends StatelessWidget {
   final GameModel game;
 
@@ -14,7 +11,6 @@ class GameDetailHeader extends StatelessWidget {
     final spotsFilled = game.usersJoined.length;
 
     return Container(
-      // Margen para que no toque los bordes de la pantalla
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(

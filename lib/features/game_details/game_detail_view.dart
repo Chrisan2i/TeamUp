@@ -1,13 +1,10 @@
-// lib/features/game_details/game_detail_view.dart
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:teamup/models/game_model.dart';
 import 'package:teamup/services/game_players_service.dart';
 
-// Importa los widgets que usaremos
-import 'widgets/game_detail_header.dart'; // Tu header modificado
+import 'widgets/game_detail_header.dart';
 import 'tabs/status_tab_view.dart';
 import 'tabs/about_tab_view.dart';
 import 'tabs/map_tab_view.dart';
@@ -30,7 +27,7 @@ class _GameDetailViewState extends State<GameDetailView> with TickerProviderStat
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    // Añadimos un listener para reconstruir la UI cuando se cambia de pestaña
+
     _tabController.addListener(() {
       setState(() {});
     });
@@ -43,7 +40,7 @@ class _GameDetailViewState extends State<GameDetailView> with TickerProviderStat
     super.dispose();
   }
 
-  // --- Lógica de acciones (sin cambios) ---
+
   Future<void> _handleJoinGame(GameModel game) async { /* ... tu código ... */ }
   Future<void> _handleLeaveGame(GameModel game) async { /* ... tu código ... */ }
 

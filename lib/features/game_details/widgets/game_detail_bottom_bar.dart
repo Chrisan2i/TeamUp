@@ -1,5 +1,3 @@
-// lib/features/game_details/widgets/game_detail_bottom_bar.dart
-
 import 'package:flutter/material.dart';
 import 'package:teamup/models/game_model.dart';
 

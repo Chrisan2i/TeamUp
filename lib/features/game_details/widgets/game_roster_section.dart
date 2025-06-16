@@ -2,9 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:teamup/features/auth/models/user_model.dart';
 // Importa la pantalla de perfil si ya la tienes
-// import '../profile/profile_view.dart';
+// import '../profile/user_view.dart';
 
-// ✅ Convertido a StatefulWidget para optimizar la carga de datos
+
 class GameRosterSection extends StatefulWidget {
   final List<String> userIds;
 
@@ -15,22 +15,20 @@ class GameRosterSection extends StatefulWidget {
 }
 
 class _GameRosterSectionState extends State<GameRosterSection> {
-  // ✅ Future para almacenar los resultados y no volver a llamar a la API
   late Future<List<UserModel>> _playersFuture;
 
   @override
   void initState() {
     super.initState();
-    // ✅ Llamamos a fetchPlayers solo una vez cuando el widget se crea
     _playersFuture = fetchPlayers();
   }
 
-  // ✅ La función se mantiene, pero ahora se llama desde initState
+
   Future<List<UserModel>> fetchPlayers() async {
     final firestore = FirebaseFirestore.instance;
     List<UserModel> users = [];
 
-    // Usamos Future.wait para hacer las peticiones en paralelo, es más rápido
+
     final playerDocs = await Future.wait(
         widget.userIds.map((uid) => firestore.collection('users').doc(uid).get())
     );
@@ -43,7 +41,7 @@ class _GameRosterSectionState extends State<GameRosterSection> {
     return users;
   }
 
-  // ✅ NUEVO: Función para mostrar el menú de opciones
+
   void _showPlayerOptions(BuildContext context, UserModel player) {
     showModalBottomSheet(
       context: context,
@@ -117,7 +115,6 @@ class _GameRosterSectionState extends State<GameRosterSection> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Ahora el FutureBuilder usa la variable de estado _playersFuture
     return FutureBuilder<List<UserModel>>(
       future: _playersFuture,
       builder: (context, snapshot) {
@@ -146,7 +143,6 @@ class _GameRosterSectionState extends State<GameRosterSection> {
               child: Text('GAME ROSTER', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500, letterSpacing: 0.3)),
             ),
             const SizedBox(height: 12),
-            // ✅ Pasamos el context a _buildPlayerTile para poder llamar al BottomSheet
             ...players.map((player) => _buildPlayerTile(context, player)).toList(),
             const SizedBox(height: 12),
           ],
@@ -188,7 +184,7 @@ class _GameRosterSectionState extends State<GameRosterSection> {
                   ],
                 ),
               ),
-              // ✅ NUEVO: Botón de opciones
+
               IconButton(
                 icon: const Icon(Icons.more_horiz, color: Colors.grey),
                 onPressed: () => _showPlayerOptions(context, player),
@@ -201,7 +197,7 @@ class _GameRosterSectionState extends State<GameRosterSection> {
     );
   }
 
-  // ✅ NUEVO: Widget reutilizable para el avatar
+
   Widget _buildAvatar(UserModel player) {
     final String initial = player.fullName.isNotEmpty ? player.fullName[0] : '?';
     final bool hasProfileImage = player.profileImageUrl != null && player.profileImageUrl!.isNotEmpty;
@@ -217,7 +213,6 @@ class _GameRosterSectionState extends State<GameRosterSection> {
     );
   }
 
-  // ✅ NUEVO: Widget reutilizable para los botones del BottomSheet
   Widget _buildOptionButton({required IconData icon, required String text, required VoidCallback onTap}) {
     return OutlinedButton.icon(
       onPressed: onTap,
