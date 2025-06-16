@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:teamup/features/profile/profile_edit_view.dart';
-import 'package:teamup/features/settings/setting_view.dart';
 import '../../auth/models/user_model.dart';
 
 class ProfileHeader extends StatelessWidget {
