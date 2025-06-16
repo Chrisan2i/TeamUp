@@ -28,33 +28,29 @@ class SettingView extends StatelessWidget {
       body: ListView(
         children: [
           const SizedBox(height: 10),
-
-          // Sección GENERAL
           const SectionTitle(title: 'General'),
           SettingTile(
-  icon: Icons.brightness_6,
-  title: 'Tema',
-  iconColor: Colors.black,
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const ThemeSelectionView()),
-    );
-  },
-),
+            icon: Icons.brightness_6,
+            title: 'Tema',
+            iconColor: Colors.black,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ThemeSelectionView()),
+              );
+            },
+          ),
           SettingTile(
-  icon: Icons.language,
-  title: 'Idioma',
-  iconColor: Colors.black,
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const LanguageSelectionView()),
-    );
-  },
-),
-
-          // Sección APOYO
+            icon: Icons.language,
+            title: 'Idioma',
+            iconColor: Colors.black,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LanguageSelectionView()),
+              );
+            },
+          ),
           const SectionTitle(title: 'Apoyo'),
           SettingTile(
             icon: Icons.help_outline,
@@ -67,17 +63,7 @@ class SettingView extends StatelessWidget {
               );
             },
           ),
-
-          // Sección CUENTA
           const SectionTitle(title: 'Cuenta'),
-          SettingTile(
-            icon: Icons.lock,
-            title: 'Cambiar contraseña',
-            iconColor: Colors.black,
-            onTap: () {
-              // Acción para contraseña
-            },
-          ),
           SettingTile(
             icon: Icons.exit_to_app,
             title: 'Cerrar sesión',
