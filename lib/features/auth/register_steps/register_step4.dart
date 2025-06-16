@@ -36,20 +36,25 @@ class _RegisterStep4State extends State<RegisterStep4> {
       return;
     }
 
+    final navigator = Navigator.of(context);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Sesión no encontrada")),
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text("Sesión no encontrada. Por favor, intenta de nuevo.")),
       );
       return;
     }
 
     final fullName = "${widget.firstName} ${widget.lastName}";
 
+
+
     final newUser = UserModel(
       uid: user.uid,
       fullName: fullName,
-      username: widget.firstName.toLowerCase() + user.uid.substring(0, 4), // temporal
+      username: widget.firstName.toLowerCase() + user.uid.substring(0, 4), // nombre de usuario temporal
       email: widget.email,
       phone: user.phoneNumber ?? '',
       profileImageUrl: '',
@@ -59,30 +64,41 @@ class _RegisterStep4State extends State<RegisterStep4> {
       reports: 0,
       totalGamesCreated: 0,
       totalGamesJoined: 0,
-      rating: 0.0,
+      ratingCount: 0,
+      ratingSum: 0.0,
       position: '',
       skillLevel: _skill!,
       lastLoginAt: DateTime.now(),
       createdAt: DateTime.now(),
       notesByAdmin: '',
-      verification: VerificationData(
+      verification: VerificationData( // Esto ya estaba correcto
         idCardUrl: '',
         faceImageUrl: '',
         status: 'pending',
         rejectionReason: null,
       ),
+      friends: [],
+      friendRequestsSent: [],
+      friendRequestsReceived: [],
+      blockedUsers: [],
     );
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .set(newUser.toMap());
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set(newUser.toMap());
 
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const GameHomeView()),
-          (_) => false,
-    );
+
+      navigator.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const GameHomeView()),
+            (_) => false,
+      );
+    } catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text("Error al guardar los datos: $e")),
+      );
+    }
   }
 
   @override
@@ -107,16 +123,20 @@ class _RegisterStep4State extends State<RegisterStep4> {
                 DropdownMenuItem(value: "Avanzado", child: Text("Avanzado")),
               ],
               onChanged: (value) => setState(() => _skill = value),
-              decoration: const InputDecoration(border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: "Nivel de juego",
+              ),
             ),
             const Spacer(),
             ElevatedButton(
               onPressed: _finishRegistration,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.cyanAccent.shade700,
+                backgroundColor: Colors.cyan.shade700, // Ajuste de color
                 minimumSize: const Size.fromHeight(50),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text("Finalizar registro"),
+              child: const Text("Finalizar registro", style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -124,4 +144,3 @@ class _RegisterStep4State extends State<RegisterStep4> {
     );
   }
 }
-

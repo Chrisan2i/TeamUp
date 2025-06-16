@@ -1,10 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
 class MessageModel {
   final String id;
   final String senderId;
-  final String receiverId; // puede ser un grupo o usuario
+  final String receiverId;
   final String content;
   final DateTime timestamp;
   final bool isGroup;
@@ -20,9 +19,11 @@ class MessageModel {
     required this.seen,
   });
 
-  factory MessageModel.fromMap(Map<String, dynamic> map) {
+  // --- ESTA ES LA PARTE CORREGIDA ---
+  // El constructor factory `fromMap` ahora acepta dos argumentos: el mapa de datos y el ID del documento.
+  factory MessageModel.fromMap(Map<String, dynamic> map, String id) {
     return MessageModel(
-      id: map['id'] ?? '',
+      id: id, // Usamos el ID del documento que se pasa como segundo argumento.
       senderId: map['senderId'] ?? '',
       receiverId: map['receiverId'] ?? '',
       content: map['content'] ?? '',
@@ -32,13 +33,13 @@ class MessageModel {
     );
   }
 
+  // El método toMap se mantiene igual.
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'senderId': senderId,
       'receiverId': receiverId,
       'content': content,
-      'timestamp': timestamp,
+      'timestamp': Timestamp.fromDate(timestamp),
       'isGroup': isGroup,
       'seen': seen,
     };

@@ -7,14 +7,23 @@ class FieldModel {
   final String zone;
   final double lat;
   final double lng;
-  final String type;
   final String surfaceType;
   final double pricePerHour;
   final String imageUrl;
-  final bool isVerified;
   final bool isActive;
   final DateTime createdAt;
   final Map<String, List<String>> availability;
+
+  final String format;
+  final double duration;
+  final String description;
+  final String footwear;
+  final String contact;
+
+
+  final bool hasDiscount;
+  final double? discountPercentage;
+  final int minPlayersToBook;
 
   FieldModel({
     required this.id,
@@ -23,14 +32,20 @@ class FieldModel {
     required this.zone,
     required this.lat,
     required this.lng,
-    required this.type,
     required this.surfaceType,
     required this.pricePerHour,
     required this.imageUrl,
-    required this.isVerified,
     required this.isActive,
     required this.createdAt,
     required this.availability,
+    required this.format,
+    required this.duration,
+    required this.description,
+    required this.footwear,
+    required this.contact,
+    this.hasDiscount = false,
+    this.discountPercentage,
+    this.minPlayersToBook = 1,
   });
 
   factory FieldModel.fromMap(Map<String, dynamic> map, String id) {
@@ -41,12 +56,10 @@ class FieldModel {
       zone: map['zone'],
       lat: (map['lat'] as num).toDouble(),
       lng: (map['lng'] as num).toDouble(),
-      type: map['type'],
       surfaceType: map['surfaceType'],
       pricePerHour: (map['pricePerHour'] as num).toDouble(),
       imageUrl: map['photoUrl'],
-      isVerified: map['isVerified'] ?? false,
-      isActive: map['isActive'] ?? false,
+      isActive: map['isActive'] ?? true,
       createdAt: (map['createdAt'] as Timestamp).toDate(),
       availability: (map['availability'] as Map).map(
             (key, value) => MapEntry(
@@ -54,6 +67,16 @@ class FieldModel {
           List<String>.from(value ?? []),
         ),
       ),
+      format: map['format'] ?? '7v7',
+      duration: (map['duration'] ?? 1.5).toDouble(),
+      description: map['description'] ?? '',
+      footwear: map['footwear'] ?? 'any',
+      contact: map['contact'] ?? '',
+      hasDiscount: map['hasDiscount'] ?? false,
+      discountPercentage: map['discountPercentage'] != null
+          ? (map['discountPercentage'] as num).toDouble()
+          : null,
+      minPlayersToBook: map['minPlayersToBook'] ?? 1,
     );
   }
 
@@ -64,15 +87,34 @@ class FieldModel {
       'zone': zone,
       'lat': lat,
       'lng': lng,
-      'type': type,
       'surfaceType': surfaceType,
       'pricePerHour': pricePerHour,
       'photoUrl': imageUrl,
-      'isVerified': isVerified,
       'isActive': isActive,
       'createdAt': Timestamp.fromDate(createdAt),
       'availability': availability,
+      'format': format,
+      'duration': duration,
+      'description': description,
+      'footwear': footwear,
+      'contact': contact,
+      'hasDiscount': hasDiscount,
+      'discountPercentage': discountPercentage,
+      'minPlayersToBook': minPlayersToBook,
     };
+  }
+
+  /// 🔢 Calcula el precio por jugador asumiendo que se unen el mínimo necesario
+  double getPricePerPersonAuto() {
+    double totalPrice = pricePerHour * duration;
+
+    if (hasDiscount && discountPercentage != null) {
+      totalPrice *= (1 - discountPercentage! / 100);
+    }
+
+    if (minPlayersToBook <= 0) return totalPrice;
+
+    return totalPrice / minPlayersToBook;
   }
 }
 

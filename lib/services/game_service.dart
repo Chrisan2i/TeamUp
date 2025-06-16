@@ -4,6 +4,39 @@ import '../models/game_model.dart';
 class GameService {
   final CollectionReference games = FirebaseFirestore.instance.collection('games');
 
+  Future<void> updateGameStatus(GameModel game) async {
+    final gameRef = FirebaseFirestore.instance.collection('games').doc(game.id);
+    final doc = await gameRef.get();
+
+    if (!doc.exists) return;
+
+    final data = doc.data()!;
+    final updatedGame = GameModel.fromMap(data);
+
+    final int joined = updatedGame.usersJoined.length + 1;
+    final int minToConfirm = updatedGame.minPlayersToConfirm;
+    final int total = updatedGame.playerCount;
+
+    print('🎯 Jugadores unidos: $joined / $total (mínimo para confirmar: $minToConfirm)');
+
+    String newStatus = 'scheduled';
+    if (joined >= total) {
+      newStatus = 'full';
+    } else if (joined >= minToConfirm) {
+      newStatus = 'confirmed';
+    }
+
+    print('🔄 Estado actual: ${updatedGame.status}, Estado nuevo: $newStatus');
+
+    if (updatedGame.status != newStatus) {
+      await gameRef.update({'status': newStatus});
+      print('✅ Estado actualizado a $newStatus');
+    } else {
+      print('ℹ️ Estado no cambiado (ya era $newStatus)');
+    }
+  }
+
+
   /// Crea un nuevo partido
   Future<void> createGame(GameModel game) async {
     await games.doc(game.id).set(game.toMap());
@@ -18,7 +51,7 @@ class GameService {
     return null;
   }
 
-  /// Actualiza un partido
+  /// Actualiza un partido completo
   Future<void> updateGame(GameModel game) async {
     await games.doc(game.id).update(game.toMap());
   }
@@ -28,7 +61,7 @@ class GameService {
     await games.doc(id).delete();
   }
 
-  /// Obtiene todos los partidos públicos o de un usuario
+  /// Stream de partidos públicos o de un usuario
   Stream<List<GameModel>> getGames({String? ownerId}) {
     Query query = games;
 
@@ -39,9 +72,8 @@ class GameService {
     return query
         .orderBy('date')
         .snapshots()
-        .map((snapshot) =>
-        snapshot.docs.map((doc) => GameModel.fromMap(doc.data() as Map<String, dynamic>)).toList());
+        .map((snapshot) => snapshot.docs
+        .map((doc) => GameModel.fromMap(doc.data() as Map<String, dynamic>))
+        .toList());
   }
-
-
 }

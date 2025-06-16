@@ -8,6 +8,7 @@ class AuthService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   /// INICIAR SESIÓN
+  /// Esta función ya es compatible con el nuevo modelo gracias al factory 'fromMap' robusto.
   Future<UserModel?> signIn(String email, String password) async {
     try {
       UserCredential result = await _auth.signInWithEmailAndPassword(
@@ -15,8 +16,7 @@ class AuthService {
         password: password,
       );
 
-      final userDoc =
-      await _db.collection('users').doc(result.user!.uid).get();
+      final userDoc = await _db.collection('users').doc(result.user!.uid).get();
 
       if (userDoc.exists) {
         return UserModel.fromMap(userDoc.data()!, result.user!.uid);
@@ -31,6 +31,7 @@ class AuthService {
   }
 
   /// REGISTRARSE
+  /// --- ESTA FUNCIÓN HA SIDO ACTUALIZADA ---
   Future<UserModel?> register({
     required String fullName,
     required String username,
@@ -57,9 +58,10 @@ class AuthService {
         reports: 0,
         totalGamesCreated: 0,
         totalGamesJoined: 0,
-        rating: 0.0,
+        ratingCount: 0,
+        ratingSum: 0.0,
         position: '',
-        skillLevel: '', // ✅ Campo skillLevel agregado aquí
+        skillLevel: '',
         lastLoginAt: DateTime.now(),
         createdAt: DateTime.now(),
         notesByAdmin: '',
@@ -69,6 +71,10 @@ class AuthService {
           status: 'pending',
           rejectionReason: null,
         ),
+        friends: [],
+        friendRequestsSent: [],
+        friendRequestsReceived: [],
+        blockedUsers: [],
       );
 
       await _db.collection('users').doc(result.user!.uid).set(userModel.toMap());

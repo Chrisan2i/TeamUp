@@ -1,196 +1,224 @@
 import 'package:flutter/material.dart';
-import '../../../models/game_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:teamup/models/game_model.dart';
 import '../../../core/constant/colors.dart';
 import '../../../core/constant/app_sizes.dart';
-import '../../../core/theme/typography.dart';
-import 'join_game_botton.dart';
+import 'game_card_buttons.dart';
+import 'game_card_info.dart';
+import 'game_card_rating_dialog.dart';
+
+
+class FacilityBannerClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.lineTo(0, size.height);
+    path.lineTo(size.width, size.height);
+    path.lineTo(size.width, 0);
+    path.lineTo(size.width * 0.2, 0);
+    path.quadraticBezierTo(0, 0, 0, size.height * 0.35);
+    path.close();
+    return path;
+  }
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
 
 class GameCard extends StatelessWidget {
   final GameModel game;
   final bool showLeaveButton;
   final void Function(GameModel)? onLeave;
-
-  // NUEVOS PARAMETROS
-  final bool showReportIcon;
   final void Function(GameModel)? onReport;
+  final VoidCallback? onTap;
 
   const GameCard({
     super.key,
     required this.game,
     this.showLeaveButton = false,
     this.onLeave,
-    this.showReportIcon = false,
     this.onReport,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final remainingSpots = game.playerCount;
 
-    return Stack(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: cardBackground,
-            borderRadius: BorderRadius.circular(kCardRadius),
-            boxShadow: const [
-              BoxShadow(
-                color: shadowColor,
-                blurRadius: 6,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Imagen
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(kCardRadius)),
-                child: Image.network(
-                  game.imageUrl.isNotEmpty
-                      ? game.imageUrl
-                      : 'https://placehold.co/600x400',
-                  width: double.infinity,
-                  height: 200,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    height: 200,
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final gameDay = DateTime(game.date.year, game.date.month, game.date.day);
+    final isPast = gameDay.isBefore(today);
+
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final userParticipated = game.usersJoined.contains(currentUserId);
+
+    final showPastBanner = isPast && userParticipated;
+    final showReport = isPast && userParticipated;
+    // --- Fin de la lógica original ---
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white, // Fondo blanco
+          borderRadius: BorderRadius.circular(kCardRadius),
+          border: Border.all(color: Colors.grey.shade300, width: 1.0),
+          boxShadow: const [
+            BoxShadow(
+              color: shadowColor,
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(kCardRadius)),
+                  child: Image.network(
+                    game.imageUrl.isNotEmpty ? game.imageUrl : 'https://placehold.co/600x400',
                     width: double.infinity,
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                    height: 180,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      height: 180,
+                      width: double.infinity,
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                    ),
                   ),
                 ),
-              ),
 
-              Padding(
-                padding: const EdgeInsets.all(kPaddingMedium),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Título y hora/precio
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(child: Text(game.fieldName, style: heading2)),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(game.hour,
-                                style: const TextStyle(color: Color(0xFF0CC0DF), fontWeight: FontWeight.w500)),
-                            const SizedBox(height: 2),
-                            Text('\$${game.price.toStringAsFixed(2)}', style: bodyGrey),
-                          ],
-                        ),
-                      ],
+                // Logo del grupo superpuesto
+                Positioned(
+                  bottom: 12,
+                  left: 12,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
                     ),
-                    const SizedBox(height: 4),
-                    Text(game.zone, style: bodyGrey),
-                    const SizedBox(height: 8),
-
-                    // Lugar
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on, size: 16, color: iconGrey),
-                        const SizedBox(width: 4),
-                        Expanded(child: Text(game.fieldName, style: bodyGrey)),
-                      ],
+                    child: CircleAvatar(
+                      radius: 25,
+                      backgroundColor: Colors.blue.shade900, // Color de ejemplo como en el diseño
+                      child: const Text('GO', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     ),
-                    const SizedBox(height: 12),
+                  ),
+                ),
 
-                    // Chips
-                    Row(
-                      children: [
-                        _buildChip(game.isPublic ? 'Público' : 'Privado'),
-                        const SizedBox(width: 8),
-                        _buildChip('$remainingSpots Spot${remainingSpots == 1 ? '' : 's'} left!'),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Info adicional
-                    Row(
-                      children: const [
-                        Icon(Icons.access_time, size: 20, color: iconGrey),
-                        SizedBox(width: 6),
-                        Text('1h', style: bodyGrey),
-                        SizedBox(width: 16),
-                        Icon(Icons.group, size: 20, color: iconGrey),
-                        SizedBox(width: 6),
-                        Text('7v7', style: bodyGrey),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Botón dinámico
-                    SizedBox(
-                      width: double.infinity,
-                      child: showLeaveButton && onLeave != null
-                          ? ElevatedButton(
-                        onPressed: () => onLeave!(game),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(kButtonHeight),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(kBorderRadius),
-                          ),
-                        ),
-                        child: const Text('Salir del Partido'),
-                      )
-                          : ElevatedButton(
-                        onPressed: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            shape: const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                            ),
-                            builder: (_) => JoinGameBottom(game: game),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0CC0DF),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(kButtonHeight),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(kBorderRadius),
-                          ),
-                        ),
-                        child: const Text('Join Game'),
+                // Banner "New Facility"
+                Positioned(
+                  top: 0,
+                  right: 12,
+                  child: ClipPath(
+                    clipper: FacilityBannerClipper(),
+                    child: Container(
+                      width: 65,
+                      height: 55,
+                      color: const Color(0xFF1E4FFD),
+                      padding: const EdgeInsets.only(top: 6, left: 2, right: 2),
+                      child: const Text(
+                        'New Facility',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
 
-        // ICONO DE REPORTAR
-        if (showReportIcon)
-          Positioned(
-            top: 8,
-            right: 8,
-            child: IconButton(
-              icon: const Icon(Icons.flag, color: Colors.red),
-              tooltip: 'Reportar partido',
-              onPressed: () => onReport?.call(game),
+                // Botón de ubicación/mapa
+                Positioned(
+                    bottom: 12,
+                    right: 12,
+                    child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.location_on_outlined, color: Colors.white, size: 16),
+                            SizedBox(width: 4),
+                            Text("--", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          ],
+                        )
+                    )
+                ),
+
+                // Banner "Finalizado"
+                if (showPastBanner)
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(8)),
+                      child: const Text('Finalizado', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+
+                // Icono de reporte
+                if (showReport)
+                  Positioned(
+                    top: 44,
+                    left: 4,
+                    child: IconButton(
+                      icon: const Icon(Icons.flag, color: Colors.white, shadows: [Shadow(color: Colors.black, blurRadius: 4)]),
+                      tooltip: 'Reportar partido',
+                      onPressed: () => onReport?.call(game),
+                    ),
+                  ),
+              ],
             ),
-          ),
-      ],
-    );
-  }
 
-  Widget _buildChip(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: chipBackground,
-        borderRadius: BorderRadius.circular(100),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: kPaddingMedium),
+              child: StreamBuilder<DocumentSnapshot>(
+                stream: FirebaseFirestore.instance.collection('games').doc(game.id).snapshots(),
+                builder: (context, snapshot) {
+
+                  final updatedGame = snapshot.hasData && snapshot.data!.exists
+                      ? GameModel.fromMap(snapshot.data!.data() as Map<String, dynamic>)
+                      : game;
+
+                  return Column(
+                    children: [
+                      GameCardInfo(game: updatedGame),
+                      const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: kPaddingMedium),
+                        child: GameCardButtons(
+                          game: updatedGame,
+                          isPast: isPast,
+                          showLeaveButton: !isPast && showLeaveButton,
+                          onLeave: onLeave,
+                          showRateButton: isPast && userParticipated,
+                          onRate: (game) {
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => GameCardRatingDialog(game: game),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
-      child: Text(label, style: chipLabel),
     );
   }
 }
-

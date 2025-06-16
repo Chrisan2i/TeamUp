@@ -1,0 +1,122 @@
+import 'package:flutter/material.dart';
+import 'package:teamup/models/game_model.dart';
+import 'package:teamup/features/games/widgets/join_game_botton.dart';
+
+class GameDetailBottomBar extends StatelessWidget {
+  final GameModel game;
+  final bool isUserJoined;
+  final bool isLoading;
+  final VoidCallback onJoin;
+  final VoidCallback onLeave;
+
+  const GameDetailBottomBar({
+    super.key,
+    required this.game,
+    required this.isUserJoined,
+    required this.isLoading,
+    required this.onJoin,
+    required this.onLeave,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isGameFull = game.usersJoined.length >= game.playerCount;
+
+
+    final Color buttonColor;
+    final String buttonText;
+
+    if (isLoading) {
+      buttonColor = Colors.grey.shade400;
+      buttonText = '';
+    } else if (isUserJoined) {
+
+      buttonColor = const Color(0xFFF25C54);
+      buttonText = 'Leave Game';
+    } else if (isGameFull) {
+
+      buttonColor = Colors.grey.shade400;
+      buttonText = 'Game Full';
+    } else {
+
+      buttonColor = const Color(0xFF10B981); // Color verde
+      buttonText = 'Join Game';
+    }
+
+
+    return BottomAppBar(
+      padding: EdgeInsets.zero,
+      elevation: 0,
+      color: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9F5FF),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: ElevatedButton(
+
+                onPressed: isLoading || isGameFull
+                    ? null
+                    : () {
+                  if (isUserJoined) {
+                    onLeave();
+                  } else {
+
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.white,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                      ),
+                      builder: (ctx) => JoinGameBottom(game: game),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: buttonColor,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: isLoading
+                    ? const SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                )
+                    : Text(
+                  buttonText,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            ElevatedButton(
+              onPressed: () { /* Lógica de chat */ },
+              style: ElevatedButton.styleFrom(
+                shape: const CircleBorder(),
+                padding: const EdgeInsets.all(16),
+                backgroundColor: Colors.white,
+                elevation: 2,
+              ),
+              child: const Icon(Icons.send, color: Colors.black87, size: 22),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

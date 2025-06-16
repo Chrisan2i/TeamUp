@@ -11,9 +11,20 @@ class GameModel {
   final int playerCount;
   final bool isPublic;
   final double price;
+  final double duration;
   final String createdAt;
-  final String imageUrl; // NUEVO CAMPO
-  final List<String> usersjoined;
+  final String imageUrl;
+  final List<String> usersJoined; // Nombre correcto es camelCase
+  final String skillLevel;
+  final String type;
+  final String format;
+  final String footwear;
+  final String status;
+  final int minPlayersToConfirm;
+  final String? privateCode;
+  final double? fieldRating;
+  final String? report;
+  final List<String> usersPaid;
 
   GameModel({
     required this.id,
@@ -26,17 +37,28 @@ class GameModel {
     required this.playerCount,
     required this.isPublic,
     required this.price,
+    required this.duration,
     required this.createdAt,
     required this.imageUrl,
-    required this.usersjoined,
+    required this.usersJoined, // CORREGIDO: El nombre del campo del constructor era diferente
+    required this.skillLevel,
+    required this.type,
+    required this.format,
+    required this.footwear,
+    required this.status,
+    required this.minPlayersToConfirm,
+    this.privateCode,
+    this.fieldRating,
+    this.report,
+    required this.usersPaid,
   });
 
   factory GameModel.fromMap(Map<String, dynamic> map) {
-    // 🔍 Convertir date de forma segura
+    // Función para parsear la fecha de forma segura
     DateTime parseDate(dynamic value) {
       if (value is Timestamp) return value.toDate();
       if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
-      return DateTime.now(); // fallback
+      return DateTime.now();
     }
 
     return GameModel(
@@ -49,10 +71,22 @@ class GameModel {
       description: map['description'] ?? '',
       playerCount: map['playerCount'] ?? 0,
       isPublic: map['isPublic'] ?? true,
-      price: (map['price'] ?? 0).toDouble(),
+      price: (map['price'] ?? 0.0).toDouble(),
+      duration: (map['duration'] ?? 1.0).toDouble(),
       createdAt: map['createdAt'] ?? '',
       imageUrl: map['imageUrl'] ?? '',
-      usersjoined: List<String>.from(map['usersjoined'] ?? []),
+      // CORREGIDO: Usar el nombre de propiedad y la clave de mapa correctos ('usersJoined')
+      usersJoined: List<String>.from(map['usersJoined'] ?? []),
+      skillLevel: map['skillLevel'] ?? '',
+      type: map['type'] ?? '',
+      format: map['format'] ?? '7v7',
+      footwear: map['footwear'] ?? 'any',
+      status: map['status'] ?? 'waiting',
+      minPlayersToConfirm: map['minPlayersToConfirm'] ?? 0,
+      privateCode: map['privateCode'],
+      fieldRating: map['fieldRating'] != null ? (map['fieldRating'] as num).toDouble() : null,
+      report: map['report'],
+      usersPaid: List<String>.from(map['usersPaid'] ?? []),
     );
   }
 
@@ -62,15 +96,27 @@ class GameModel {
       'ownerId': ownerId,
       'zone': zone,
       'fieldName': fieldName,
-      'date': date.toIso8601String(),
+      'date': Timestamp.fromDate(date),
       'hour': hour,
       'description': description,
       'playerCount': playerCount,
       'isPublic': isPublic,
       'price': price,
+      'duration': duration,
       'createdAt': createdAt,
-      'imageUrl': imageUrl, // AÑADIDO
-      'usersjoined': usersjoined,
+      'imageUrl': imageUrl,
+      // CORREGIDO: Usar la clave y la propiedad correctas ('usersJoined')
+      'usersJoined': usersJoined,
+      'skillLevel': skillLevel,
+      'type': type,
+      'format': format,
+      'footwear': footwear,
+      'status': status,
+      'minPlayersToConfirm': minPlayersToConfirm,
+      'privateCode': privateCode,
+      'fieldRating': fieldRating,
+      'report': report,
+      'usersPaid': usersPaid,
     };
   }
 
@@ -85,9 +131,20 @@ class GameModel {
     int? playerCount,
     bool? isPublic,
     double? price,
+    double? duration,
     String? createdAt,
     String? imageUrl,
-    List<String>? usersjoined,
+    List<String>? usersJoined, // CORREGIDO
+    String? skillLevel,
+    String? type,
+    String? format,
+    String? footwear,
+    String? status,
+    int? minPlayersToConfirm,
+    String? privateCode,
+    double? fieldRating,
+    String? report,
+    List<String>? usersPaid, // CORREGIDO
   }) {
     return GameModel(
       id: id ?? this.id,
@@ -100,9 +157,22 @@ class GameModel {
       playerCount: playerCount ?? this.playerCount,
       isPublic: isPublic ?? this.isPublic,
       price: price ?? this.price,
+      duration: duration ?? this.duration,
       createdAt: createdAt ?? this.createdAt,
-      imageUrl: imageUrl ?? this.imageUrl, // AÑADIDO
-      usersjoined: usersjoined ?? this.usersjoined,
+      imageUrl: imageUrl ?? this.imageUrl,
+      // CORREGIDO
+      usersJoined: usersJoined ?? this.usersJoined,
+      skillLevel: skillLevel ?? this.skillLevel,
+      type: type ?? this.type,
+      format: format ?? this.format,
+      footwear: footwear ?? this.footwear,
+      status: status ?? this.status,
+      minPlayersToConfirm: minPlayersToConfirm ?? this.minPlayersToConfirm,
+      privateCode: privateCode ?? this.privateCode,
+      fieldRating: fieldRating ?? this.fieldRating,
+      report: report ?? this.report,
+      // CORREGIDO
+      usersPaid: usersPaid ?? this.usersPaid,
     );
   }
 }
