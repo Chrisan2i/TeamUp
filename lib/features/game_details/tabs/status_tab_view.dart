@@ -1,17 +1,14 @@
-// lib/features/game_details/tabs/status_tab_view.dart
-
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
-import 'package:intl/intl.dart';
 import 'package:teamup/models/game_model.dart';
-import 'package:teamup/features/game_details/widgets/game_roster_section.dart'; // Tu Roster actual
+import 'package:teamup/features/game_details/widgets/game_roster_section.dart';
 
 class StatusTabView extends StatelessWidget {
   final GameModel game;
   const StatusTabView({super.key, required this.game});
 
   String _buildTimeRange(String startHour, double duration) {
-    // ... (la misma función de formato de hora que ya tienes)
     try {
       final parts = startHour.split(':');
       final hour = int.parse(parts[0]);
@@ -25,7 +22,8 @@ class StatusTabView extends StatelessWidget {
 
       final end = TimeOfDay(hour: endHour, minute: finalMinute);
 
-      String format(TimeOfDay t) =>'${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+      String format(TimeOfDay t) => 
+          '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
       return '${format(start)} - ${format(end)}';
     } catch (_) {
@@ -33,9 +31,9 @@ class StatusTabView extends StatelessWidget {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
     final joinedCount = game.usersJoined.length;
     final totalPlayers = game.playerCount;
     final percent = (joinedCount / totalPlayers).clamp(0.0, 1.0);
@@ -105,7 +103,7 @@ class StatusTabView extends StatelessWidget {
                 color: const Color(0xFFF97316),
               ),
               Positioned(
-                left: (MediaQuery.of(context).size.width / 3) * playersToConfirm / spotsLeft - 60, // Lógica aproximada para la posición
+                left: (MediaQuery.of(context).size.width / 3) * playersToConfirm / spotsLeft - 60,
                 top: -25,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -131,8 +129,12 @@ class StatusTabView extends StatelessWidget {
             style: TextStyle(color: Colors.grey.shade600),
           ),
           const SizedBox(height: 32),
-          // Tu Roster
-          GameRosterSection(userIds: game.usersJoined),
+          GameRosterSection(
+            userIds: game.usersJoined,
+            gameId: game.id,
+            isCreator: game.ownerId == currentUserId,
+            isPrivateGame: game.privateCode != null && game.privateCode!.isNotEmpty,
+          ),
         ],
       ),
     );

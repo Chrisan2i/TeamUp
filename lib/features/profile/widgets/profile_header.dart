@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:teamup/features/profile/profile_edit_view.dart';
 import 'package:teamup/features/settings/setting_view.dart';
+import 'package:teamup/features/games/widgets/created_games_view.dart';
 import '../../auth/models/user_model.dart';
 
 class ProfileHeader extends StatelessWidget {
@@ -69,7 +70,16 @@ class ProfileHeader extends StatelessWidget {
                 children: [
                   _navButton(Icons.group, "Friends"),
                   const SizedBox(width: 12),
-                  _navButton(Icons.history, "Created Games"),
+                  _navButton(
+                    Icons.history, 
+                    "Created Games",
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const CreatedGamesView()),
+                      );
+                    },
+                  ),
                 ],
               ),
             ],
@@ -79,9 +89,9 @@ class ProfileHeader extends StatelessWidget {
     );
   }
 
-  Widget _navButton(IconData icon, String label) {
+  Widget _navButton(IconData icon, String label, {VoidCallback? onPressed}) {
     return ElevatedButton.icon(
-      onPressed: () {},
+      onPressed: onPressed,
       icon: Icon(icon, color: Colors.white, size: 18),
       label: Text(label),
       style: ElevatedButton.styleFrom(

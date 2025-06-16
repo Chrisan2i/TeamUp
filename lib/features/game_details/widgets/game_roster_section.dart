@@ -1,20 +1,27 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
-// Vistas y Modelos
 import 'package:teamup/features/auth/models/user_model.dart';
-import 'package:teamup/models/private_chat_model.dart';
 import 'package:teamup/features/player_profile/player_profile_view.dart';
 import 'package:teamup/features/chat/views/chat_view.dart';
-
-// Servicios
 import 'package:teamup/features/auth/services/user_service.dart';
+import 'package:teamup/models/private_chat_model.dart';
 import 'package:teamup/services/private_chat_service.dart';
+import 'package:teamup/services/game_service.dart';
 
 class GameRosterSection extends StatefulWidget {
   final List<String> userIds;
-  const GameRosterSection({super.key, required this.userIds});
+  final String gameId;
+  final bool isCreator;
+  final bool isPrivateGame;
+
+  const GameRosterSection({
+    super.key,
+    required this.userIds,
+    required this.gameId,
+    required this.isCreator,
+    required this.isPrivateGame,
+  });
 
   @override
   State<GameRosterSection> createState() => _GameRosterSectionState();
@@ -35,7 +42,7 @@ class _GameRosterSectionState extends State<GameRosterSection> {
   Future<List<UserModel>> fetchPlayers() async {
     final firestore = FirebaseFirestore.instance;
     List<UserModel> users = [];
-    if (widget.userIds.isEmpty) return users; // Evita errores si la lista está vacía
+    if (widget.userIds.isEmpty) return users;
 
     final playerDocs = await Future.wait(
         widget.userIds.map((uid) => firestore.collection('users').doc(uid).get()));
@@ -62,31 +69,23 @@ class _GameRosterSectionState extends State<GameRosterSection> {
     }
   }
 
-  /// Inicia o abre un chat con un jugador y navega a la vista de chat.
   void _handleSendMessage(BuildContext modalContext, UserModel targetPlayer) async {
     if (_currentUserId == null) return;
 
-    // Cierra el modal primero
     Navigator.pop(modalContext);
 
     try {
-
-
       final ids = [_currentUserId!, targetPlayer.uid]..sort();
       String potentialChatId = ids.join('_');
-
 
       final chatDoc = await FirebaseFirestore.instance.collection('private_chats').doc(potentialChatId).get();
 
       String chatId;
 
       if (chatDoc.exists) {
-
         chatId = chatDoc.id;
       } else {
-
         chatId = potentialChatId;
-
         final newChat = PrivateChatModel(
           id: chatId,
           userA: _currentUserId!,
@@ -96,13 +95,10 @@ class _GameRosterSectionState extends State<GameRosterSection> {
           lastUpdated: DateTime.now(),
           isBlocked: false,
         );
-
-
         await _privateChatService.createChat(newChat);
       }
 
-      // 4. Navega a la vista de chat con los datos necesarios
-      if (mounted) { // Buena práctica: verificar que el widget sigue en el árbol
+      if (mounted) {
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -114,7 +110,6 @@ class _GameRosterSectionState extends State<GameRosterSection> {
           ),
         );
       }
-
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -124,7 +119,6 @@ class _GameRosterSectionState extends State<GameRosterSection> {
     }
   }
 
-  /// Muestra el modal con opciones para un jugador, con UI reactiva.
   void _showPlayerOptions(BuildContext context, UserModel player) {
     if (player.uid == _currentUserId) return;
 
@@ -188,6 +182,23 @@ class _GameRosterSectionState extends State<GameRosterSection> {
                   ),
                   const SizedBox(height: 24),
 
+                  // Botón de expulsión solo si es creador y juego privado
+                  if (widget.isCreator && widget.isPrivateGame)
+                    Column(
+                      children: [
+                        _buildOptionButton(
+                          icon: Icons.person_remove_outlined,
+                          text: 'Remove Player',
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            _removePlayer(player.uid);
+                          },
+                          isDestructive: true,
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
+
                   _buildOptionButton(
                     icon: friendButtonIcon,
                     text: friendButtonText,
@@ -215,6 +226,44 @@ class _GameRosterSectionState extends State<GameRosterSection> {
         );
       },
     );
+  }
+
+  // Método para expulsar a un jugador
+  void _removePlayer(String playerId) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    try {
+      final gameService = GameService();
+      final game = await gameService.getGame(widget.gameId);
+      
+      if (game == null) {
+        throw Exception('Game not found');
+      }
+      
+      if (game.ownerId != _currentUserId) {
+        throw Exception('Only the game owner can remove players');
+      }
+      
+      // Actualizar la lista de jugadores
+      final updatedPlayers = List<String>.from(game.usersJoined)..remove(playerId);
+      
+      // Actualizar en Firestore
+      await FirebaseFirestore.instance.collection('games').doc(widget.gameId).update({
+        'usersJoined': updatedPlayers,
+      });
+      
+      // Actualizar el estado local
+      setState(() {
+        widget.userIds.remove(playerId);
+      });
+      
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Player removed successfully')),
+      );
+    } catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Error removing player: $e')),
+      );
+    }
   }
 
   @override
@@ -314,15 +363,17 @@ class _GameRosterSectionState extends State<GameRosterSection> {
     );
   }
 
-  Widget _buildOptionButton({required IconData icon, required String text, VoidCallback? onTap}) {
+  Widget _buildOptionButton({required IconData icon, required String text, VoidCallback? onTap, bool isDestructive = false}) {
     final bool isEnabled = onTap != null;
+    final color = isDestructive ? Colors.red : (isEnabled ? Colors.black87 : Colors.grey);
+    
     return OutlinedButton.icon(
       onPressed: onTap,
-      icon: Icon(icon, color: isEnabled ? Colors.black87 : Colors.grey),
-      label: Text(text, style: TextStyle(color: isEnabled ? Colors.black87 : Colors.grey, fontWeight: FontWeight.w600)),
+      icon: Icon(icon, color: color),
+      label: Text(text, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(double.infinity, 50),
-        side: BorderSide(color: isEnabled ? Colors.grey.shade300 : Colors.grey.shade200),
+        side: BorderSide(color: isDestructive ? Colors.red.shade200 : (isEnabled ? Colors.grey.shade300 : Colors.grey.shade200)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
       ),
     );
