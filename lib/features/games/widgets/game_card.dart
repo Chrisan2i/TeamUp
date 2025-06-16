@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../models/game_model.dart';
+import 'package:teamup/models/game_model.dart';
 import '../../../core/constant/colors.dart';
 import '../../../core/constant/app_sizes.dart';
 import '../../../core/theme/typography.dart';
 import 'game_card_buttons.dart';
 import 'game_card_info.dart';
 import 'game_card_rating_dialog.dart';
+import 'package:teamup/features/game_details/widgets/game_players_list_screen.dart'; // Importa la nueva pantalla de jugadores
+import "package:teamup/features/game_details/widgets/player_profile_screen.dart";    // Importa la pantalla de perfil de jugador
 
 class GameCard extends StatelessWidget {
   final GameModel game;

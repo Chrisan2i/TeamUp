@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:teamup/models/game_model.dart';
 import '../../../core/constant/colors.dart';
 import '../../../core/constant/app_sizes.dart';
-import '../../../core/theme/typography.dart';
+import '../../game_details/widgets/game_players_list_screen.dart'; 
 
 class GameCardInfo extends StatelessWidget {
   final GameModel game;
@@ -95,13 +95,37 @@ class GameCardInfo extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              Text(
-                '$remainingSpots Spot${remainingSpots == 1 ? '' : 's'} left!',
-                style: const TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.w600,
+              
+              // Botón para ver jugadores inscritos
+              if (remainingSpots > 0)
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => GamePlayersListScreen(gameId: game.id),
+                    ),
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          '$remainingSpots Spot${remainingSpots == 1 ? '' : 's'} left',
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.people_alt_outlined, size: 18, color: Colors.blue),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
             ],
           ),
 
