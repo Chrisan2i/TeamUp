@@ -7,7 +7,7 @@ class ReportService {
 
   Future<void> addReport(id , categoria, valoracion, foto, descripcion) async{
    final report = ReportModel(id:id, categoria: categoria, valoracion: valoracion, foto: foto, descripcion: descripcion);
-   await reportCollection.add(report.toMap());
+   reportCollection.add(report.toMap());
 
 }
 }

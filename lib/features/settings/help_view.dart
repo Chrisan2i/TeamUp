@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:teamup/services/report_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class HelpFormView extends StatefulWidget {
   const HelpFormView({super.key});
@@ -7,9 +11,15 @@ class HelpFormView extends StatefulWidget {
   State<HelpFormView> createState() => _HelpFormViewState();
 }
 
+
+
 class _HelpFormViewState extends State<HelpFormView> {
+  final user = FirebaseAuth.instance.currentUser;
   String? _selectedProblemCategory;
   int _selectedRating = 0;
+   String? _imagePath;
+  // Para la descripción
+  final TextEditingController _descriptionController = TextEditingController();
   final List<String> _problemCategories = [
     'Arbitraje',
     'Comportamiento de jugadores',
@@ -19,6 +29,25 @@ class _HelpFormViewState extends State<HelpFormView> {
     'Incidente de seguridad',
     'Otro tipo de problema'
   ];
+
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    
+    if (image != null) {
+      setState(() {
+        _imagePath = image.path; // Guardamos la ruta del archivo
+      });
+    }
+  }
+
+  //
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +109,7 @@ class _HelpFormViewState extends State<HelpFormView> {
                     'Selecciona una categoría',
                     style: TextStyle(color: Color(0xFF6B7280)),
                   ),
+                  // Aquí se establece el valor seleccionado
                   value: _selectedProblemCategory,
                   icon: const Icon(Icons.arrow_drop_down),
                   items: _problemCategories.map((String value) {
@@ -89,9 +119,20 @@ class _HelpFormViewState extends State<HelpFormView> {
                     );
                   }).toList(),
                   onChanged: (String? newValue) {
+                    //Variable para almacenar la categoría seleccionada
+                    if (newValue == null) return; // Evita errores si newValue es null
                     setState(() {
                       _selectedProblemCategory = newValue;
                     });
+                    final reportService = ReportService();
+                    // Aquí puedes llamar al servicio para agregar el reporte
+                    reportService.addReport(
+                      user!.uid, // ID del usuario
+                      _selectedProblemCategory!, // Categoría seleccionada
+                      _selectedRating, // Valoración seleccionada
+                      _imagePath, // Ruta de la imagen (puede ser null)
+                      _descriptionController.text, // Descripción del problema
+                    );
                   },
                 ),
               ),
@@ -136,7 +177,7 @@ class _HelpFormViewState extends State<HelpFormView> {
                 const SizedBox(height: 24),
             
             // Subir foto (opcional)
-            const Text(
+             const Text(
               'Subir Evidencia Fotográfica (Opcional)',
               style: TextStyle(
                 color: Color(0xFF374151),
@@ -144,38 +185,45 @@ class _HelpFormViewState extends State<HelpFormView> {
               ),
             ),
             const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              height: 120,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFFE5E7EB),
-                  width: 2,
+            GestureDetector(
+              onTap: _pickImage,
+              child: Container(
+                width: double.infinity,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFFE5E7EB),
+                    width: 2,
+                  ),
                 ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.cloud_upload, size: 32, color: Color(0xFF6B7280)),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Toca para subir foto',
-                    style: TextStyle(
-                      color: Color(0xFF6B7280),
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'JPG, PNG hasta 10MB',
-                    style: TextStyle(
-                      color: Colors.grey[500],
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
+                child: _imagePath == null
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.cloud_upload, size: 32, color: Color(0xFF6B7280)),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Toca para subir foto',
+                            style: TextStyle(
+                              color: Color(0xFF6B7280),
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'JPG, PNG hasta 10MB',
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      )
+                    : Image.file(File(_imagePath!), // Mostramos la imagen seleccionada
+                        fit: BoxFit.cover,
+                      ),
               ),
             ),
             const SizedBox(height: 24),
