@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../../models/field_model.dart'; // Asegúrate de importar el modelo
 import 'resumen_item.dart';
 
 class StepDetalles extends StatelessWidget {
   final String? selectedZone;
-  final String? selectedField;
+  final FieldModel? selectedField;
   final DateTime? selectedDate;
   final String? selectedHour;
   final String? description;
@@ -79,12 +80,12 @@ class StepDetalles extends StatelessWidget {
                 crossAxisCount: 2,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                shrinkWrap: true, // 🔑 Esto hace que no se expanda infinitamente
-                physics: const NeverScrollableScrollPhysics(), // 🔑 evita doble scroll
-                childAspectRatio: 3.5, // 🔧 Ajusta altura de los items (puedes probar con 4.0 también)
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: 3.5,
                 children: [
                   ResumenItem(icon: Icons.location_on, label: 'Zona', value: selectedZone),
-                  ResumenItem(icon: Icons.sports_soccer, label: 'Cancha', value: selectedField),
+                  ResumenItem(icon: Icons.sports_soccer, label: 'Cancha', value: selectedField?.name),
                   ResumenItem(
                     icon: Icons.calendar_today,
                     label: 'Fecha',
@@ -94,17 +95,35 @@ class StepDetalles extends StatelessWidget {
                   ),
                   ResumenItem(icon: Icons.access_time, label: 'Hora', value: selectedHour),
                   ResumenItem(icon: Icons.people, label: 'Jugadores', value: numberOfPlayers?.toString()),
+                  if (selectedField != null && selectedField!.hasDiscount)
+                    ResumenItem(
+                      icon: Icons.local_offer,
+                      label: 'Descuento',
+                      value: '${selectedField!.discountPercentage?.toStringAsFixed(0)}%',
+                    ),
                   ResumenItem(icon: Icons.school, label: 'Nivel', value: selectedSkillLevel),
                   ResumenItem(icon: Icons.timer, label: 'Duración', value: '${selectedDuration}h'),
                   ResumenItem(icon: Icons.sports, label: 'Tipo', value: selectedType),
                   ResumenItem(icon: Icons.format_list_bulleted, label: 'Formato', value: selectedFormat),
                   ResumenItem(icon: Icons.directions_run, label: 'Calzado', value: selectedFootwear),
+
+                  // ✅ Nuevo ítem correcto
+                  ResumenItem(
+                    icon: Icons.attach_money,
+                    label: 'Precio por jugador',
+                    value: selectedField != null
+                        ? 'Bs. ${selectedField!.getPricePerPersonAuto().toStringAsFixed(2)}'
+                        : null,
+                  ),
+                  ResumenItem(
+                    icon: Icons.group_add,
+                    label: 'Minimo jugares',
+                    value: selectedField?.minPlayersToBook.toString(),
+                  ),
                 ],
               ),
             ),
           ),
-
-
 
           const SizedBox(height: 32),
           _buildInputTitle('Descripción (opcional)'),
@@ -116,7 +135,7 @@ class StepDetalles extends StatelessWidget {
           ),
 
           const SizedBox(height: 20),
-          _buildInputTitle('Número de jugadores'),
+          _buildInputTitle('Total de jugadores'),
           TextFormField(
             keyboardType: TextInputType.number,
             onChanged: onPlayersChanged,
@@ -124,12 +143,38 @@ class StepDetalles extends StatelessWidget {
           ),
 
           const SizedBox(height: 20),
-          _buildInputTitle('Mínimo para confirmar'),
-          TextFormField(
-            keyboardType: TextInputType.number,
-            onChanged: onMinPlayersChanged,
-            decoration: _inputDecoration('Ej: 6'),
+          _buildInputTitle('Tipo de partido'),
+          DropdownButtonFormField<String>(
+            value: selectedType,
+            items: ['Amistoso', 'Torneo', 'Competitivo'].map((type) {
+              return DropdownMenuItem(
+                value: type,
+                child: Text(type),
+              );
+            }).toList(),
+            onChanged: (value) {
+              if (value != null) onTypeChanged(value);
+            },
+
+            decoration: _inputDecoration('Selecciona el tipo de partido'),
           ),
+          const SizedBox(height: 20),
+          _buildInputTitle('Nivel de habilidad'),
+          DropdownButtonFormField<String>(
+            value: selectedSkillLevel,
+            items: ['Beginner', 'Intermediate', 'Advanced'].map((level) {
+              return DropdownMenuItem(
+                value: level,
+                child: Text(level),
+              );
+            }).toList(),
+            onChanged: (value) {
+              if (value != null) onSkillLevelChanged(value);
+            },
+            decoration: _inputDecoration('Selecciona tu nivel'),
+          ),
+
+
 
           const SizedBox(height: 28),
           Row(

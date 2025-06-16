@@ -20,6 +20,11 @@ class FieldModel {
   final String footwear;
   final String contact;
 
+  // 🔽 Campos nuevos
+  final bool hasDiscount;
+  final double? discountPercentage;
+  final int minPlayersToBook;
+
   FieldModel({
     required this.id,
     required this.ownerId,
@@ -38,6 +43,9 @@ class FieldModel {
     required this.description,
     required this.footwear,
     required this.contact,
+    this.hasDiscount = false,
+    this.discountPercentage,
+    this.minPlayersToBook = 1,
   });
 
   factory FieldModel.fromMap(Map<String, dynamic> map, String id) {
@@ -64,6 +72,11 @@ class FieldModel {
       description: map['description'] ?? '',
       footwear: map['footwear'] ?? 'any',
       contact: map['contact'] ?? '',
+      hasDiscount: map['hasDiscount'] ?? false,
+      discountPercentage: map['discountPercentage'] != null
+          ? (map['discountPercentage'] as num).toDouble()
+          : null,
+      minPlayersToBook: map['minPlayersToBook'] ?? 1,
     );
   }
 
@@ -85,7 +98,23 @@ class FieldModel {
       'description': description,
       'footwear': footwear,
       'contact': contact,
+      'hasDiscount': hasDiscount,
+      'discountPercentage': discountPercentage,
+      'minPlayersToBook': minPlayersToBook,
     };
+  }
+
+  /// 🔢 Calcula el precio por jugador asumiendo que se unen el mínimo necesario
+  double getPricePerPersonAuto() {
+    double totalPrice = pricePerHour * duration;
+
+    if (hasDiscount && discountPercentage != null) {
+      totalPrice *= (1 - discountPercentage! / 100);
+    }
+
+    if (minPlayersToBook <= 0) return totalPrice;
+
+    return totalPrice / minPlayersToBook;
   }
 }
 

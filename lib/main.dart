@@ -10,7 +10,6 @@ import 'features/auth/welcome_screen.dart';
 import 'package:teamup/core/providers/theme_provider.dart';
 
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(

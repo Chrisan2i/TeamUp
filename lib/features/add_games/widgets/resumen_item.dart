@@ -36,6 +36,8 @@ class ResumenItem extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 isAvailable ? value! : 'No disponible',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
@@ -44,7 +46,7 @@ class ResumenItem extends StatelessWidget {
                 textHeightBehavior: const TextHeightBehavior(
                   applyHeightToFirstAscent: false,
                   applyHeightToLastDescent: false,
-                ), // ✅ evita desbordes de fuente
+                ),
               ),
             ],
           ),

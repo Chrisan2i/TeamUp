@@ -4,12 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:teamup/models/game_model.dart';
 import '../../../core/constant/colors.dart';
 import '../../../core/constant/app_sizes.dart';
-import '../../../core/theme/typography.dart';
 import 'game_card_buttons.dart';
 import 'game_card_info.dart';
 import 'game_card_rating_dialog.dart';
-import 'package:teamup/features/game_details/widgets/game_players_list_screen.dart'; // Importa la nueva pantalla de jugadores
-import "package:teamup/features/game_details/widgets/player_profile_screen.dart";    // Importa la pantalla de perfil de jugador
 
 class GameCard extends StatelessWidget {
   final GameModel game;
@@ -59,7 +56,7 @@ class GameCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Imagen
+                // Imagen superior
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(kCardRadius)),
                   child: Image.network(
@@ -76,13 +73,13 @@ class GameCard extends StatelessWidget {
                   ),
                 ),
 
-                // Contenido principal
+                // Contenido principal con stream de datos actualizados
                 Padding(
                   padding: const EdgeInsets.all(kPaddingMedium),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      /// 🟢 StreamBuilder para status y cupos en tiempo real
+                      /// Encabezado: estado + cupos
                       StreamBuilder<DocumentSnapshot>(
                         stream: FirebaseFirestore.instance
                             .collection('games')
@@ -97,16 +94,45 @@ class GameCard extends StatelessWidget {
                           final updatedGame = GameModel.fromMap(data);
                           final remainingSpots = updatedGame.playerCount - updatedGame.usersjoined.length;
 
-                          return GameCardInfo(
-                            game: updatedGame,
-                            remainingSpots: remainingSpots,
+                          return Align(
+                            alignment: Alignment.centerRight,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  updatedGame.status.toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                if (remainingSpots > 0)
+                                  Text(
+                                    '$remainingSpots Spot${remainingSpots == 1 ? '' : 's'} left!',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                              ],
+                            ),
                           );
                         },
                       ),
 
+                      const SizedBox(height: 12),
+
+                      // Info del juego
+                      GameCardInfo(
+                        game: game,
+                        remainingSpots: 0, // Ya se maneja arriba
+                      ),
+
                       const SizedBox(height: 20),
 
-                      // Botones
+                      // Botones inferiores (ej: Join Game)
                       GameCardButtons(
                         game: game,
                         isPast: isPast,
@@ -127,7 +153,7 @@ class GameCard extends StatelessWidget {
             ),
           ),
 
-          // 🔴 Bandera "Finalizado"
+          // Banner Finalizado
           if (showPastBanner)
             Positioned(
               top: 8,
@@ -148,7 +174,7 @@ class GameCard extends StatelessWidget {
               ),
             ),
 
-          // 🏴 Reportar
+          // Icono de reporte
           if (showReport)
             Positioned(
               top: 44,

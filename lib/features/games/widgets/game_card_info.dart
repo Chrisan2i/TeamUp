@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:teamup/models/game_model.dart';
 import '../../../core/constant/colors.dart';
 import '../../../core/constant/app_sizes.dart';
-import '../../game_details/widgets/game_players_list_screen.dart'; 
 
 class GameCardInfo extends StatelessWidget {
   final GameModel game;
@@ -33,7 +32,7 @@ class GameCardInfo extends StatelessWidget {
 
       return '${format(start)} – ${format(end)}';
     } catch (_) {
-      return startHour; // fallback
+      return startHour;
     }
   }
 
@@ -49,7 +48,7 @@ class GameCardInfo extends StatelessWidget {
             game.description,
             style: const TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w600,
             ),
           ),
 
@@ -75,7 +74,7 @@ class GameCardInfo extends StatelessWidget {
                 _buildTimeRange(game.hour, game.duration),
                 style: const TextStyle(
                   fontSize: 14,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
               ),
@@ -84,61 +83,26 @@ class GameCardInfo extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // ✅ Estado y cupos
+          // 🏷️ Etiquetas estilo fila de detalles
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Row(
+                children: [
+                  _buildTag(game.skillLevel),
+                  const SizedBox(width: 8),
+                  _buildTag('${game.duration}h'),
+                  const SizedBox(width: 8),
+                  _buildTag(game.format),
+                ],
+              ),
               Text(
-                game.status.toUpperCase(),
+                'Price: \$${game.price.toStringAsFixed(2)}',
                 style: const TextStyle(
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              
-              // Botón para ver jugadores inscritos
-              if (remainingSpots > 0)
-                GestureDetector(
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => GamePlayersListScreen(gameId: game.id),
-                    ),
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[50],
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          '$remainingSpots Spot${remainingSpots == 1 ? '' : 's'} left',
-                          style: const TextStyle(
-                            color: Colors.blue,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(Icons.people_alt_outlined, size: 18, color: Colors.blue),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          // 🏷️ Etiquetas
-          Wrap(
-            spacing: 12,
-            children: [
-              _buildTag(game.skillLevel),
-              _buildTag('${game.duration}h'),
-              _buildTag(game.format),
-              _buildTag('Price: \$${game.price.toStringAsFixed(2)}'),
             ],
           ),
         ],
@@ -148,7 +112,7 @@ class GameCardInfo extends StatelessWidget {
 
   Widget _buildTag(String label) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.grey.shade200,
         borderRadius: BorderRadius.circular(20),
