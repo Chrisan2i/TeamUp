@@ -41,8 +41,12 @@ class GamePlayersService {
         });
       });
 
-      // ✅ Después de la transacción, actualiza el status
-      await GameService().updateGameStatus(game);
+      final updatedSnap = await firestore.collection('games').doc(game.id).get();
+      if (updatedSnap.exists) {
+        final updatedGame = GameModel.fromMap(updatedSnap.data()!);
+        await GameService().updateGameStatus(updatedGame);
+      }
+
 
       print('✅ Unión exitosa.');
       return true;

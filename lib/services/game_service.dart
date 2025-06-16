@@ -4,26 +4,38 @@ import '../models/game_model.dart';
 class GameService {
   final CollectionReference games = FirebaseFirestore.instance.collection('games');
 
-  /// 🟡 Actualiza el status del partido basado en los jugadores unidos
   Future<void> updateGameStatus(GameModel game) async {
-    final int joined = game.usersjoined.length;
-    final int minToConfirm = game.minPlayersToConfirm;
-    final int total = game.playerCount;
+    final gameRef = FirebaseFirestore.instance.collection('games').doc(game.id);
+    final doc = await gameRef.get();
+
+    if (!doc.exists) return;
+
+    final data = doc.data()!;
+    final updatedGame = GameModel.fromMap(data);
+
+    final int joined = updatedGame.usersjoined.length + 1;
+    final int minToConfirm = updatedGame.minPlayersToConfirm;
+    final int total = updatedGame.playerCount;
+
+    print('🎯 Jugadores unidos: $joined / $total (mínimo para confirmar: $minToConfirm)');
 
     String newStatus = 'scheduled';
-
     if (joined >= total) {
       newStatus = 'full';
     } else if (joined >= minToConfirm) {
       newStatus = 'confirmed';
     }
 
-    if (game.status != newStatus) {
-      await games.doc(game.id).update({
-        'status': newStatus,
-      });
+    print('🔄 Estado actual: ${updatedGame.status}, Estado nuevo: $newStatus');
+
+    if (updatedGame.status != newStatus) {
+      await gameRef.update({'status': newStatus});
+      print('✅ Estado actualizado a $newStatus');
+    } else {
+      print('ℹ️ Estado no cambiado (ya era $newStatus)');
     }
   }
+
 
   /// Crea un nuevo partido
   Future<void> createGame(GameModel game) async {

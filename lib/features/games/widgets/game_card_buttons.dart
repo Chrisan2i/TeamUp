@@ -3,6 +3,8 @@ import '../../../core/constant/app_sizes.dart';
 import '../../../core/constant/colors.dart';
 import '../../../models/game_model.dart';
 import 'join_game_botton.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 class GameCardButtons extends StatelessWidget {
   final GameModel game;
@@ -24,6 +26,12 @@ class GameCardButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+
+    // ✅ Verifica si el usuario ya está unido al partido
+    final isUserJoined = currentUserId != null &&
+        game.usersjoined.contains(currentUserId);
+
     if (isPast) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -46,7 +54,8 @@ class GameCardButtons extends StatelessWidget {
       );
     }
 
-    if (showLeaveButton && onLeave != null) {
+    // ✅ Mostrar botón de salir si ya está unido
+    if (isUserJoined && onLeave != null) {
       return ElevatedButton(
         onPressed: () => onLeave!(game),
         style: ElevatedButton.styleFrom(
@@ -61,7 +70,8 @@ class GameCardButtons extends StatelessWidget {
       );
     }
 
-    return Container(
+    // 👉 Botón por defecto para unirse
+    return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () {
