@@ -76,10 +76,11 @@ class _AddGameViewState extends State<AddGameView> {
       footwear: selectedField!.footwear,
       createdAt: DateTime.now().toIso8601String(),
       imageUrl: selectedField!.imageUrl,
-      usersjoined: [user.uid],
+      usersJoined: [user.uid],
       privateCode: isPublic ? null : privateCode,
       status: 'waiting',
       minPlayersToConfirm: selectedField!.minPlayersToBook,
+      usersPaid: [],
     );
 
     final docRef = await FirebaseFirestore.instance.collection('games').add(newGame.toMap());

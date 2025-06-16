@@ -24,7 +24,8 @@ class _JoinGameBottomState extends State<JoinGameBottom> {
   Widget build(BuildContext context) {
     final game = widget.game;
     final dateFormatted = "${game.date.day}/${game.date.month}/${game.date.year}";
-    final int spotsLeft = game.playerCount - game.usersjoined.length;
+    // CORREGIDO: 'usersjoined' cambiado a 'usersJoined'
+    final int spotsLeft = game.playerCount - game.usersJoined.length;
     final int totalPeople = 1 + guestCount;
     final double totalFinal = game.price * totalPeople;
 
@@ -45,7 +46,8 @@ class _JoinGameBottomState extends State<JoinGameBottom> {
             ],
           ),
           const SizedBox(height: 10),
-          Text("Join Game (5v5)", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          // MODIFICADO: Usa el formato del juego desde el modelo
+          Text("Join Game (${game.format})", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           Row(children: [
             const Icon(Icons.calendar_today_outlined, size: 20),
@@ -109,6 +111,10 @@ class _JoinGameBottomState extends State<JoinGameBottom> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: spotsLeft > 0 ? () async {
+                // CORREGIDO: Se mueve el BuildContext fuera del async gap
+                final scaffoldMessenger = ScaffoldMessenger.of(context);
+                final navigator = Navigator.of(context);
+
                 final confirmed = await showDialog<bool>(
                   context: context,
                   builder: (ctx) => AlertDialog(
@@ -120,15 +126,24 @@ class _JoinGameBottomState extends State<JoinGameBottom> {
                     ],
                   ),
                 );
+
+                // CORREGIDO: Se verifica si el widget sigue montado antes de usar el context
+                if (!mounted) return;
+
                 if (confirmed == true) {
                   // Se une al partido y se agrega en gamePlayers
+                  // NOTA: Tu lógica aquí une al usuario y sus invitados.
+                  // Asegúrate de que `joinGame` maneje el `guestCount` si es necesario.
                   final success = await GamePlayersService().joinGame(game);
 
+                  // CORREGIDO: Se verifica si el widget sigue montado antes de usar el context
+                  if (!mounted) return;
+
                   if (success) {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Te uniste al partido.")));
+                    navigator.pop(); // Usa la variable guardada
+                    scaffoldMessenger.showSnackBar(const SnackBar(content: Text("Te uniste al partido.")));
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Hubo un error al unirte.")));
+                    scaffoldMessenger.showSnackBar(const SnackBar(content: Text("Hubo un error al unirte.")));
                   }
                 }
               } : null,
@@ -168,6 +183,9 @@ class _PaymentDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // CORREGIDO: Se mueve el BuildContext fuera del async gap
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -178,7 +196,8 @@ class _PaymentDetail extends StatelessWidget {
             child: GestureDetector(
               onTap: () {
                 Clipboard.setData(ClipboardData(text: value));
-                ScaffoldMessenger.of(context).showSnackBar(
+                // Usa la variable guardada
+                scaffoldMessenger.showSnackBar(
                   SnackBar(content: Text("$label copiado")),
                 );
               },

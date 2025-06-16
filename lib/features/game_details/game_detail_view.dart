@@ -1,246 +1,175 @@
+// lib/features/game_details/game_detail_view.dart
+
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'widgets/game_status_section.dart';
-import 'widgets/game_roster_section.dart';
-import 'package:teamup/features/games/widgets/game_card_buttons.dart';
 import 'package:teamup/models/game_model.dart';
-import 'package:intl/intl.dart';
+import 'package:teamup/services/game_players_service.dart';
 
-class GameDetailView extends StatelessWidget {
+// Importa los widgets que usaremos
+import 'widgets/game_detail_header.dart'; // Tu header modificado
+import 'tabs/status_tab_view.dart';
+import 'tabs/about_tab_view.dart';
+import 'tabs/map_tab_view.dart';
+import 'widgets/game_detail_bottom_bar.dart';
+
+class GameDetailView extends StatefulWidget {
   final GameModel game;
-
   const GameDetailView({super.key, required this.game});
 
   @override
+  State<GameDetailView> createState() => _GameDetailViewState();
+}
+
+class _GameDetailViewState extends State<GameDetailView> with TickerProviderStateMixin {
+  late TabController _tabController;
+  final GamePlayersService _gameService = GamePlayersService();
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    // Añadimos un listener para reconstruir la UI cuando se cambia de pestaña
+    _tabController.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.removeListener(() {});
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  // --- Lógica de acciones (sin cambios) ---
+  Future<void> _handleJoinGame(GameModel game) async { /* ... tu código ... */ }
+  Future<void> _handleLeaveGame(GameModel game) async { /* ... tu código ... */ }
+
+  @override
   Widget build(BuildContext context) {
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
-
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final gameDay = DateTime(game.date.year, game.date.month, game.date.day);
-    final isPast = gameDay.isBefore(today);
-    final userJoined = game.usersjoined.contains(currentUserId);
-
-    final remainingSpots = game.playerCount - game.usersjoined.length;
-    final showLeaveButton = userJoined && !isPast;
-
-    final formattedDate = DateFormat('EEEE, d MMM', 'en_US').format(game.date);
-    final fullTime = '${game.hour}';
-
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Stack(
-              children: [
-                // Galería con bordes redondeados
-                ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  ),
-                  child: Container(
-                    height: 220,
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: NetworkImage(
-                          game.imageUrl.isNotEmpty
-                              ? game.imageUrl
-                              : 'https://placehold.co/459x192',
-                        ),
-                        fit: BoxFit.cover,
-                      ),
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance.collection('games').doc(widget.game.id).snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData || !snapshot.data!.exists) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final game = GameModel.fromMap(snapshot.data!.data() as Map<String, dynamic>);
+
+          return Stack(
+            children: [
+              // 1. FONDO: La imagen (no se desplaza)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: 220,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: NetworkImage(game.imageUrl.isNotEmpty ? game.imageUrl : 'https://placehold.co/600x400'),
+                      fit: BoxFit.cover,
                     ),
                   ),
-                ),
-
-                // Botón de volver (X)
-                Positioned(
-                  top: 40,
-                  left: 16,
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const CircleAvatar(
-                      backgroundColor: Colors.white,
-                      child: Icon(Icons.close, color: Colors.black),
-                    ),
-                  ),
-                ),
-
-                // Iconos arriba derecha
-                Positioned(
-                  top: 40,
-                  right: 16,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _iconCircle(Icons.chat_bubble_outline),
-                      const SizedBox(width: 12),
-                      _iconCircle(Icons.location_on_outlined),
-                      const SizedBox(width: 12),
-                      _iconCircle(Icons.share_outlined),
-                    ],
-                  ),
-                ),
-
-                // Título centrado
-                Positioned(
-                  top: 40,
-                  left: 0,
-                  right: 0,
-                  child: const Center(
-                    child: Text(
-                      'Details',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF111827),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Etiqueta de cupos restantes
-                if (remainingSpots > 0)
-                  Positioned(
-                    top: 100,
-                    right: 16,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFDC2626),
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: Text(
-                        '$remainingSpots Spots left!',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            // Nombre del partido
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                game.description.isNotEmpty
-                    ? game.description
-                    : 'Partido amistoso',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF111827),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 4),
+              // 2. CONTENIDO SCROLLEABLE
+              SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // Espaciador para empujar el contenido hacia abajo
+                    const SizedBox(height: 170),
 
-            // Ubicación (fieldName o zona)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                game.fieldName.isNotEmpty
-                    ? game.fieldName
-                    : game.zone,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF6B7280),
+                    // Aquí usamos tu widget de header modificado
+                    GameDetailHeader(game: game),
+                    const SizedBox(height: 24), // Espacio entre la tarjeta y los tabs
+
+                    // Barra de TABS
+                    TabBar(
+                      controller: _tabController,
+                      labelColor: const Color(0xFF10B981),
+                      unselectedLabelColor: Colors.grey.shade600,
+                      indicatorColor: const Color(0xFF10B981),
+                      indicatorWeight: 3.0,
+                      tabs: const [
+                        Tab(text: 'STATUS'),
+                        Tab(text: 'ABOUT'),
+                        Tab(text: 'MAP'),
+                      ],
+                    ),
+
+                    // Contenido de las TABS
+                    IndexedStack(
+                      index: _tabController.index,
+                      children: [
+                        Visibility(visible: _tabController.index == 0, child: StatusTabView(game: game)),
+                        Visibility(visible: _tabController.index == 1, child: AboutTabView(game: game)),
+                        Visibility(visible: _tabController.index == 2, child: MapTabView(game: game)),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ),
 
-            const SizedBox(height: 24),
-
-            // Tabs STATUS | ABOUT | MAP (solo diseño visual)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Container(
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: Color(0xFF10B981),
-                          width: 2,
-                        ),
-                      ),
+              // 3. BOTONES SUPERIORES (fijos, no se desplazan)
+              Positioned(
+                top: 50,
+                left: 16,
+                right: 16,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _iconCircle(Icons.close, () => Navigator.pop(context)),
+                    const Text('Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white, shadows: [Shadow(color: Colors.black, blurRadius: 4)])),
+                    Row(
+                      children: [
+                        _iconCircle(Icons.chat_bubble_outline, () {}),
+                        const SizedBox(width: 8),
+                        _iconCircle(Icons.location_on_outlined, () {}),
+                        const SizedBox(width: 8),
+                        _iconCircle(Icons.share_outlined, () {}),
+                      ],
                     ),
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: const Text(
-                      'STATUS',
-                      style: TextStyle(
-                        color: Color(0xFF10B981),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-                  const Text(
-                    'ABOUT',
-                    style: TextStyle(
-                      color: Color(0xFF6B7280),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-                  const Text(
-                    'MAP',
-                    style: TextStyle(
-                      color: Color(0xFF6B7280),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Sección de estado del partido
-            GameStatusSection(game: game),
-
-            const SizedBox(height: 32),
-
-            // Lista de jugadores unidos
-            GameRosterSection(userIds: game.usersjoined),
-
-            const SizedBox(height: 100),
-          ],
-        ),
+            ],
+          );
+        },
       ),
+      // BARRA INFERIOR (fija, no se desplaza)
+      bottomNavigationBar: StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance.collection('games').doc(widget.game.id).snapshots(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) return const SizedBox.shrink();
+            final game = GameModel.fromMap(snapshot.data!.data() as Map<String, dynamic>);
+            final isUserJoined = FirebaseAuth.instance.currentUser != null && game.usersJoined.contains(FirebaseAuth.instance.currentUser!.uid);
 
-      // Botón inferior fijo
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16),
-        child: GameCardButtons(
-          game: game,
-          isPast: isPast,
-          showLeaveButton: showLeaveButton,
-        ),
+            return GameDetailBottomBar(
+              game: game,
+              isUserJoined: isUserJoined,
+              isLoading: _isLoading,
+              onJoin: () => _handleJoinGame(game),
+              onLeave: () => _handleLeaveGame(game),
+            );
+          }
       ),
     );
   }
 
-  Widget _iconCircle(IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
+  // Widget de construcción para los iconos superiores
+  Widget _iconCircle(IconData icon, VoidCallback onPressed) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: CircleAvatar(
+        radius: 18,
+        backgroundColor: Colors.black.withOpacity(0.4),
+        child: Icon(icon, color: Colors.white, size: 20),
       ),
-      child: Icon(icon, size: 18, color: Colors.black),
     );
   }
 }

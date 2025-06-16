@@ -13,7 +13,7 @@ class GameService {
     final data = doc.data()!;
     final updatedGame = GameModel.fromMap(data);
 
-    final int joined = updatedGame.usersjoined.length + 1;
+    final int joined = updatedGame.usersJoined.length + 1;
     final int minToConfirm = updatedGame.minPlayersToConfirm;
     final int total = updatedGame.playerCount;
 

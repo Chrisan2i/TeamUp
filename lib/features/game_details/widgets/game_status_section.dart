@@ -14,7 +14,7 @@ class GameStatusSection extends StatelessWidget {
     final location = game.fieldName.isNotEmpty ? game.fieldName : game.zone;
     final level = game.skillLevel.isNotEmpty ? game.skillLevel : 'Intermediate';
 
-    final joinedCount = game.usersjoined.length;
+    final joinedCount = game.usersJoined.length;
     final totalPlayers = game.playerCount;
     final isFull = joinedCount >= totalPlayers;
     final spotsLeft = totalPlayers - joinedCount;

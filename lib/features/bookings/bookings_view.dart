@@ -64,7 +64,7 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
     final snapshot = await FirebaseFirestore.instance.collection('games').get();
 
     final allGames = snapshot.docs.map((doc) => GameModel.fromMap(doc.data())).toList();
-    final joinedGames = allGames.where((game) => game.usersjoined.contains(userId)).toList();
+    final joinedGames = allGames.where((game) => game.usersJoined.contains(userId)).toList();
 
     final upcoming = <GameModel>[];
     final past = <GameModel>[];
