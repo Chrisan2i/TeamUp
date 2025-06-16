@@ -6,12 +6,12 @@ import 'widgets/game_date_selector.dart';
 import 'widgets/game_search_bar.dart';
 import 'widgets/game_card.dart';
 import '../../core/constant/app_sizes.dart';
-import '../auth/services/auth_service.dart';
 import '../add_games/add_game_view.dart';
 import '../profile/profile_view.dart';
 import '../bookings/bookings_view.dart';
 import 'package:teamup/core/widgets/custom_botton_navbar.dart';
 import 'package:teamup/features/game_details/game_detail_view.dart';
+import 'package:teamup/features/chat/views/messages_view.dart';
 
 class GameHomeView extends StatelessWidget {
   const GameHomeView({super.key});
@@ -27,7 +27,13 @@ class GameHomeView extends StatelessWidget {
         context,
         MaterialPageRoute(builder: (_) => const BookingsView()),
       );
-    } else if (index == 3) {
+    } else if (index == 2) {
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MessagesView()),
+      );
+    }else if (index == 3) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const ProfileView()),

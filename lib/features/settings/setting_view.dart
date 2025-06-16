@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:teamup/features/settings/theme_selection_view.dart';
-import 'package:teamup/features/settings/language_selection_view.dart';
 import 'package:teamup/features/settings/help_view.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:teamup/features/auth/welcome_screen.dart';
 
 class SettingView extends StatelessWidget {
   const SettingView({super.key});
@@ -40,17 +42,7 @@ class SettingView extends StatelessWidget {
               );
             },
           ),
-          SettingTile(
-            icon: Icons.language,
-            title: 'Idioma',
-            iconColor: Colors.black,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const LanguageSelectionView()),
-              );
-            },
-          ),
+          
           const SectionTitle(title: 'Apoyo'),
           SettingTile(
             icon: Icons.help_outline,
@@ -68,9 +60,12 @@ class SettingView extends StatelessWidget {
             icon: Icons.exit_to_app,
             title: 'Cerrar sesión',
             iconColor: Colors.black,
-            onTap: () {
-              // Acción para logout
-            },
+            onTap: () async {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                );
+              }
           ),
         ],
       ),

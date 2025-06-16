@@ -9,6 +9,7 @@ import 'package:teamup/models/game_model.dart';
 import 'package:teamup/features/profile/profile_view.dart';
 import 'package:teamup/features/games/game_home_view.dart';
 import 'package:teamup/services/game_players_service.dart';
+import 'package:teamup/features/chat/views/messages_view.dart';
 
 class BookingsView extends StatefulWidget {
   const BookingsView({super.key});
@@ -42,6 +43,12 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
         context,
         MaterialPageRoute(builder: (_) => const BookingsView()),
       );
+    }else if (index == 2) {
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MessagesView()),
+      );
     } else if (index == 3) {
       Navigator.pushReplacement(
         context,
@@ -64,7 +71,7 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
     final snapshot = await FirebaseFirestore.instance.collection('games').get();
 
     final allGames = snapshot.docs.map((doc) => GameModel.fromMap(doc.data())).toList();
-    final joinedGames = allGames.where((game) => game.usersjoined.contains(userId)).toList();
+    final joinedGames = allGames.where((game) => game.usersJoined.contains(userId)).toList();
 
     final upcoming = <GameModel>[];
     final past = <GameModel>[];

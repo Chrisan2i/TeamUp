@@ -78,7 +78,7 @@ class ProfileStats extends StatelessWidget {
         children: [
           _statColumn('${user.totalGamesJoined}', 'Games'),
           _statColumn('${user.totalGamesCreated}', 'Facilities'),
-          _statColumn('${user.rating.toInt()}', 'Hours'),
+          _statColumn('${user.averageRating.toInt()}', 'Ratings'),
         ],
       ),
     );

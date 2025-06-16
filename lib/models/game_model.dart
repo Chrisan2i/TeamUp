@@ -14,17 +14,17 @@ class GameModel {
   final double duration;
   final String createdAt;
   final String imageUrl;
-  final List<String> usersjoined;
-
+  final List<String> usersJoined; // Nombre correcto es camelCase
   final String skillLevel;
   final String type;
   final String format;
-  final String footwear; // ✅ NUEVO
+  final String footwear;
   final String status;
-  final int minPlayersToConfirm; // ✅ NUEVO
+  final int minPlayersToConfirm;
   final String? privateCode;
   final double? fieldRating;
   final String? report;
+  final List<String> usersPaid;
 
   GameModel({
     required this.id,
@@ -40,19 +40,21 @@ class GameModel {
     required this.duration,
     required this.createdAt,
     required this.imageUrl,
-    required this.usersjoined,
+    required this.usersJoined, // CORREGIDO: El nombre del campo del constructor era diferente
     required this.skillLevel,
     required this.type,
     required this.format,
-    required this.footwear, // ✅
+    required this.footwear,
     required this.status,
-    required this.minPlayersToConfirm, // ✅
+    required this.minPlayersToConfirm,
     this.privateCode,
     this.fieldRating,
     this.report,
+    required this.usersPaid,
   });
 
   factory GameModel.fromMap(Map<String, dynamic> map) {
+    // Función para parsear la fecha de forma segura
     DateTime parseDate(dynamic value) {
       if (value is Timestamp) return value.toDate();
       if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
@@ -69,20 +71,22 @@ class GameModel {
       description: map['description'] ?? '',
       playerCount: map['playerCount'] ?? 0,
       isPublic: map['isPublic'] ?? true,
-      price: (map['price'] ?? 0).toDouble(),
+      price: (map['price'] ?? 0.0).toDouble(),
       duration: (map['duration'] ?? 1.0).toDouble(),
       createdAt: map['createdAt'] ?? '',
       imageUrl: map['imageUrl'] ?? '',
-      usersjoined: List<String>.from(map['usersjoined'] ?? []),
+      // CORREGIDO: Usar el nombre de propiedad y la clave de mapa correctos ('usersJoined')
+      usersJoined: List<String>.from(map['usersJoined'] ?? []),
       skillLevel: map['skillLevel'] ?? '',
       type: map['type'] ?? '',
       format: map['format'] ?? '7v7',
-      footwear: map['footwear'] ?? 'any', // ✅ default
+      footwear: map['footwear'] ?? 'any',
       status: map['status'] ?? 'waiting',
       minPlayersToConfirm: map['minPlayersToConfirm'] ?? 0,
       privateCode: map['privateCode'],
       fieldRating: map['fieldRating'] != null ? (map['fieldRating'] as num).toDouble() : null,
       report: map['report'],
+      usersPaid: List<String>.from(map['usersPaid'] ?? []),
     );
   }
 
@@ -101,16 +105,18 @@ class GameModel {
       'duration': duration,
       'createdAt': createdAt,
       'imageUrl': imageUrl,
-      'usersjoined': usersjoined,
+      // CORREGIDO: Usar la clave y la propiedad correctas ('usersJoined')
+      'usersJoined': usersJoined,
       'skillLevel': skillLevel,
       'type': type,
       'format': format,
-      'footwear': footwear, // ✅
+      'footwear': footwear,
       'status': status,
-      'minPlayersToConfirm': minPlayersToConfirm, // ✅
+      'minPlayersToConfirm': minPlayersToConfirm,
       'privateCode': privateCode,
       'fieldRating': fieldRating,
       'report': report,
+      'usersPaid': usersPaid,
     };
   }
 
@@ -128,16 +134,17 @@ class GameModel {
     double? duration,
     String? createdAt,
     String? imageUrl,
-    List<String>? usersjoined,
+    List<String>? usersJoined, // CORREGIDO
     String? skillLevel,
     String? type,
     String? format,
-    String? footwear, // ✅
+    String? footwear,
     String? status,
-    int? minPlayersToConfirm, // ✅
+    int? minPlayersToConfirm,
     String? privateCode,
     double? fieldRating,
     String? report,
+    List<String>? usersPaid, // CORREGIDO
   }) {
     return GameModel(
       id: id ?? this.id,
@@ -153,16 +160,19 @@ class GameModel {
       duration: duration ?? this.duration,
       createdAt: createdAt ?? this.createdAt,
       imageUrl: imageUrl ?? this.imageUrl,
-      usersjoined: usersjoined ?? this.usersjoined,
+      // CORREGIDO
+      usersJoined: usersJoined ?? this.usersJoined,
       skillLevel: skillLevel ?? this.skillLevel,
       type: type ?? this.type,
       format: format ?? this.format,
-      footwear: footwear ?? this.footwear, // ✅
+      footwear: footwear ?? this.footwear,
       status: status ?? this.status,
-      minPlayersToConfirm: minPlayersToConfirm ?? this.minPlayersToConfirm, // ✅
+      minPlayersToConfirm: minPlayersToConfirm ?? this.minPlayersToConfirm,
       privateCode: privateCode ?? this.privateCode,
       fieldRating: fieldRating ?? this.fieldRating,
       report: report ?? this.report,
+      // CORREGIDO
+      usersPaid: usersPaid ?? this.usersPaid,
     );
   }
 }

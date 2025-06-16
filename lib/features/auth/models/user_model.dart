@@ -1,3 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+
+@immutable
 class UserModel {
   final String uid;
   final String fullName;
@@ -11,13 +15,20 @@ class UserModel {
   final int reports;
   final int totalGamesCreated;
   final int totalGamesJoined;
-  final double rating;
   final String position;
   final String skillLevel;
-  final DateTime lastLoginAt;
-  final DateTime createdAt;
+  final DateTime? lastLoginAt;
+  final DateTime? createdAt;
   final String notesByAdmin;
-  final VerificationData verification;
+  final VerificationData? verification;
+  final List<String> friends;
+  final List<String> friendRequestsSent;
+  final List<String> friendRequestsReceived;
+  final int ratingCount;
+  final double ratingSum;
+  final List<String> blockedUsers;
+
+  double get averageRating => (ratingCount > 0) ? ratingSum / ratingCount : 0.0;
 
   UserModel({
     required this.uid,
@@ -32,13 +43,18 @@ class UserModel {
     required this.reports,
     required this.totalGamesCreated,
     required this.totalGamesJoined,
-    required this.rating,
     required this.position,
     required this.skillLevel,
-    required this.lastLoginAt,
-    required this.createdAt,
+    this.lastLoginAt,
+    this.createdAt,
     required this.notesByAdmin,
-    required this.verification,
+    this.verification,
+    required this.friends,
+    required this.friendRequestsSent,
+    required this.friendRequestsReceived,
+    required this.ratingCount,
+    required this.ratingSum,
+    required this.blockedUsers,
   });
 
   factory UserModel.fromMap(Map<String, dynamic> map, String uid) {
@@ -55,13 +71,18 @@ class UserModel {
       reports: map['reports'] ?? 0,
       totalGamesCreated: map['totalGamesCreated'] ?? 0,
       totalGamesJoined: map['totalGamesJoined'] ?? 0,
-      rating: (map['rating'] ?? 0).toDouble(),
       position: map['position'] ?? '',
       skillLevel: map['skillLevel'] ?? '',
-      lastLoginAt: DateTime.parse(map['lastLoginAt']),
-      createdAt: DateTime.parse(map['createdAt']),
+      lastLoginAt: map['lastLoginAt'] is Timestamp ? (map['lastLoginAt'] as Timestamp).toDate() : null,
+      createdAt: map['createdAt'] is Timestamp ? (map['createdAt'] as Timestamp).toDate() : null,
       notesByAdmin: map['notesByAdmin'] ?? '',
-      verification: VerificationData.fromMap(map['verification']),
+      verification: map['verification'] != null ? VerificationData.fromMap(map['verification']) : null,
+      friends: List<String>.from(map['friends'] ?? []),
+      friendRequestsSent: List<String>.from(map['friendRequestsSent'] ?? []),
+      friendRequestsReceived: List<String>.from(map['friendRequestsReceived'] ?? []),
+      ratingCount: map['ratingCount'] ?? 0,
+      ratingSum: (map['ratingSum'] ?? 0.0).toDouble(),
+      blockedUsers: List<String>.from(map['blockedUsers'] ?? []),
     );
   }
 
@@ -78,24 +99,85 @@ class UserModel {
       'reports': reports,
       'totalGamesCreated': totalGamesCreated,
       'totalGamesJoined': totalGamesJoined,
-      'rating': rating,
       'position': position,
       'skillLevel': skillLevel,
-      'lastLoginAt': lastLoginAt.toIso8601String(),
-      'createdAt': createdAt.toIso8601String(),
+      'lastLoginAt': lastLoginAt != null ? Timestamp.fromDate(lastLoginAt!) : null,
+      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : null,
       'notesByAdmin': notesByAdmin,
-      'verification': verification.toMap(),
+      'verification': verification?.toMap(),
+      'friends': friends,
+      'friendRequestsSent': friendRequestsSent,
+      'friendRequestsReceived': friendRequestsReceived,
+      'ratingCount': ratingCount,
+      'ratingSum': ratingSum,
+      'blockedUsers': blockedUsers,
     };
+  }
+
+  UserModel copyWith({
+    String? uid,
+    String? fullName,
+    String? username,
+    String? email,
+    String? phone,
+    String? profileImageUrl,
+    bool? isVerified,
+    bool? blocked,
+    String? banReason,
+    int? reports,
+    int? totalGamesCreated,
+    int? totalGamesJoined,
+    String? position,
+    String? skillLevel,
+    DateTime? lastLoginAt,
+    DateTime? createdAt,
+    String? notesByAdmin,
+    VerificationData? verification,
+    List<String>? friends,
+    List<String>? friendRequestsSent,
+    List<String>? friendRequestsReceived,
+    int? ratingCount,
+    double? ratingSum,
+    List<String>? blockedUsers,
+  }) {
+    return UserModel(
+      uid: uid ?? this.uid,
+      fullName: fullName ?? this.fullName,
+      username: username ?? this.username,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      isVerified: isVerified ?? this.isVerified,
+      blocked: blocked ?? this.blocked,
+      banReason: banReason ?? this.banReason,
+      reports: reports ?? this.reports,
+      totalGamesCreated: totalGamesCreated ?? this.totalGamesCreated,
+      totalGamesJoined: totalGamesJoined ?? this.totalGamesJoined,
+      position: position ?? this.position,
+      skillLevel: skillLevel ?? this.skillLevel,
+      lastLoginAt: lastLoginAt ?? this.lastLoginAt,
+      createdAt: createdAt ?? this.createdAt,
+      notesByAdmin: notesByAdmin ?? this.notesByAdmin,
+      verification: verification ?? this.verification,
+      friends: friends ?? this.friends,
+      friendRequestsSent: friendRequestsSent ?? this.friendRequestsSent,
+      friendRequestsReceived: friendRequestsReceived ?? this.friendRequestsReceived,
+      ratingCount: ratingCount ?? this.ratingCount,
+      ratingSum: ratingSum ?? this.ratingSum,
+      blockedUsers: blockedUsers ?? this.blockedUsers,
+    );
   }
 }
 
+
+@immutable
 class VerificationData {
   final String idCardUrl;
   final String faceImageUrl;
-  final String status; // e.g. 'pending', 'approved', 'rejected'
+  final String status;
   final String? rejectionReason;
 
-  VerificationData({
+  const VerificationData({
     required this.idCardUrl,
     required this.faceImageUrl,
     required this.status,
@@ -119,6 +201,4 @@ class VerificationData {
       'rejectionReason': rejectionReason,
     };
   }
-
 }
-

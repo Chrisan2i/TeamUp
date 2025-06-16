@@ -75,7 +75,7 @@ class GameController extends ChangeNotifier {
       if (!game.isPublic) return false;
 
       // ⛔ Ocultar si ya está unido (opcional)
-      if (game.usersjoined.contains(currentUserId)) return false;
+      if (game.usersJoined.contains(currentUserId)) return false;
 
       // 📅 Filtro por fecha exacta
       if (selectedDate != null) {

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../core/constant/app_sizes.dart';
-import '../../../core/constant/colors.dart';
-import '../../../models/game_model.dart';
-import 'join_game_botton.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
+import 'package:teamup/models/game_model.dart';
+import '../../../core/constant/app_sizes.dart';
+import 'join_game_botton.dart'; // Asegúrate que la ruta es correcta
 
 class GameCardButtons extends StatelessWidget {
   final GameModel game;
@@ -13,6 +11,7 @@ class GameCardButtons extends StatelessWidget {
   final void Function(GameModel)? onLeave;
   final bool showRateButton;
   final void Function(GameModel)? onRate;
+  final void Function(GameModel)? onPay;
 
   const GameCardButtons({
     super.key,
@@ -22,58 +21,121 @@ class GameCardButtons extends StatelessWidget {
     this.onLeave,
     this.showRateButton = false,
     this.onRate,
+    this.onPay,
   });
 
   @override
   Widget build(BuildContext context) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) {
+      return const SizedBox.shrink();
+    }
 
-    // ✅ Verifica si el usuario ya está unido al partido
-    final isUserJoined = currentUserId != null &&
-        game.usersjoined.contains(currentUserId);
+    final isUserJoined = game.usersJoined.contains(currentUserId);
+    final isUserPaid = game.usersPaid.contains(currentUserId);
 
+
+
+    // Si el partido ya pasó
     if (isPast) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (showRateButton && onRate != null)
-            OutlinedButton.icon(
-              onPressed: () => onRate!(game),
-              icon: const Icon(Icons.star_border),
-              label: const Text('Calificar Partido'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.black,
-                side: const BorderSide(color: Color(0xFF0CC0DF)),
-                minimumSize: const Size.fromHeight(kButtonHeight),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(kBorderRadius),
-                ),
-              ),
-            ),
-        ],
+      if (showRateButton && isUserJoined && onRate != null) {
+        return _buildRateButton(context);
+      }
+      return const SizedBox.shrink();
+    }
+
+
+    if (isUserJoined) {
+      final bool needsToPay = game.price > 0 && !isUserPaid && onPay != null;
+      if (needsToPay) {
+        return _buildPayButton(context);
+      }
+      if (showLeaveButton && onLeave != null) {
+        return _buildLeaveButton(context);
+      }
+
+      return Container(
+        alignment: Alignment.center,
+        height: 48,
+        child: Text(
+          isUserPaid ? "Pagado y Confirmado" : "Ya estás unido",
+          style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.bold),
+        ),
       );
     }
 
-    // ✅ Mostrar botón de salir si ya está unido
-    if (isUserJoined && onLeave != null) {
-      return ElevatedButton(
-        onPressed: () => onLeave!(game),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red,
-          foregroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(kButtonHeight),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(kBorderRadius),
+    final bool isGameFull = game.usersJoined.length >= game.playerCount;
+
+    if (!isGameFull) {
+
+      return _buildJoinButton(context);
+    } else {
+
+      return Container(
+        height: 48,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          "Partido Lleno",
+          style: TextStyle(
+            color: Colors.grey.shade600,
+            fontWeight: FontWeight.w500,
           ),
         ),
-        child: const Text('Salir del Partido'),
       );
     }
+  }
 
-    // 👉 Botón por defecto para unirse
+
+  Widget _buildPayButton(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: () => onPay!(game),
+      icon: const Icon(Icons.payment),
+      label: Text('Pagar \$${game.price.toStringAsFixed(2)}'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF007BFF),
+        foregroundColor: Colors.white,
+        minimumSize: const Size.fromHeight(kButtonHeight),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
+  Widget _buildLeaveButton(BuildContext context) {
+    return OutlinedButton(
+      onPressed: () => onLeave!(game),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.red,
+        side: const BorderSide(color: Colors.red),
+        minimumSize: const Size.fromHeight(kButtonHeight),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
+      ),
+      child: const Text('Salir del Partido'),
+    );
+  }
+
+  Widget _buildRateButton(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: () => onRate!(game),
+      icon: const Icon(Icons.star_border, color: Color(0xFF0CC0DF)),
+      label: const Text('Calificar Partido'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.black,
+        side: const BorderSide(color: Color(0xFF0CC0DF)),
+        minimumSize: const Size.fromHeight(kButtonHeight),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
+      ),
+    );
+  }
+
+  Widget _buildJoinButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(
+      child: OutlinedButton(
         onPressed: () {
           showModalBottomSheet(
             context: context,
@@ -84,18 +146,12 @@ class GameCardButtons extends StatelessWidget {
             builder: (_) => JoinGameBottom(game: game),
           );
         },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF0CC0DF),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          textStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.black87,
+          minimumSize: const Size.fromHeight(48),
+          side: BorderSide(color: Colors.grey.shade400, width: 1.5),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         child: const Text('Join Game'),
       ),

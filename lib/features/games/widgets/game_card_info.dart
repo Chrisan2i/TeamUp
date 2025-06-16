@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:teamup/models/game_model.dart';
-import '../../../core/constant/colors.dart';
 import '../../../core/constant/app_sizes.dart';
 
 class GameCardInfo extends StatelessWidget {
   final GameModel game;
-  final int remainingSpots;
 
-  const GameCardInfo({
-    super.key,
-    required this.game,
-    required this.remainingSpots,
-  });
+
+  const GameCardInfo({super.key, required this.game});
+
 
   String _buildTimeRange(String startHour, double duration) {
     try {
@@ -19,18 +15,13 @@ class GameCardInfo extends StatelessWidget {
       final hour = int.parse(parts[0]);
       final minute = int.parse(parts[1]);
       final start = TimeOfDay(hour: hour, minute: minute);
-
       final totalMinutes = (duration * 60).toInt();
       final endMinute = minute + totalMinutes;
       final endHour = hour + endMinute ~/ 60;
       final finalMinute = endMinute % 60;
-
       final end = TimeOfDay(hour: endHour, minute: finalMinute);
-
-      String format(TimeOfDay t) =>
-          '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
-
-      return '${format(start)} – ${format(end)}';
+      String format(TimeOfDay t) => '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+      return '${format(start)} - ${format(end)}';
     } catch (_) {
       return startHour;
     }
@@ -38,70 +29,81 @@ class GameCardInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final remainingSpots = game.playerCount - game.usersJoined.length;
+
+
     return Padding(
-      padding: const EdgeInsets.all(kPaddingMedium),
+      padding: const EdgeInsets.only(top: kPaddingMedium, bottom: kPaddingMedium),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🎉 Título
-          Text(
-            game.description,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
 
-          const SizedBox(height: 6),
-
-          // 📍 Lugar y grupo
-          Text(
-            '@${game.fieldName} | ${game.zone}',
-            style: const TextStyle(
-              fontSize: 13,
-              color: Colors.black54,
-            ),
-          ),
-
-          const SizedBox(height: 6),
-
-          // ⏰ Hora
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.access_time, size: 18, color: Colors.black54),
-              const SizedBox(width: 6),
-              Text(
-                _buildTimeRange(game.hour, game.duration),
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+              // Info del juego
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "🎉 ${game.description} 🎉",
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '@${game.fieldName} | ${game.zone}',
+                      style: const TextStyle(fontSize: 13, color: Colors.black54),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _buildTimeRange(game.hour, game.duration),
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black),
+                    ),
+                  ],
                 ),
+              ),
+              const SizedBox(width: 12),
+              // Estado del juego
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    game.status.toUpperCase(),
+                    style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  if (remainingSpots > 0)
+                    Text(
+                      '$remainingSpots Spot${remainingSpots == 1 ? '' : 's'} left!',
+                      style: const TextStyle(fontSize: 13, color: Colors.red, fontWeight: FontWeight.w500),
+                    ),
+                ],
               ),
             ],
           ),
-
-          const SizedBox(height: 12),
-
-          // 🏷️ Etiquetas estilo fila de detalles
+          const SizedBox(height: 16),
+          // "GAME DETAILS"
+          const Text(
+            'GAME DETAILS',
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
+          ),
+          const SizedBox(height: 8),
+          // Fila para etiquetas y precio
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
                   _buildTag(game.skillLevel),
-                  const SizedBox(width: 8),
+                  _buildSeparator(),
                   _buildTag('${game.duration}h'),
-                  const SizedBox(width: 8),
+                  _buildSeparator(),
                   _buildTag(game.format),
                 ],
               ),
               Text(
                 'Price: \$${game.price.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black87),
               ),
             ],
           ),
@@ -110,20 +112,16 @@ class GameCardInfo extends StatelessWidget {
     );
   }
 
+  // Las etiquetas ahora son texto plano
   Widget _buildTag(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
+    return Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black87));
+  }
+
+  // Separador para las etiquetas
+  Widget _buildSeparator() {
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8.0),
+      child: Text('|', style: TextStyle(fontSize: 13, color: Colors.grey)),
     );
   }
 }
