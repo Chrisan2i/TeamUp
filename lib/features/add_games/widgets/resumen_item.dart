@@ -1,39 +1,57 @@
+
 import 'package:flutter/material.dart';
 
 class ResumenItem extends StatelessWidget {
+  final IconData icon;
   final String label;
-  final String value;
+  final String? value;
 
   const ResumenItem({
     super.key,
+    required this.icon,
     required this.label,
-    required this.value,
+    this.value,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF6B7280),
-            ),
+    final isAvailable = value?.isNotEmpty == true;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: Colors.grey.shade700),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                isAvailable ? value! : 'No disponible',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: isAvailable ? Colors.black : Colors.grey,
+                ),
+                textHeightBehavior: const TextHeightBehavior(
+                  applyHeightToFirstAscent: false,
+                  applyHeightToLastDescent: false,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 6),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF111827),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

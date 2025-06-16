@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
 import 'package:teamup/core/widgets/custom_botton_navbar.dart';
 import 'package:teamup/features/add_games/add_game_view.dart';
 import 'package:teamup/features/bookings/widgets/bookings_game_list.dart';
 import 'package:teamup/features/bookings/widgets/bookings_tab_bar.dart';
 import 'package:teamup/models/game_model.dart';
-
 import 'package:teamup/features/profile/profile_view.dart';
 import 'package:teamup/features/games/game_home_view.dart';
+import 'package:teamup/services/game_players_service.dart';
 
 class BookingsView extends StatefulWidget {
   const BookingsView({super.key});
@@ -38,12 +37,12 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
         context,
         MaterialPageRoute(builder: (_) => const GameHomeView()),
       );
-    }else if (index == 1) {
+    } else if (index == 1) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const BookingsView()),
       );
-    }else if (index == 3) {
+    } else if (index == 3) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const ProfileView()),
@@ -64,11 +63,8 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
     final now = DateTime.now();
     final snapshot = await FirebaseFirestore.instance.collection('games').get();
 
-    final allGames = snapshot.docs
-        .map((doc) => GameModel.fromMap(doc.data()))
-        .toList();
-    final joinedGames = allGames.where((game) =>
-        game.usersjoined.contains(userId)).toList();
+    final allGames = snapshot.docs.map((doc) => GameModel.fromMap(doc.data())).toList();
+    final joinedGames = allGames.where((game) => game.usersjoined.contains(userId)).toList();
 
     final upcoming = <GameModel>[];
     final past = <GameModel>[];
@@ -95,16 +91,32 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
     });
   }
 
-
-    Future<void> _leaveGame(GameModel game) async {
-    if (userId == null) return;
-    final docRef = FirebaseFirestore.instance.collection('games').doc(game.id);
-    final newUsers = List<String>.from(game.usersjoined)..remove(userId);
-    await docRef.update({"usersjoined": newUsers});
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Has salido del partido.")),
+  Future<void> _leaveGame(GameModel game) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("¿Salir del partido?"),
+        content: const Text("¿Estás seguro de que deseas salir de este partido?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancelar")),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Salir")),
+        ],
+      ),
     );
-    await _fetchBookings();
+
+    if (confirm != true) return;
+
+    final success = await GamePlayersService().leaveGame(game);
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Has salido del partido.")),
+      );
+      await _fetchBookings();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error al salir del partido.")),
+      );
+    }
   }
 
   @override
