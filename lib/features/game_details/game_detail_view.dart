@@ -58,7 +58,7 @@ class _GameDetailViewState extends State<GameDetailView> with TickerProviderStat
 
           return Stack(
             children: [
-              // 1. FONDO: La imagen (no se desplaza)
+              // FONDO: La imagen (no se desplaza)
               Positioned(
                 top: 0,
                 left: 0,
@@ -74,18 +74,13 @@ class _GameDetailViewState extends State<GameDetailView> with TickerProviderStat
                 ),
               ),
 
-              // 2. CONTENIDO SCROLLEABLE
+              // CONTENIDO SCROLLEABLE
               SingleChildScrollView(
                 child: Column(
                   children: [
-                    // Espaciador para empujar el contenido hacia abajo
                     const SizedBox(height: 170),
-
-                    // Aquí usamos tu widget de header modificado
                     GameDetailHeader(game: game),
-                    const SizedBox(height: 24), // Espacio entre la tarjeta y los tabs
-
-                    // Barra de TABS
+                    const SizedBox(height: 24),
                     TabBar(
                       controller: _tabController,
                       labelColor: const Color(0xFF10B981),
@@ -98,8 +93,6 @@ class _GameDetailViewState extends State<GameDetailView> with TickerProviderStat
                         Tab(text: 'MAP'),
                       ],
                     ),
-
-                    // Contenido de las TABS
                     IndexedStack(
                       index: _tabController.index,
                       children: [
@@ -108,11 +101,12 @@ class _GameDetailViewState extends State<GameDetailView> with TickerProviderStat
                         Visibility(visible: _tabController.index == 2, child: MapTabView(game: game)),
                       ],
                     ),
+                    const SizedBox(height: 100),
                   ],
                 ),
               ),
 
-              // 3. BOTONES SUPERIORES (fijos, no se desplazan)
+              // BOTONES SUPERIORES (fijos, no se desplazan)
               Positioned(
                 top: 50,
                 left: 16,
@@ -120,8 +114,11 @@ class _GameDetailViewState extends State<GameDetailView> with TickerProviderStat
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _iconCircle(Icons.close, () => Navigator.pop(context)),
+                    // --- CAMBIO AQUÍ: Se reemplaza el ícono de 'close' por una flecha de 'back' ---
+                    _iconCircle(Icons.arrow_back_ios_new, () => Navigator.pop(context)),
+
                     const Text('Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white, shadows: [Shadow(color: Colors.black, blurRadius: 4)])),
+
                     Row(
                       children: [
                         _iconCircle(Icons.chat_bubble_outline, () {}),
@@ -138,7 +135,6 @@ class _GameDetailViewState extends State<GameDetailView> with TickerProviderStat
           );
         },
       ),
-      // BARRA INFERIOR (fija, no se desplaza)
       bottomNavigationBar: StreamBuilder<DocumentSnapshot>(
           stream: FirebaseFirestore.instance.collection('games').doc(widget.game.id).snapshots(),
           builder: (context, snapshot) {
@@ -158,7 +154,6 @@ class _GameDetailViewState extends State<GameDetailView> with TickerProviderStat
     );
   }
 
-  // Widget de construcción para los iconos superiores
   Widget _iconCircle(IconData icon, VoidCallback onPressed) {
     return GestureDetector(
       onTap: onPressed,

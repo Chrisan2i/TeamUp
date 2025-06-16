@@ -1,4 +1,3 @@
-// 📁 profile_view.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:teamup/features/profile/widgets/profile.dart';
@@ -7,6 +6,7 @@ import 'package:teamup/features/add_games/add_game_view.dart';
 import 'package:teamup/features/games/game_home_view.dart';
 import 'package:teamup/features/settings/setting_view.dart';
 import 'package:teamup/features/bookings/bookings_view.dart';
+import 'package:teamup/features/chat/views/messages_view.dart';
 
 class ProfileView extends StatelessWidget {
   final List<String> initialSelectedCategories;
@@ -27,7 +27,13 @@ class ProfileView extends StatelessWidget {
           context,
           MaterialPageRoute(builder: (_) => const BookingsView()),
         );
-      }else if (index == 3) {
+      }else if (index == 2) {
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MessagesView()),
+      );
+    }else if (index == 3) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const ProfileView()),
