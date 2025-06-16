@@ -20,7 +20,7 @@ class FieldModel {
   final String footwear;
   final String contact;
 
-  // 🔽 Campos nuevos
+
   final bool hasDiscount;
   final double? discountPercentage;
   final int minPlayersToBook;

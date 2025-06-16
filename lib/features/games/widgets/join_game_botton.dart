@@ -1,7 +1,6 @@
-// Archivo: join_game_bottom.dart (versión final, compatible con tu GameModel)
-
 import 'package:flutter/material.dart';
-import 'package:teamup/models/game_model.dart'; // Asegúrate de que esta ruta sea correcta
+import 'package:teamup/models/game_model.dart';
+import 'package:teamup/services/game_players_service.dart';
 
 class JoinGameBottom extends StatefulWidget {
   final GameModel game;
@@ -15,6 +14,7 @@ class JoinGameBottom extends StatefulWidget {
 class _JoinGameBottomState extends State<JoinGameBottom> {
   int guestCount = 0;
   String _selectedPaymentMethod = 'Pago Móvil';
+  bool _isJoining = false; // NUEVO: Estado para manejar la carga y deshabilitar el botón
 
   void _showPaymentMethodsSheet() {
     showModalBottomSheet(
@@ -48,7 +48,6 @@ class _JoinGameBottomState extends State<JoinGameBottom> {
     final totalPeople = 1 + guestCount;
     final totalFinal = game.price * totalPeople;
 
-    const primaryColor = Color(0xFF008060);
     const textColor = Color(0xFF1C1C1E);
     const subtextColor = Color(0xFF8A8A8E);
 
@@ -81,6 +80,7 @@ class _JoinGameBottomState extends State<JoinGameBottom> {
                 ),
               ),
             ),
+            // El botón ahora usa la lógica corregida
             _buildLetsPlayButton(spotsLeft),
           ],
         ),
@@ -88,7 +88,7 @@ class _JoinGameBottomState extends State<JoinGameBottom> {
     );
   }
 
-  // --- Widgets de construcción para un código limpio ---
+
 
   Widget _buildHeader(BuildContext context, int spotsLeft) {
     return Column(
@@ -140,7 +140,6 @@ class _JoinGameBottomState extends State<JoinGameBottom> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(game.fieldName, style: TextStyle(fontSize: 16, color: textColor)),
-                  // --- CAMBIO AQUÍ: Se usa game.zone para la dirección, como en tu GameModel ---
                   Text(game.zone, style: TextStyle(fontSize: 14, color: subtextColor)),
                 ],
               ),
@@ -177,10 +176,10 @@ class _JoinGameBottomState extends State<JoinGameBottom> {
               _CounterButton(
                 icon: Icons.add,
                 onPressed: () {
-                  if (guestCount + 1 < spotsLeft) {
+                  if (1 + guestCount < spotsLeft) { // Se cuenta el jugador actual + invitados
                     setState(() => guestCount++);
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Not enough spots for more guests.")));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No hay suficientes lugares para más invitados.")));
                   }
                 },
               ),
@@ -245,26 +244,71 @@ class _JoinGameBottomState extends State<JoinGameBottom> {
     );
   }
 
+
   Widget _buildLetsPlayButton(int spotsLeft) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: spotsLeft > 0 ? () async {
-          final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+        onPressed: (spotsLeft > 0 && !_isJoining)
+            ? () async {
+
+          setState(() => _isJoining = true);
+
+
+          final gameService = GamePlayersService();
           final navigator = Navigator.of(context);
+          final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-          scaffoldMessenger.showSnackBar(const SnackBar(content: Text("Simulando confirmación... Lógica de pago real no implementada.")));
 
-          await Future.delayed(const Duration(seconds: 1));
-          navigator.pop();
-          scaffoldMessenger.showSnackBar(const SnackBar(content: Text("¡Te uniste al partido!")));
-        } : null,
+          final bool success = await gameService.joinGame(widget.game);
+
+
+          if (mounted) {
+            setState(() => _isJoining = false);
+          }
+
+          if (!mounted) return; // Evita errores si el widget se desmontó
+
+
+          if (success) {
+            scaffoldMessenger.showSnackBar(const SnackBar(
+              content: Text("✅ ¡Te has unido al partido!"),
+              backgroundColor: Colors.green,
+            ));
+            navigator.pop(); // Cerrar el bottom sheet en caso de éxito
+          } else {
+            scaffoldMessenger.showSnackBar(const SnackBar(
+              content: Text("❌ Error al unirse. El partido puede estar lleno o ya estás dentro."),
+              backgroundColor: Colors.red,
+            ));
+          }
+        }
+            : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF008060),
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          disabledBackgroundColor: Colors.grey.shade400, // Color para estado deshabilitado
         ),
-        child: const Text("Let's Play", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+
+        child: _isJoining
+            ? const SizedBox(
+          height: 24,
+          width: 24,
+          child: CircularProgressIndicator(
+            color: Colors.white,
+            strokeWidth: 3,
+          ),
+        )
+            : const Text(
+          "Let's Play",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }
@@ -286,8 +330,7 @@ class _JoinGameBottomState extends State<JoinGameBottom> {
   }
 }
 
-// --- El resto de los widgets (_CounterButton, _PaymentMethodsView, _PaymentMethodTile) no necesitan cambios ---
-// ... (puedes copiar y pegar el resto de los widgets de la respuesta anterior aquí)
+
 class _CounterButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onPressed;
