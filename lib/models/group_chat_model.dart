@@ -3,42 +3,54 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class GroupChatModel {
   final String id;
   final String name;
+  final String? groupImageUrl; // Puede ser nulo
   final String creatorId;
-  final List<String> members;
+  final List<String> participants;
+  final List<String> admins;
   final String lastMessage;
-  final DateTime lastUpdated;
-  final bool isActive;
+  final Timestamp lastUpdated;
+  final String? lastMessageSenderName; // Puede ser nulo
 
   GroupChatModel({
     required this.id,
     required this.name,
+    this.groupImageUrl,
     required this.creatorId,
-    required this.members,
+    required this.participants,
+    required this.admins,
     required this.lastMessage,
     required this.lastUpdated,
-    required this.isActive,
+    this.lastMessageSenderName,
   });
 
-  factory GroupChatModel.fromMap(Map<String, dynamic> map, String docId) {
+  // Método para crear una instancia del modelo desde un mapa de Firestore
+  factory GroupChatModel.fromMap(Map<String, dynamic> map, String id) {
     return GroupChatModel(
-      id: docId,
-      name: map['name'] ?? '',
+      id: id,
+      name: map['name'] ?? 'Grupo sin nombre',
+      groupImageUrl: map['groupImageUrl'],
       creatorId: map['creatorId'] ?? '',
-      members: List<String>.from(map['members'] ?? []),
+      // Aseguramos que participants sea una lista de strings
+      participants: List<String>.from(map['participants'] ?? []),
+      admins: List<String>.from(map['admins'] ?? []),
       lastMessage: map['lastMessage'] ?? '',
-      lastUpdated: (map['lastUpdated'] as Timestamp).toDate(),
-      isActive: map['isActive'] ?? true,
+      // Si lastUpdated no existe, usamos un Timestamp del presente
+      lastUpdated: map['lastUpdated'] ?? Timestamp.now(),
+      lastMessageSenderName: map['lastMessageSenderName'],
     );
   }
 
+  // Método para convertir el modelo a un mapa para Firestore (útil al crear/actualizar)
   Map<String, dynamic> toMap() {
     return {
       'name': name,
+      'groupImageUrl': groupImageUrl,
       'creatorId': creatorId,
-      'members': members,
+      'participants': participants,
+      'admins': admins,
       'lastMessage': lastMessage,
-      'lastUpdated': Timestamp.fromDate(lastUpdated),
-      'isActive': isActive,
+      'lastUpdated': lastUpdated,
+      'lastMessageSenderName': lastMessageSenderName,
     };
   }
 }

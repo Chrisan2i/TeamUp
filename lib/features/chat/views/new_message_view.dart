@@ -1,4 +1,3 @@
-// lib/features/chat/views/new_message_view.dart
 import 'package:flutter/material.dart';
 import '../widgets/custom_search_bar.dart';
 import '../widgets/empty_state_widget.dart';

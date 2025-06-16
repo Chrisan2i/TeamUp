@@ -1,5 +1,3 @@
-// Archivo: lib/features/chat/views/chat_view.dart
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,12 +8,13 @@ import '../widgets/message_input_bar.dart';
 class ChatView extends StatefulWidget {
   final String chatId;
   final String recipientName;
-
+  final String recipientId; // <-- AÑADIR ESTA LÍNEA
 
   const ChatView({
     super.key,
     required this.chatId,
     required this.recipientName,
+    required this.recipientId, // <-- AÑADIR ESTA LÍNEA
   });
 
   @override
@@ -25,14 +24,13 @@ class ChatView extends StatefulWidget {
 class _ChatViewState extends State<ChatView> {
   final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
-
   void _sendMessage(String content) {
     if (content.trim().isEmpty) return;
 
     final messageData = MessageModel(
       id: '',
       senderId: currentUserId,
-      receiverId: widget.chatId, // En chat privado, el receiverID es el ID del chat
+      receiverId: widget.recipientId, // <-- CORREGIR ESTA LÍNEA
       content: content,
       timestamp: DateTime.now(),
       isGroup: false,
@@ -55,6 +53,7 @@ class _ChatViewState extends State<ChatView> {
 
   @override
   Widget build(BuildContext context) {
+    // ... el resto del archivo build() permanece igual ...
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -92,23 +91,13 @@ class _ChatViewState extends State<ChatView> {
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
-
-
-
                     final data = messages[index].data();
-
-
                     if (data != null && data is Map<String, dynamic>) {
-
                       final message = MessageModel.fromMap(data, messages[index].id);
                       final isMe = message.senderId == currentUserId;
                       return MessageBubble(message: message, isMe: isMe);
                     }
-
-
                     return const SizedBox.shrink();
-
-
                   },
                 );
               },

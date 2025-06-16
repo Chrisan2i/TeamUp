@@ -1,9 +1,16 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+
+// Vistas y Modelos
 import 'package:teamup/features/auth/models/user_model.dart';
+import 'package:teamup/models/private_chat_model.dart';
 import 'package:teamup/features/player_profile/player_profile_view.dart';
+import 'package:teamup/features/chat/views/chat_view.dart';
+
+// Servicios
 import 'package:teamup/features/auth/services/user_service.dart';
+import 'package:teamup/services/private_chat_service.dart';
 
 class GameRosterSection extends StatefulWidget {
   final List<String> userIds;
@@ -16,6 +23,7 @@ class GameRosterSection extends StatefulWidget {
 class _GameRosterSectionState extends State<GameRosterSection> {
   late Future<List<UserModel>> _playersFuture;
   final UserService _userService = UserService();
+  final PrivateChatService _privateChatService = PrivateChatService();
   final String? _currentUserId = FirebaseAuth.instance.currentUser?.uid;
 
   @override
@@ -24,10 +32,11 @@ class _GameRosterSectionState extends State<GameRosterSection> {
     _playersFuture = fetchPlayers();
   }
 
-  /// Carga los perfiles de los jugadores iniciales.
   Future<List<UserModel>> fetchPlayers() async {
     final firestore = FirebaseFirestore.instance;
     List<UserModel> users = [];
+    if (widget.userIds.isEmpty) return users; // Evita errores si la lista está vacía
+
     final playerDocs = await Future.wait(
         widget.userIds.map((uid) => firestore.collection('users').doc(uid).get()));
     for (var doc in playerDocs) {
@@ -38,7 +47,6 @@ class _GameRosterSectionState extends State<GameRosterSection> {
     return users;
   }
 
-  /// Llama al servicio para enviar una solicitud de amistad y muestra feedback.
   void _sendFriendRequest(UserModel targetPlayer) async {
     if (_currentUserId == null) return;
 
@@ -54,9 +62,70 @@ class _GameRosterSectionState extends State<GameRosterSection> {
     }
   }
 
+  /// Inicia o abre un chat con un jugador y navega a la vista de chat.
+  void _handleSendMessage(BuildContext modalContext, UserModel targetPlayer) async {
+    if (_currentUserId == null) return;
+
+    // Cierra el modal primero
+    Navigator.pop(modalContext);
+
+    try {
+
+
+      final ids = [_currentUserId!, targetPlayer.uid]..sort();
+      String potentialChatId = ids.join('_');
+
+
+      final chatDoc = await FirebaseFirestore.instance.collection('private_chats').doc(potentialChatId).get();
+
+      String chatId;
+
+      if (chatDoc.exists) {
+
+        chatId = chatDoc.id;
+      } else {
+
+        chatId = potentialChatId;
+
+        final newChat = PrivateChatModel(
+          id: chatId,
+          userA: _currentUserId!,
+          userB: targetPlayer.uid,
+          participants: [_currentUserId!, targetPlayer.uid],
+          lastMessage: '',
+          lastUpdated: DateTime.now(),
+          isBlocked: false,
+        );
+
+
+        await _privateChatService.createChat(newChat);
+      }
+
+      // 4. Navega a la vista de chat con los datos necesarios
+      if (mounted) { // Buena práctica: verificar que el widget sigue en el árbol
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatView(
+              chatId: chatId,
+              recipientName: targetPlayer.fullName,
+              recipientId: targetPlayer.uid,
+            ),
+          ),
+        );
+      }
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Could not open chat: $e")),
+        );
+      }
+    }
+  }
+
   /// Muestra el modal con opciones para un jugador, con UI reactiva.
   void _showPlayerOptions(BuildContext context, UserModel player) {
-    // No se muestra el modal si el jugador es el usuario actual.
     if (player.uid == _currentUserId) return;
 
     showModalBottomSheet(
@@ -64,13 +133,11 @@ class _GameRosterSectionState extends State<GameRosterSection> {
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) {
-        // StreamBuilder para que la UI se actualice en tiempo real según la relación de amistad.
         return StreamBuilder<UserModel?>(
           stream: _userService.streamUser(_currentUserId!),
           builder: (context, snapshot) {
             final currentUserData = snapshot.data;
 
-            // Lógica para determinar el estado del botón de amistad
             String friendButtonText = 'Add Friend';
             IconData friendButtonIcon = Icons.person_add_alt_1_outlined;
             VoidCallback? friendButtonAction = () {
@@ -82,18 +149,17 @@ class _GameRosterSectionState extends State<GameRosterSection> {
               if (currentUserData.friends.contains(player.uid)) {
                 friendButtonText = 'Already Friends';
                 friendButtonIcon = Icons.check_circle_outline;
-                friendButtonAction = null; // Deshabilitado
+                friendButtonAction = null;
               } else if (currentUserData.friendRequestsSent.contains(player.uid)) {
                 friendButtonText = 'Request Sent';
                 friendButtonIcon = Icons.pending_outlined;
-                friendButtonAction = null; // Deshabilitado
+                friendButtonAction = null;
               } else if (currentUserData.friendRequestsReceived.contains(player.uid)) {
                 friendButtonText = 'Accept Request';
                 friendButtonIcon = Icons.how_to_reg_outlined;
                 friendButtonAction = () {
-                  // TODO: Implementar la llamada a _userService.acceptFriendRequest
                   Navigator.pop(ctx);
-                  // Ejemplo: _userService.acceptFriendRequest(currentUserId: _currentUserId!, friendId: player.uid);
+                  // TODO: Implementar la lógica para aceptar amistad
                 };
               }
             }
@@ -122,7 +188,6 @@ class _GameRosterSectionState extends State<GameRosterSection> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Botones de acción con estado dinámico
                   _buildOptionButton(
                     icon: friendButtonIcon,
                     text: friendButtonText,
@@ -132,7 +197,7 @@ class _GameRosterSectionState extends State<GameRosterSection> {
                   _buildOptionButton(
                     icon: Icons.chat_bubble_outline,
                     text: 'Send Message',
-                    onTap: () { /* TODO: Lógica para enviar mensaje */ },
+                    onTap: () => _handleSendMessage(ctx, player),
                   ),
                   const SizedBox(height: 12),
                   _buildOptionButton(
@@ -164,14 +229,19 @@ class _GameRosterSectionState extends State<GameRosterSection> {
           return Center(child: Text("Error: ${snapshot.error}"));
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text("No players in this game yet."));
+          return const Center(child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 24.0),
+            child: Text("No players in this game yet."),
+          ));
         }
 
-        // Filtramos al usuario actual para que no aparezca en la lista
         final players = snapshot.data!.where((p) => p.uid != _currentUserId).toList();
 
         if (players.isEmpty) {
-          return const Center(child: Text("You are the only player in this game."));
+          return const Center(child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 24.0),
+            child: Text("You are the only player in this game."),
+          ));
         }
 
         return Column(
@@ -190,7 +260,6 @@ class _GameRosterSectionState extends State<GameRosterSection> {
     );
   }
 
-  /// Construye la fila de un jugador en la lista.
   Widget _buildPlayerTile(BuildContext context, UserModel player) {
     final level = player.skillLevel;
     final badgeColor = level == "Advanced" ? const Color(0xFFFFE5E5) : const Color(0xFFF3F4F6);
@@ -230,7 +299,6 @@ class _GameRosterSectionState extends State<GameRosterSection> {
     );
   }
 
-  /// Construye el avatar de un jugador.
   Widget _buildAvatar(UserModel player) {
     final initial = player.fullName.isNotEmpty ? player.fullName[0] : '?';
     final hasProfileImage = player.profileImageUrl.isNotEmpty;
@@ -246,7 +314,6 @@ class _GameRosterSectionState extends State<GameRosterSection> {
     );
   }
 
-  /// Construye un botón de opción para el modal.
   Widget _buildOptionButton({required IconData icon, required String text, VoidCallback? onTap}) {
     final bool isEnabled = onTap != null;
     return OutlinedButton.icon(
