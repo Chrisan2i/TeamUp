@@ -1,5 +1,3 @@
-// archivo: lib/models/private_chat_model.dart
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PrivateChatModel {

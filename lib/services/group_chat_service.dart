@@ -22,7 +22,7 @@ class GroupChatService {
   /// Obtener todos los grupos donde esté el usuario
   Stream<List<GroupChatModel>> getUserGroups(String userId) {
     return groupChats
-        .where('members', arrayContains: userId)
+        .where('participants', arrayContains: userId)
         .orderBy('lastUpdated', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs

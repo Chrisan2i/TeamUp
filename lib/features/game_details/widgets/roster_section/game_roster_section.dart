@@ -1,12 +1,10 @@
-// lib/features/game/widgets/game_roster_section.dart
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 // Vistas y Modelos
 import 'package:teamup/features/auth/models/user_model.dart';
-import 'package:teamup/models/private_chat_model.dart';
+// import 'package:teamup/models/private_chat_model.dart'; // <-- Eliminado, no se usa aquí.
 import 'package:teamup/features/player_profile/player_profile_view.dart';
 import 'package:teamup/features/chat/views/chat_view.dart';
 
@@ -27,7 +25,7 @@ class _GameRosterSectionState extends State<GameRosterSection> {
   final UserService _userService = UserService();
   final PrivateChatService _privateChatService = PrivateChatService();
   final String? _currentUserId = FirebaseAuth.instance.currentUser?.uid;
-  UserModel? _currentUserData; // Variable para guardar datos del usuario actual
+  UserModel? _currentUserData;
 
   @override
   void initState() {
@@ -62,11 +60,10 @@ class _GameRosterSectionState extends State<GameRosterSection> {
     return users;
   }
 
-  // --- MÉTODOS DE ACCIÓN DE AMISTAD ---
-
+  // --- MÉTODOS DE ACCIÓN DE AMISTAD (sin cambios) ---
   void _sendFriendRequest(UserModel targetPlayer) async {
     if (_currentUserId == null || _currentUserData == null) return;
-    Navigator.pop(context); // Cierra el modal
+    Navigator.pop(context);
 
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     try {
@@ -83,7 +80,7 @@ class _GameRosterSectionState extends State<GameRosterSection> {
 
   void _acceptFriendRequest(BuildContext modalContext, UserModel requester) async {
     if (_currentUserId == null) return;
-    Navigator.pop(modalContext); // Cierra el modal
+    Navigator.pop(modalContext);
 
     try {
       await _userService.acceptFriendRequest(
@@ -98,7 +95,7 @@ class _GameRosterSectionState extends State<GameRosterSection> {
 
   void _rejectFriendRequest(BuildContext modalContext, UserModel requester) async {
     if (_currentUserId == null) return;
-    Navigator.pop(modalContext); // Cierra el modal
+    Navigator.pop(modalContext);
 
     try {
       await _userService.rejectOrCancelFriendRequest(
@@ -111,11 +108,46 @@ class _GameRosterSectionState extends State<GameRosterSection> {
     }
   }
 
-  void _handleSendMessage(BuildContext modalContext, UserModel targetPlayer) {
-    // Tu lógica original aquí, no necesita cambios.
+  void _handleSendMessage(BuildContext modalContext, UserModel targetPlayer) async {
+    if (_currentUserId == null) return;
+
+    Navigator.pop(modalContext);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      // --- ¡¡AQUÍ ESTÁ LA CORRECCIÓN!! ---
+      // La llamada a la función ahora usa parámetros con nombre, como lo pide el error.
+      String chatId = await _privateChatService.findOrCreateChat(
+        currentUserId: _currentUserId!,
+        otherUserId: targetPlayer.uid,
+      );
+
+      Navigator.pop(context);
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChatView(
+            chatId: chatId,
+            recipientName: targetPlayer.fullName,
+            recipientId: targetPlayer.uid,
+          ),
+        ),
+      );
+    } catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("No se pudo iniciar el chat: $e")),
+      );
+    }
   }
 
-  /// Muestra el modal con opciones para un jugador, con UI reactiva.
+  // Muestra el modal con opciones para un jugador, con UI reactiva.
   void _showPlayerOptions(BuildContext context, UserModel player) {
     if (player.uid == _currentUserId) return;
 
@@ -176,7 +208,7 @@ class _GameRosterSectionState extends State<GameRosterSection> {
               );
             }
 
-            // --- EL DISEÑO DEL MODAL SE MANTIENE IDÉNTICO ---
+            // --- El diseño del modal no cambia ---
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
               child: Column(
@@ -201,7 +233,7 @@ class _GameRosterSectionState extends State<GameRosterSection> {
                   ),
                   const SizedBox(height: 24),
 
-                  friendActionWidget, // Widget dinámico para la acción de amistad
+                  friendActionWidget,
 
                   const SizedBox(height: 12),
                   _buildOptionButton(
@@ -227,9 +259,9 @@ class _GameRosterSectionState extends State<GameRosterSection> {
     );
   }
 
+  // --- El resto de los widgets de construcción no cambian ---
   @override
   Widget build(BuildContext context) {
-    // Tu método build se mantiene igual, no necesita cambios.
     return FutureBuilder<List<UserModel>>(
       future: _playersFuture,
       builder: (context, snapshot) {
@@ -270,8 +302,6 @@ class _GameRosterSectionState extends State<GameRosterSection> {
       },
     );
   }
-
-
 
   Widget _buildPlayerTile(BuildContext context, UserModel player) {
     final level = player.skillLevel;
@@ -341,7 +371,6 @@ class _GameRosterSectionState extends State<GameRosterSection> {
     );
   }
 
-  // --- NUEVO HELPER WIDGET PARA BOTONES DE ACEPTAR/RECHAZAR ---
   Widget _buildSmallOptionButton({required IconData icon, required String text, required Color color, VoidCallback? onTap}) {
     return ElevatedButton.icon(
       onPressed: onTap,
@@ -350,7 +379,7 @@ class _GameRosterSectionState extends State<GameRosterSection> {
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-        padding: const EdgeInsets.symmetric(vertical: 14), // Ajusta el padding para que se vea bien
+        padding: const EdgeInsets.symmetric(vertical: 14),
         elevation: 2,
       ),
     );

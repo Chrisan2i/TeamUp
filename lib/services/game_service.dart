@@ -8,7 +8,6 @@ class GameService {
   late final CollectionReference games = _firestore.collection('games');
   late final CollectionReference groupChats = _firestore.collection('group_chats');
 
-  // Tu método updateGameStatus se mantiene igual.
   Future<void> updateGameStatus(GameModel game) async {
     final gameRef = games.doc(game.id);
     final doc = await gameRef.get();

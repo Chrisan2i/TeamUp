@@ -1,9 +1,14 @@
+// lib/features/chat/views/messages_view.dart
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:teamup/features/chat/change_notifier.dart';
 import 'package:teamup/services/private_chat_service.dart';
+
+import 'package:teamup/services/group_chat_service.dart';
+import 'package:teamup/features/chat/views/group_chat_view.dart';
 
 import 'package:teamup/models/group_chat_model.dart';
 import 'package:teamup/models/private_chat_model.dart';
@@ -35,8 +40,8 @@ class _MessagesViewState extends State<MessagesView> {
   int _selectedTabIndex = 0;
   final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
-  // Usa tu servicio de chat privado que ya tiene toda la lógica
   final PrivateChatService _privateChatService = PrivateChatService();
+  final GroupChatService _groupChatService = GroupChatService();
 
   void _handleNavigation(BuildContext context, int index) {
     if (index == 2) return;
@@ -145,11 +150,8 @@ class _MessagesViewState extends State<MessagesView> {
               orElse: () => '',
             );
 
-            if (otherUserId.isEmpty) {
-              return const SizedBox.shrink();
-            }
+            if (otherUserId.isEmpty) return const SizedBox.shrink();
 
-            // --- LÍNEA CORREGIDA #1: DECLARAMOS LA VARIABLE ---
             final bool hayMensajesSinLeer = (chat.unreadCount[currentUserId] ?? 0) > 0;
 
             return FutureBuilder<DocumentSnapshot>(
@@ -166,12 +168,13 @@ class _MessagesViewState extends State<MessagesView> {
                 return ChatListItem(
                   title: otherUser.fullName,
                   subtitle: chat.lastMessage,
-                  timestamp: chat.lastUpdated,
-                  avatarUrl: otherUser.profileImageUrl ?? '',
-                  // --- LÍNEA CORREGIDA #2: USAMOS LA VARIABLE YA DECLARADA ---
+                  // --- ¡¡AQUÍ ESTÁ LA CORRECCIÓN!! ---
+                  // Convertimos el DateTime a Timestamp antes de pasarlo
+                  timestamp: Timestamp.fromDate(chat.lastUpdated),
+                  avatarUrl: otherUser.profileImageUrl,
                   hasUnread: hayMensajesSinLeer,
+                  isGroup: false,
                   onTap: () {
-                    // --- LÍNEA CORREGIDA #3: MARCAMOS COMO LEÍDO ANTES DE NAVEGAR ---
                     if (hayMensajesSinLeer) {
                       _privateChatService.markChatAsRead(chat.id, currentUserId);
                     }
@@ -196,22 +199,63 @@ class _MessagesViewState extends State<MessagesView> {
   }
 
   Widget _buildGroupChatsList() {
-    // ... tu código existente para grupos ...
-    // Puedes dejarlo como está por ahora
-    return const EmptyStateWidget(
-      icon: Icons.group_outlined,
-      message: "No Groups Yet",
+    return StreamBuilder<List<GroupChatModel>>(
+      stream: _groupChatService.getUserGroups(currentUserId),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          debugPrint("Error al cargar grupos: ${snapshot.error}");
+          return const Center(child: Text("Error al cargar los grupos."));
+        }
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const EmptyStateWidget(
+            icon: Icons.group_outlined,
+            message: "No Groups Yet",
+          );
+        }
+
+        final groups = snapshot.data!;
+
+        return ListView.builder(
+          itemCount: groups.length,
+          itemBuilder: (context, index) {
+            final group = groups[index];
+
+            final subtitle = (group.lastMessageSenderName != null && group.lastMessageSenderName!.isNotEmpty)
+                ? "${group.lastMessageSenderName}: ${group.lastMessage}"
+                : group.lastMessage;
+
+            return ChatListItem(
+              title: group.name,
+              subtitle: subtitle,
+              timestamp: group.lastUpdated, // Este ya es un Timestamp, está correcto
+              avatarUrl: group.groupImageUrl,
+              isGroup: true,
+              hasUnread: false,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GroupChatView(groupChat: group),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 }
 
 class _ChatListItemPlaceholder extends StatelessWidget {
-  // ... tu código existente ...
   const _ChatListItemPlaceholder();
-
   @override
   Widget build(BuildContext context) {
     return ListTile(
+      contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
       leading: const CircleAvatar(
         radius: 28,
         backgroundColor: Colors.black12,
@@ -225,17 +269,6 @@ class _ChatListItemPlaceholder extends StatelessWidget {
         height: 14,
         color: Colors.grey.shade200,
         margin: const EdgeInsets.only(right: 40.0),
-      ),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Container(
-            height: 12,
-            width: 50,
-            color: Colors.grey.shade200,
-          ),
-        ],
       ),
     );
   }
