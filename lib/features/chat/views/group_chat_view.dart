@@ -1,5 +1,3 @@
-// lib/features/chat/views/group_chat_view.dart
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -81,16 +79,16 @@ class _GroupChatViewState extends State<GroupChatView> {
                   : null,
             ),
             const SizedBox(width: 12),
-            // --- LA CORRECCIÓN ESTÁ AQUÍ ---
+
             // Envolvemos el Text con Expanded para que se ajuste al espacio disponible
             Expanded(
               child: Text(
                 widget.groupChat.name,
-                overflow: TextOverflow.ellipsis, // Opcional: asegura que termine con '...'
-                style: const TextStyle(fontSize: 18), // Puedes ajustar el estilo
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 18),
               ),
             ),
-            // --------------------------------
+
           ],
         ),
         actions: [

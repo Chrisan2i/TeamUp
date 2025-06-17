@@ -79,11 +79,10 @@ class GameService {
     // 3. Crea el modelo del partido, usando todos tus campos
     final game = GameModel(
       id: newGameDoc.id,
-      ownerId: currentUser.uid, // Correcto
-      groupChatId: newChatDoc.id, // ¡LA VINCULACIÓN!
+      ownerId: currentUser.uid,
+      groupChatId: newChatDoc.id,
       usersJoined: [currentUser.uid],
 
-      // Datos del formulario
       zone: zone,
       fieldName: fieldName,
       date: date,

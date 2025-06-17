@@ -5,8 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class MessageModel {
   final String id;
   final String senderId;
-  final String? senderName;    // <-- AÑADIDO: Guardará el nombre del remitente (crucial para grupos)
-  final String? receiverId;    // <-- MODIFICADO: Ahora es opcional (no se usa en grupos)
+  final String? senderName;
+  final String? receiverId;
   final String content;
   final DateTime timestamp;
   final bool isGroup;

@@ -1,29 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:teamup/services/chat_service.dart';
 
-// Modelos
+
 import 'package:teamup/models/group_chat_model.dart';
 import 'package:teamup/models/private_chat_model.dart';
-import "package:teamup/features/auth/models/user_model.dart"; // Asegúrate de que la ruta sea correcta
+import "package:teamup/features/auth/models/user_model.dart";
 
-//  Widgets
-import 'package:teamup/features/chat/widgets/custom_tab_bar.dart'; // Asegúrate de que la ruta sea correcta
-import 'package:teamup/features/chat/widgets/custom_search_bar.dart'; // Asegúrate de que la ruta sea correcta
-import 'package:teamup/features/chat/widgets/empty_state_widget.dart'; // Asegúrate de que la ruta sea correcta
-import 'package:teamup/features/chat/widgets/chat_list_item.dart'; // Asegúrate de que la ruta sea correcta
-import 'package:teamup/core/widgets/custom_botton_navbar.dart'; // Asegúrate de que la ruta sea correcta
+// Widgets
+import 'package:teamup/features/chat/widgets/custom_tab_bar.dart';
+import 'package:teamup/features/chat/widgets/custom_search_bar.dart';
+import 'package:teamup/features/chat/widgets/empty_state_widget.dart';
+import 'package:teamup/features/chat/widgets/chat_list_item.dart';
+import 'package:teamup/core/widgets/custom_botton_navbar.dart';
 
-//  Vistas
+// Vistas
 import 'new_message_view.dart';
 import 'chat_view.dart';
 import 'package:teamup/features/add_games/add_game_view.dart';
 import 'package:teamup/features/games/game_home_view.dart';
 import 'package:teamup/features/profile/profile_view.dart';
 import 'package:teamup/features/bookings/bookings_view.dart';
-// lib/features/chat/views/messages_view.dart
 import 'group_chat_view.dart';
-// import 'group_chat_view.dart'; // Descomenta cuando crees esta vista
 
 class MessagesView extends StatefulWidget {
   const MessagesView({super.key});
@@ -35,6 +34,16 @@ class MessagesView extends StatefulWidget {
 class _MessagesViewState extends State<MessagesView> {
   int _selectedTabIndex = 0;
   final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
+  final ChatService _chatService = ChatService();
+  late Stream<QuerySnapshot> _unreadMessagesStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _unreadMessagesStream = _chatService.getUnreadMessagesStream();
+  }
+  // ----------------------------------------------------
 
   void _handleNavigation(BuildContext context, int index) {
     if (index == 2) return;
@@ -65,8 +74,8 @@ class _MessagesViewState extends State<MessagesView> {
           IconButton(
             icon: const Icon(Icons.edit_square, size: 26),
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(
-                  builder: (context) => const NewMessageView()));
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const NewMessageView()));
             },
           ),
         ],
@@ -108,9 +117,19 @@ class _MessagesViewState extends State<MessagesView> {
         child: const Icon(Icons.add, color: Colors.white),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: 2,
-        onTap: (index) => _handleNavigation(context, index),
+
+      bottomNavigationBar: StreamBuilder<QuerySnapshot>(
+        stream: _unreadMessagesStream,
+        builder: (context, snapshot) {
+
+          final hasUnread = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
+
+          return CustomBottomNavBar(
+            currentIndex: 2,
+            onTap: (index) => _handleNavigation(context, index),
+            hasUnreadMessages: hasUnread,
+          );
+        },
       ),
     );
   }
@@ -124,10 +143,8 @@ class _MessagesViewState extends State<MessagesView> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          debugPrint(
-              "Error en StreamBuilder de chats privados: ${snapshot.error}");
-          return const Center(
-              child: Text("Ocurrió un error al cargar los chats."));
+          debugPrint("Error en StreamBuilder de chats privados: ${snapshot.error}");
+          return const Center(child: Text("Ocurrió un error al cargar los chats."));
         }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -154,8 +171,10 @@ class _MessagesViewState extends State<MessagesView> {
             }
 
             return FutureBuilder<DocumentSnapshot>(
-              future: FirebaseFirestore.instance.collection('users').doc(
-                  otherUserId).get(),
+              future: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(otherUserId)
+                  .get(),
               builder: (context, userSnapshot) {
                 if (userSnapshot.connectionState == ConnectionState.waiting) {
                   return const _ChatListItemPlaceholder();
@@ -176,12 +195,11 @@ class _MessagesViewState extends State<MessagesView> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            ChatView(
-                              chatId: chat.id,
-                              recipientName: otherUser.fullName,
-                              recipientId: otherUser.uid,
-                            ),
+                        builder: (context) => ChatView(
+                          chatId: chat.id,
+                          recipientName: otherUser.fullName,
+                          recipientId: otherUser.uid,
+                        ),
                       ),
                     );
                   },
@@ -193,6 +211,7 @@ class _MessagesViewState extends State<MessagesView> {
       },
     );
   }
+
   Widget _buildGroupChatsList() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -202,8 +221,7 @@ class _MessagesViewState extends State<MessagesView> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          debugPrint(
-              "Error en StreamBuilder de chats grupales: ${snapshot.error}");
+          debugPrint("Error en StreamBuilder de chats grupales: ${snapshot.error}");
           return const Center(child: Text("Error al cargar los grupos."));
         }
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -226,8 +244,7 @@ class _MessagesViewState extends State<MessagesView> {
             String subtitle = groupChat.lastMessage;
             if (groupChat.lastMessageSenderName != null &&
                 groupChat.lastMessageSenderName!.isNotEmpty) {
-              subtitle =
-              "${groupChat.lastMessageSenderName}: ${groupChat.lastMessage}";
+              subtitle = "${groupChat.lastMessageSenderName}: ${groupChat.lastMessage}";
             }
 
             return ChatListItem(
@@ -242,7 +259,6 @@ class _MessagesViewState extends State<MessagesView> {
                     builder: (context) => GroupChatView(groupChat: groupChat),
                   ),
                 );
-                // ------------------------------------
               },
             );
           },
@@ -251,7 +267,6 @@ class _MessagesViewState extends State<MessagesView> {
     );
   }
 }
-
 
 class _ChatListItemPlaceholder extends StatelessWidget {
   const _ChatListItemPlaceholder();

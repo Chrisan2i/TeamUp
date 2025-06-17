@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+// --- IMPORTS PARA LA NOTIFICACIÓN ---
+import 'package:teamup/models/notification_model.dart';
+import 'package:teamup/services/notification_service.dart';
+// ------------------------------------
+
 import 'game_controller.dart';
 import 'widgets/game_date_selector.dart';
 import 'widgets/game_search_bar.dart';
@@ -14,11 +20,39 @@ import 'package:teamup/features/game_details/game_detail_view.dart';
 import 'package:teamup/features/chat/views/messages_view.dart';
 import 'package:teamup/features/notification/notification_view.dart';
 
-class GameHomeView extends StatelessWidget {
+class GameHomeView extends StatefulWidget {
   const GameHomeView({super.key});
+
+  @override
+  State<GameHomeView> createState() => _GameHomeViewState();
+}
+
+class _GameHomeViewState extends State<GameHomeView> {
+
+  final NotificationService _notificationService = NotificationService();
+  late Stream<List<NotificationModel>> _unreadNotificationsStream;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _unreadNotificationsStream = _getUnreadNotifications();
+  }
+
+
+  Stream<List<NotificationModel>> _getUnreadNotifications() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return Stream.value([]); // Devuelve un stream vacío si no hay usuario
+    }
+
+    return _notificationService.getNotificationsStream(user.uid)
+        .map((notifications) => notifications.where((n) => !n.isRead).toList());
+  }
 
   void _handleNavigation(BuildContext context, int index) {
     if (index == 0) {
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const GameHomeView()),
@@ -29,12 +63,11 @@ class GameHomeView extends StatelessWidget {
         MaterialPageRoute(builder: (_) => const BookingsView()),
       );
     } else if (index == 2) {
-
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MessagesView()),
       );
-    }else if (index == 3) {
+    } else if (index == 3) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const ProfileView()),
@@ -46,7 +79,6 @@ class GameHomeView extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Provider.of<GameController>(context);
 
-    // ✅ Corrección para evitar notifyListeners() durante build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null && controller.currentUserId.isEmpty) {
@@ -55,6 +87,7 @@ class GameHomeView extends StatelessWidget {
     });
 
     return Scaffold(
+      // --- TU DISEÑO ORIGINAL RESTAURADO ---
       backgroundColor: const Color(0xFFC9C9C9),
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -69,15 +102,38 @@ class GameHomeView extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-        // ...
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none),
-            onPressed: () {
-              // ▼▼▼ NUEVA ACCIÓN ▼▼▼
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+          StreamBuilder<List<NotificationModel>>(
+            stream: _unreadNotificationsStream,
+            builder: (context, snapshot) {
+              final hasUnread = snapshot.hasData && snapshot.data!.isNotEmpty;
+
+              return IconButton(
+                icon: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.notifications_none), // Tu icono original
+                    if (hasUnread)
+                      Positioned(
+                        top: 2, // Ajusta la posición vertical si es necesario
+                        right: 2, // Ajusta la posición horizontal si es necesario
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Colors.blueAccent,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                  );
+                },
               );
             },
           ),

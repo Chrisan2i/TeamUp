@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:teamup/services/chat_service.dart'; //
 import '/../models/message_model.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/message_input_bar.dart';
@@ -23,28 +24,36 @@ class ChatView extends StatefulWidget {
 
 class _ChatViewState extends State<ChatView> {
   final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+  final ChatService _chatService = ChatService(); // <-- NUEVA INSTANCIA
+
+  @override
+  void initState() {
+    super.initState();
+    // Cuando la vista se construye, marca los mensajes como leídos
+    _chatService.markMessagesAsRead(widget.chatId);
+  }
 
   void _sendMessage(String content) {
     if (content.trim().isEmpty) return;
 
+    // Asegúrate de que tu MessageModel tenga el campo 'seen'
     final messageData = MessageModel(
       id: '',
       senderId: currentUserId,
-      receiverId: widget.recipientId, // <-- CORREGIR ESTA LÍNEA
+      receiverId: widget.recipientId,
+      senderName: '', // El modelo de mensaje debe soportar esto
       content: content,
       timestamp: DateTime.now(),
       isGroup: false,
-      seen: false,
+      seen: false, // Los nuevos mensajes siempre empiezan como no vistos
     ).toMap();
 
-    // Añade el mensaje a la subcolección
     FirebaseFirestore.instance
         .collection('private_chats')
         .doc(widget.chatId)
         .collection('messages')
         .add(messageData);
 
-    // Actualiza el documento principal del chat
     FirebaseFirestore.instance.collection('private_chats').doc(widget.chatId).update({
       'lastMessage': content,
       'lastUpdated': Timestamp.now(),
@@ -53,6 +62,7 @@ class _ChatViewState extends State<ChatView> {
 
   @override
   Widget build(BuildContext context) {
+    // El resto del widget build no necesita cambios
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
