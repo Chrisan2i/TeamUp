@@ -74,7 +74,7 @@ class _GameHomeViewState extends State<GameHomeView> {
         backgroundColor: Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: const Text('Discover', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
+        title: const Text('Games', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
         centerTitle: true,
         actions: [
           StreamBuilder<List<NotificationModel>>(
