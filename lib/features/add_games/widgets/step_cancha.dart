@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../models/field_model.dart';
-import 'step_fecha.dart'; // Necesario para getFullEnglishWeekday
+import 'package:teamup/features/add_games/add_game_view.dart'; // Para getFullEnglishWeekday
 
 class StepCancha extends StatefulWidget {
-  final String? selectedField;
+  final String? selectedField; // Ahora usamos el ID
   final String? selectedHour;
-  final Function(String, String, FieldModel) onSelect;
+  final Function(String, FieldModel) onSelect; // Solo necesita la hora y el objeto cancha
   final VoidCallback onNext;
   final String selectedZone;
   final DateTime selectedDate;
@@ -37,76 +37,94 @@ class _StepCanchaState extends State<StepCancha> {
 
   Future<void> _loadFields() async {
     final weekdayKey = getFullEnglishWeekday(widget.selectedDate);
-    print('🔍 FILTRANDO POR ZONA: ${widget.selectedZone}');
-    print('📅 FILTRANDO POR DÍA: $weekdayKey');
-
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('fields')
           .where('zone', isEqualTo: widget.selectedZone)
           .where('isActive', isEqualTo: true)
           .get();
-
-      print('📦 Canchas encontradas en la zona: ${snapshot.docs.length}');
-
       final filtered = snapshot.docs
-          .map((doc) {
-        print('➡️ Cancha: ${doc['name']}');
-        return FieldModel.fromMap(doc.data(), doc.id);
-      })
+          .map((doc) => FieldModel.fromMap(doc.data(), doc.id))
           .where((field) {
         final available = field.availability[weekdayKey];
-        print('  🕐 Disponibilidad ese día: $available');
         return available != null && available.isNotEmpty;
-      })
-          .toList();
-
-      print('✅ Canchas finales filtradas: ${filtered.length}');
-
-      setState(() {
-        fields = filtered;
-        isLoading = false;
-      });
+      }).toList();
+      if (mounted) {
+        setState(() {
+          fields = filtered;
+          isLoading = false;
+        });
+      }
     } catch (e) {
       print('❌ ERROR AL CARGAR CANCHAS: $e');
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
+    if (fields.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.search_off, size: 60, color: Colors.grey),
+              const SizedBox(height: 16),
+              const Text(
+                'No hay canchas disponibles',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Prueba seleccionando otra fecha u otra zona.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     final weekdayKey = getFullEnglishWeekday(widget.selectedDate);
 
     return ListView.separated(
       itemCount: fields.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 20),
-      padding: const EdgeInsets.only(bottom: 20),
+      separatorBuilder: (_, __) => const SizedBox(height: 24),
+      padding: const EdgeInsets.only(top: 16, bottom: 100), // Espacio extra al final para el botón
       itemBuilder: (context, index) {
         final cancha = fields[index];
-        final isSelected = widget.selectedField == cancha.name;
+        final isFieldSelected = widget.selectedField == cancha.id;
         final availableSlots = cancha.availability[weekdayKey] ?? [];
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: const [
-              BoxShadow(color: Color(0x19000000), blurRadius: 6, offset: Offset(0, 4)),
-            ],
+        return Card(
+          elevation: isFieldSelected ? 6 : 2, // Más sombra si está seleccionada
+          margin: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: isFieldSelected ? Theme.of(context).primaryColor : Colors.transparent,
+                width: 2,
+              )
           ),
+          clipBehavior: Clip.antiAlias,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                child: Image.network(cancha.imageUrl, height: 150, width: double.infinity, fit: BoxFit.cover),
+              Image.network(
+                cancha.imageUrl,
+                height: 160,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_,__,___) => Container(height: 160, color: Colors.grey.shade300, child: const Icon(Icons.sports_soccer, size: 50, color: Colors.grey)),
               ),
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -115,46 +133,60 @@ class _StepCanchaState extends State<StepCancha> {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(cancha.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                        Text('\$${cancha.pricePerHour}/h',
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF00C49A))),
+                        Expanded(child: Text(cancha.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
+                        Text(
+                          'Bs. ${cancha.pricePerHour.toStringAsFixed(2)}/h',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text('Formato: ${cancha.format}', style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
-                    Text('Duración: ${cancha.duration} h', style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
-                    Text('Descripción: ${cancha.description}', style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
-                    Text('Calzado permitido: ${cancha.footwear}', style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
-                    Text('Contacto: ${cancha.contact}', style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
                     const SizedBox(height: 12),
-                    const Text('Horarios disponibles:', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
-                    const SizedBox(height: 8),
+                    _buildInfoRow(Icons.format_list_bulleted, 'Formato:', cancha.format),
+                    _buildInfoRow(Icons.timer_outlined, 'Duración:', '${cancha.duration}h'),
+                    _buildInfoRow(Icons.directions_run_outlined, 'Calzado:', cancha.footwear),
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 16),
+                    const Text('Horarios disponibles:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: availableSlots.map((hour) {
-                        final isHourSelected = widget.selectedHour == hour && isSelected;
+                        final isHourSelected = widget.selectedHour == hour && isFieldSelected;
                         return ChoiceChip(
                           label: Text(hour),
                           selected: isHourSelected,
-                          onSelected: (_) => widget.onSelect(cancha.name, hour, cancha),
-                          selectedColor: const Color(0xFF004AAD),
-                          labelStyle: TextStyle(color: isHourSelected ? Colors.white : const Color(0xFF111827)),
-                          backgroundColor: const Color(0xFFE5E7EB),
+                          onSelected: (_) => widget.onSelect(hour, cancha),
+                          selectedColor: Theme.of(context).primaryColor,
+                          labelStyle: TextStyle(color: isHourSelected ? Colors.white : Colors.black87, fontWeight: FontWeight.w600),
+                          backgroundColor: Colors.grey.shade200,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         );
                       }).toList(),
                     ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: isSelected && widget.selectedHour != null ? widget.onNext : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF004AAD),
-                        minimumSize: const Size.fromHeight(45),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+
+                    // 💡 --- LA SOLUCIÓN ESTÁ AQUÍ --- 💡
+                    const SizedBox(height: 20),
+                    // Solo muestra el botón si esta es la cancha seleccionada
+                    if (isFieldSelected)
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          // El botón se habilita solo si se ha seleccionado una hora
+                          onPressed: widget.selectedHour != null ? widget.onNext : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          child: Text(widget.selectedHour != null ? 'Confirmar y Siguiente' : 'Selecciona una hora'),
+                        ),
                       ),
-                      child: const Text('Seleccionar esta cancha'),
-                    ),
                   ],
                 ),
               ),
@@ -162,6 +194,21 @@ class _StepCanchaState extends State<StepCancha> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: Colors.grey.shade600),
+          const SizedBox(width: 8),
+          Text(label, style: TextStyle(fontSize: 14, color: Colors.grey.shade700)),
+          const SizedBox(width: 4),
+          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+        ],
+      ),
     );
   }
 }

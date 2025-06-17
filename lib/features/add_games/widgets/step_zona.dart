@@ -4,13 +4,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class StepZona extends StatefulWidget {
   final String? selectedZone;
   final Function(String) onSelect;
-  final VoidCallback onNext;
+  // 💡 CORRECCIÓN: Se elimina el parámetro 'onNext' porque ya no es necesario.
+  // final VoidCallback onNext;
 
   const StepZona({
     super.key,
     required this.selectedZone,
     required this.onSelect,
-    required this.onNext,
+    // required this.onNext,
   });
 
   @override
@@ -29,18 +30,18 @@ class _StepZonaState extends State<StepZona> {
 
   Future<void> loadZonas() async {
     final snapshot = await FirebaseFirestore.instance.collection('zones').get();
-
     final loaded = snapshot.docs.map((doc) {
       return {
         'name': doc['name'] ?? 'Sin nombre',
-        'emoji': '📍', // fijo, o doc['emoji'] si lo agregas luego
+        'emoji': '📍',
       };
     }).toList();
-
-    setState(() {
-      zonas = loaded;
-      isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        zonas = loaded;
+        isLoading = false;
+      });
+    }
   }
 
   @override
@@ -56,69 +57,71 @@ class _StepZonaState extends State<StepZona> {
         const Text(
           'Selecciona la zona',
           style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF111827),
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
         const Text(
-          'Elige dónde quieres jugar en Caracas',
+          'Elige dónde quieres jugar',
           style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: Color(0xFF6B7280),
+            fontSize: 15,
+            color: Colors.grey,
           ),
         ),
         const SizedBox(height: 24),
-        Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          children: zonas.map((zona) {
-            final isSelected = widget.selectedZone == zona['name'];
-            return GestureDetector(
-              onTap: () => widget.onSelect(zona['name']),
-              child: Container(
-                width: MediaQuery.of(context).size.width / 2 - 32,
-                height: 110,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(
-                    color: isSelected ? Colors.blue : const Color(0xFFE5E7EB),
-                    width: 1.5,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x19000000),
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
+        Expanded(
+          child: GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.2, // Ajuste para mejor proporción
+            ),
+            itemCount: zonas.length,
+            itemBuilder: (context, index) {
+              final zona = zonas[index];
+              final isSelected = widget.selectedZone == zona['name'];
+              return GestureDetector(
+                onTap: () => widget.onSelect(zona['name']),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(
+                      color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade300,
+                      width: 2.0,
                     ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      zona['emoji'],
-                      style: const TextStyle(fontSize: 32),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      zona['name'],
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF111827),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isSelected ? Theme.of(context).primaryColor.withAlpha(70) : Colors.black.withAlpha(25),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        zona['emoji'],
+                        style: const TextStyle(fontSize: 40),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        zona['name'],
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }).toList(),
+              );
+            },
+          ),
         ),
       ],
     );
