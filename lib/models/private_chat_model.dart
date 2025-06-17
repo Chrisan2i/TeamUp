@@ -4,45 +4,47 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PrivateChatModel {
   final String id;
-  final String userA;
-  final String userB;
-  final List<String> participants; // <-- ASEGÚRATE DE TENER ESTO
-  String lastMessage;
-  DateTime lastUpdated;
-  final bool isBlocked; // <-- Y TAMBIÉN ESTO
+  final List<String> participants;
+  final String lastMessage;
+  final DateTime lastUpdated;
+  final bool isBlocked;
+  final Map<String, int> unreadCount;
 
   PrivateChatModel({
     required this.id,
-    required this.userA,
-    required this.userB,
     required this.participants,
     required this.lastMessage,
     required this.lastUpdated,
     required this.isBlocked,
+    required this.unreadCount,
   });
 
-  // Factory para crear desde un mapa de Firestore
+  /// Factory para crear una instancia desde un mapa de Firestore.
   factory PrivateChatModel.fromMap(Map<String, dynamic> map, String id) {
+    // Parsea el mapa de unreadCount de forma segura
+    final unreadData = map['unreadCount'] as Map<String, dynamic>? ?? {};
+    final unreadCountMap = unreadData.map((key, value) => MapEntry(key, value as int));
+
     return PrivateChatModel(
       id: id,
-      userA: map['userA'] ?? '',
-      userB: map['userB'] ?? '',
       participants: List<String>.from(map['participants'] ?? []),
       lastMessage: map['lastMessage'] ?? '',
-      lastUpdated: (map['lastUpdated'] as Timestamp).toDate(),
+      // Asegura que lastUpdated no falle si es nulo en la BD
+      lastUpdated: (map['lastUpdated'] as Timestamp?)?.toDate() ?? DateTime.now(),
       isBlocked: map['isBlocked'] ?? false,
+      unreadCount: unreadCountMap,
     );
   }
 
-  // Método para convertir a un mapa para Firestore
+  // --- MÉTODO AÑADIDO Y CORREGIDO ---
+  /// Convierte el objeto a un mapa para guardarlo en Firestore.
   Map<String, dynamic> toMap() {
     return {
-      'userA': userA,
-      'userB': userB,
       'participants': participants,
       'lastMessage': lastMessage,
       'lastUpdated': Timestamp.fromDate(lastUpdated),
       'isBlocked': isBlocked,
+      'unreadCount': unreadCount, // <-- ¡Importante incluir el nuevo campo!
     };
   }
 }

@@ -21,7 +21,7 @@ class _GameDateSelectorState extends State<GameDateSelector> {
     7,
         (i) {
       final now = DateTime.now().add(Duration(days: i));
-      return DateTime(now.year, now.month, now.day); // ⏱️ Normalizado
+      return DateTime(now.year, now.month, now.day);
     },
   );
 

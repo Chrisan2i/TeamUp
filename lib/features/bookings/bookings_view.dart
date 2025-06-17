@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart'; // --- NUEVO IMPORT ---
+
+// --- NUEVO IMPORT ---
+import 'package:teamup/features/chat/change_notifier.dart'; // Asegúrate de que esta ruta sea correcta
+
 import 'package:teamup/core/widgets/custom_botton_navbar.dart';
 import 'package:teamup/features/add_games/add_game_view.dart';
 import 'package:teamup/features/bookings/widgets/bookings_game_list.dart';
@@ -33,27 +38,17 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
   }
 
   void _handleNavigation(BuildContext context, int index) {
-    if (index == 0) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const GameHomeView()),
-      );
-    } else if (index == 1) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const BookingsView()),
-      );
-    }else if (index == 2) {
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MessagesView()),
-      );
-    } else if (index == 3) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const ProfileView()),
-      );
+    if (index == 1) return;
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const GameHomeView()));
+        break;
+      case 2:
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MessagesView()));
+        break;
+      case 3:
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileView()));
+        break;
     }
   }
 
@@ -66,23 +61,18 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
 
   Future<void> _fetchBookings() async {
     if (userId == null) return;
-
     final now = DateTime.now();
     final snapshot = await FirebaseFirestore.instance.collection('games').get();
-
     final allGames = snapshot.docs.map((doc) => GameModel.fromMap(doc.data())).toList();
     final joinedGames = allGames.where((game) => game.usersJoined.contains(userId)).toList();
-
     final upcoming = <GameModel>[];
     final past = <GameModel>[];
-
     bool isSameOrAfterToday(DateTime date) {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final gameDate = DateTime(date.year, date.month, date.day);
       return gameDate.isAtSameMomentAs(today) || gameDate.isAfter(today);
     }
-
     for (final game in joinedGames) {
       if (isSameOrAfterToday(game.date)) {
         upcoming.add(game);
@@ -90,7 +80,6 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
         past.add(game);
       }
     }
-
     setState(() {
       upcomingGames = upcoming;
       pastGames = past;
@@ -110,19 +99,13 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
         ],
       ),
     );
-
     if (confirm != true) return;
-
     final success = await GamePlayersService().leaveGame(game);
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Has salido del partido.")),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Has salido del partido.")));
       await _fetchBookings();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error al salir del partido.")),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error al salir del partido.")));
     }
   }
 
@@ -137,13 +120,7 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
-        title: const Text(
-          'Bookings',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF111827),
-          ),
-        ),
+        title: const Text('Bookings', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF111827))),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -181,19 +158,21 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AddGameView()),
-          );
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const AddGameView()));
         },
         backgroundColor: const Color(0xFF0CC0DF),
         tooltip: 'Crear Partido',
         child: const Icon(Icons.add),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: 1,
-        onTap: (index) => _handleNavigation(context, index),
+      bottomNavigationBar: Consumer<ChatNotifier>(
+        builder: (context, chatNotifier, child) {
+          return CustomBottomNavBar(
+            currentIndex: 1,
+            onTap: (index) => _handleNavigation(context, index),
+            hasUnreadMessages: chatNotifier.hasUnreadMessages,
+          );
+        },
       ),
     );
   }

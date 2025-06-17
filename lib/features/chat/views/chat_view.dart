@@ -41,11 +41,11 @@ class _ChatViewState extends State<ChatView> {
       id: '',
       senderId: currentUserId,
       receiverId: widget.recipientId,
-      senderName: '', // El modelo de mensaje debe soportar esto
+      senderName: '',
       content: content,
       timestamp: DateTime.now(),
       isGroup: false,
-      seen: false, // Los nuevos mensajes siempre empiezan como no vistos
+      seen: false,
     ).toMap();
 
     FirebaseFirestore.instance

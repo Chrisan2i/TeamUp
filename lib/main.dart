@@ -11,6 +11,9 @@ import 'features/games/game_controller.dart';
 import 'features/auth/welcome_screen.dart';
 import 'core/providers/theme_provider.dart';
 
+
+import 'package:teamup/features/chat/change_notifier.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -28,7 +31,8 @@ class TeamUpApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => GameController()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()), // 👈 AÑADIDO AQUÍ
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => ChatNotifier()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
@@ -43,7 +47,7 @@ class TeamUpApp extends StatelessWidget {
               useMaterial3: true,
               primaryColor: Colors.cyan,
             ),
-            themeMode: themeProvider.themeMode, // 👈 APLICA TEMA SELECCIONADO
+            themeMode: themeProvider.themeMode,
 
             home: StreamBuilder<User?>(
               stream: FirebaseAuth.instance.authStateChanges(),

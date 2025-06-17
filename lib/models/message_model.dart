@@ -1,5 +1,3 @@
-// lib/models/message_model.dart
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MessageModel {
