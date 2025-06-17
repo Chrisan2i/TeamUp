@@ -73,9 +73,6 @@ class _ChatViewState extends State<ChatView> {
             Text(widget.recipientName),
           ],
         ),
-        actions: [
-          IconButton(icon: const Icon(Icons.call_outlined), onPressed: () {}),
-        ],
       ),
       body: Column(
         children: [
