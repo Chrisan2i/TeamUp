@@ -29,8 +29,6 @@ class _ProfileEditorState extends State<ProfileEditor> {
   final TextEditingController _countryController = TextEditingController();
   final TextEditingController _skillController = TextEditingController();
   final TextEditingController _positionController = TextEditingController();
-  final TextEditingController _birthdayController = TextEditingController();
-  final TextEditingController _genderController = TextEditingController();
 
   @override
   void initState() {
@@ -52,7 +50,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
         country = data['country'] ?? '';
         position = data['position'] ?? '';
         skillLevel = data['skillLevel'] ?? '';
-        profileImageUrl = data['profileImage'];
+        profileImageUrl = data['profileImageUrl'];
       });
     }
   }
@@ -77,7 +75,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null) {
         await FirebaseFirestore.instance.collection('users').doc(uid).update({
-          'profileImage': imageUrl,
+          'profileImageUrl': imageUrl,
         });
         setState(() {
           profileImageUrl = imageUrl;
@@ -432,15 +430,15 @@ class _ProfileEditorState extends State<ProfileEditor> {
                     onPressed: () async {
                       final user = FirebaseAuth.instance.currentUser;
                       if (user != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                        );
                         await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
                         await user.delete();
                         if (context.mounted) {
                           Navigator.of(context).popUntil((route) => route.isFirst);
                         }
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-                        );
                       }
                     },
                     child: const Text(

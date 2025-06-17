@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:provider/provider.dart';
-
-
-import 'package:teamup/features/chat/change_notifier.dart';
 import 'package:teamup/features/profile/widgets/profile.dart';
 import 'package:teamup/core/widgets/custom_botton_navbar.dart';
 import 'package:teamup/features/add_games/add_game_view.dart';
@@ -22,17 +18,26 @@ class ProfileView extends StatelessWidget {
   });
 
   void _handleNavigation(BuildContext context, int index) {
-    if (index == 3) return;
-    switch (index) {
-      case 0:
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const GameHomeView()));
-        break;
-      case 1:
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const BookingsView()));
-        break;
-      case 2:
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MessagesView()));
-        break;
+    if (index == 0) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const GameHomeView()),
+      );
+    } else if (index == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const BookingsView()),
+      );
+    } else if (index == 2) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MessagesView()),
+      );
+    } else if (index == 3) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProfileView()),
+      );
     }
   }
 
@@ -45,7 +50,13 @@ class ProfileView extends StatelessWidget {
           backgroundColor: const Color(0xFFF9FAFB),
           appBar: AppBar(
             automaticallyImplyLeading: false,
-            title: const Text('Perfil', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            title: const Text(
+              'Perfil',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             centerTitle: true,
             backgroundColor: Colors.white,
             elevation: 1,
@@ -53,7 +64,10 @@ class ProfileView extends StatelessWidget {
               icon: const Icon(Icons.brightness_6, color: Colors.black),
               tooltip: 'Cambiar tema',
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const ThemeSelectionView()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ThemeSelectionView()),
+                );
               },
             ),
             actions: [
@@ -61,7 +75,10 @@ class ProfileView extends StatelessWidget {
                 icon: const Icon(Icons.help_outline, color: Colors.black),
                 tooltip: 'Ayuda',
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpFormView()));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HelpFormView()),
+                  );
                 },
               ),
             ],
@@ -69,21 +86,19 @@ class ProfileView extends StatelessWidget {
           body: const Profile(),
           floatingActionButton: FloatingActionButton(
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const AddGameView()));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AddGameView()),
+              );
             },
             backgroundColor: const Color(0xFF0CC0DF),
             tooltip: 'Crear Partido',
             child: const Icon(Icons.add),
           ),
           floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-          bottomNavigationBar: Consumer<ChatNotifier>(
-            builder: (context, chatNotifier, child) {
-              return CustomBottomNavBar(
-                currentIndex: 3,
-                onTap: (index) => _handleNavigation(context, index),
-                hasUnreadMessages: chatNotifier.hasUnreadMessages,
-              );
-            },
+          bottomNavigationBar: CustomBottomNavBar(
+            currentIndex: 3,
+            onTap: (index) => _handleNavigation(context, index),
           ),
         );
       },

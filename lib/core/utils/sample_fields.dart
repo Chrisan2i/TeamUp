@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 final sampleFields = <FieldModel>[
   FieldModel(
     id: '1',
-    ownerId: 'admin123',
+    ownerId: 'Um0cQCPuiVO1HMg0KeKFiDpFXaY2',
     name: 'Cancha Olímpica Los Teques',
     zone: 'Miranda',
     lat: 10.3421,
@@ -26,7 +26,7 @@ final sampleFields = <FieldModel>[
   ),
   FieldModel(
     id: '2',
-    ownerId: 'admin123',
+    ownerId: 'Um0cQCPuiVO1HMg0KeKFiDpFXaY2',
     name: 'Complejo Deportivo La Castellana',
     zone: 'Distrito Capital',
     lat: 10.4978,
@@ -48,7 +48,7 @@ final sampleFields = <FieldModel>[
   ),
   FieldModel(
     id: '3',
-    ownerId: 'admin123',
+    ownerId: 'Um0cQCPuiVO1HMg0KeKFiDpFXaY2',
     name: 'Polideportivo Macuto',
     zone: 'Vargas',
     lat: 10.601,
@@ -70,7 +70,7 @@ final sampleFields = <FieldModel>[
   ),
   FieldModel(
     id: '4',
-    ownerId: 'admin123',
+    ownerId: 'Um0cQCPuiVO1HMg0KeKFiDpFXaY2',
     name: 'Cancha San Antonio de los Altos',
     zone: 'Miranda',
     lat: 10.3901,
@@ -92,7 +92,7 @@ final sampleFields = <FieldModel>[
   ),
   FieldModel(
     id: '5',
-    ownerId: 'admin123',
+    ownerId: 'Um0cQCPuiVO1HMg0KeKFiDpFXaY2',
     name: 'Cancha del Este',
     zone: 'Distrito Capital',
     lat: 10.5,
@@ -114,7 +114,7 @@ final sampleFields = <FieldModel>[
   ),
   FieldModel(
     id: '6',
-    ownerId: 'admin123',
+    ownerId: 'Um0cQCPuiVO1HMg0KeKFiDpFXaY2',
     name: 'Complejo Deportivo Maiquetía',
     zone: 'Vargas',
     lat: 10.5995,
@@ -136,7 +136,7 @@ final sampleFields = <FieldModel>[
   ),
   FieldModel(
     id: '7',
-    ownerId: 'admin123',
+    ownerId: 'Um0cQCPuiVO1HMg0KeKFiDpFXaY2',
     name: 'Polideportivo Chacao',
     zone: 'Distrito Capital',
     lat: 10.4942,
@@ -158,7 +158,7 @@ final sampleFields = <FieldModel>[
   ),
   FieldModel(
     id: '8',
-    ownerId: 'admin123',
+    ownerId: 'Um0cQCPuiVO1HMg0KeKFiDpFXaY2',
     name: 'Cancha Deportiva Petare',
     zone: 'Miranda',
     lat: 10.4812,
@@ -180,7 +180,7 @@ final sampleFields = <FieldModel>[
   ),
   FieldModel(
     id: '9',
-    ownerId: 'admin123',
+    ownerId: 'Um0cQCPuiVO1HMg0KeKFiDpFXaY2',
     name: 'Cancha El Trébol',
     zone: 'Vargas',
     lat: 10.6075,
