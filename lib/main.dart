@@ -3,12 +3,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:teamup/features/games/game_home_view.dart';
+
+
+import 'features/games/game_home_view.dart';
 import 'firebase_options.dart';
 import 'features/games/game_controller.dart';
 import 'features/auth/welcome_screen.dart';
-import 'package:teamup/core/providers/theme_provider.dart';
-
+import 'core/providers/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

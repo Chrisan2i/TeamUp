@@ -324,10 +324,11 @@ class _ProfileEditorState extends State<ProfileEditor> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Profile'),
+        title: const Text('Editar Perfil', style: TextStyle(color: Colors.white)),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF0CC0DF),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -341,31 +342,35 @@ class _ProfileEditorState extends State<ProfileEditor> {
                   Stack(
                     children: [
                       CircleAvatar(
-                        radius: 60,
-                        backgroundColor: const Color(0xFF10B981),
-                        backgroundImage: profileImageUrl != null && profileImageUrl!.isNotEmpty
-                            ? NetworkImage(profileImageUrl!)
-                            : null,
-                        child: (profileImageUrl == null || profileImageUrl!.isEmpty)
-                            ? const Text(
-                          'A',
-                          style: TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold),
-                        )
-                            : null,
-                      ),
+                      radius: 60,
+                      backgroundColor: const Color(0xFF0CC0DF).withOpacity(0.2),
+                      backgroundImage: profileImageUrl != null && profileImageUrl!.isNotEmpty
+                          ? NetworkImage(profileImageUrl!)
+                          : null,
+                      child: (profileImageUrl == null || profileImageUrl!.isEmpty)
+                          ? Text(
+                              fullName.isNotEmpty ? fullName[0] : 'U',
+                              style: const TextStyle(
+                                color: Color(0xFF0CC0DF),
+                                fontSize: 36,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                          : null,
+                    ),
                       Positioned(
                         bottom: 0,
                         right: 0,
                         child: GestureDetector(
                             onTap: _changeProfileImage,
                           child: Container(
-                            padding: const EdgeInsets.all(4),
+                            padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF59E0B),
+                              color: const Color(0xFF0CC0DF),
                               shape: BoxShape.circle,
                               border: Border.all(color: Colors.white, width: 2),
                             ),
-                            child: const Icon(Icons.edit, color: Colors.white, size: 16),
+                            child: const Icon(Icons.edit, color: Colors.white, size: 18),
                           ),
                         ),
                       ),
@@ -456,11 +461,21 @@ class _ProfileEditorState extends State<ProfileEditor> {
               child: ElevatedButton(
                 onPressed: _saveProfileChanges,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
+                  backgroundColor: const Color(0xFF0CC0DF),
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 2,
                 ),
-                child: const Text('Done', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Guardar Cambios',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 32),
