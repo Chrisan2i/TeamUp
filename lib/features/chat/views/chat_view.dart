@@ -55,7 +55,7 @@ class _ChatViewState extends State<ChatView> {
   Widget build(BuildContext context) {
     // ... el resto del archivo build() permanece igual ...
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: Row(
           children: [

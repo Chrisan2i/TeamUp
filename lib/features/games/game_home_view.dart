@@ -28,12 +28,11 @@ class GameHomeView extends StatelessWidget {
         MaterialPageRoute(builder: (_) => const BookingsView()),
       );
     } else if (index == 2) {
-
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MessagesView()),
       );
-    }else if (index == 3) {
+    } else if (index == 3) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const ProfileView()),
@@ -54,66 +53,130 @@ class GameHomeView extends StatelessWidget {
     });
 
     return Scaffold(
-      backgroundColor: const Color(0xFFC9C9C9),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF8FAFC),
         elevation: 0,
         automaticallyImplyLeading: false,
         title: const Text(
-          'Discover',
+          'Descubrir Partidos',
           style: TextStyle(
             color: Colors.black,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
             fontSize: 20,
           ),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none),
+            icon: const Icon(Icons.notifications_outlined, color: Colors.black),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('No hay notificaciones nuevas')),
+                const SnackBar(
+                  content: Text('No hay notificaciones nuevas'),
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: Color(0xFF0CC0DF),
+                ),
               );
             },
           ),
         ],
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(16),
+          ),
+        ),
       ),
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: kSpacingSmall),
-            GameDateSelector(
-              onDateSelected: controller.setDate,
+            const SizedBox(height: 16),
+            // Selector de fecha
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                
+              ),
+              child: GameDateSelector(
+                onDateSelected: controller.setDate,
+              ),
             ),
-            const SizedBox(height: kSpacingSmall),
-            GameSearchBar(
-              onSearch: controller.setSearchText,
+            const SizedBox(height: 16),
+            // Barra de búsqueda
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: GameSearchBar(
+                onSearch: controller.setSearchText,
+              ),
             ),
-            const SizedBox(height: kSpacingMedium),
+            const SizedBox(height: 16),
+            // Lista de partidos
             Expanded(
-              child: controller.filteredGames.isEmpty
-                  ? const Center(child: Text("No games found"))
-                  : ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: kPaddingMedium),
-                itemCount: controller.filteredGames.length,
-                itemBuilder: (context, index) {
-                  final game = controller.filteredGames[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: kSpacingMedium),
-                    child: GameCard(
-                      game: game,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => GameDetailView(game: game),
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                },
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: controller.filteredGames.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.sports_soccer,
+                              size: 48,
+                              color: const Color(0xFF0CC0DF).withOpacity(0.3),
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              "No se encontraron partidos",
+                              style: TextStyle(
+                                color: Color(0xFF64748B),
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const AddGameView()),
+                                );
+                              },
+                              child: const Text(
+                                'Crear un nuevo partido',
+                                style: TextStyle(
+                                  color: Color(0xFF0CC0DF),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: controller.filteredGames.length,
+                        itemBuilder: (context, index) {
+                          final game = controller.filteredGames[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: GameCard(
+                              game: game,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => GameDetailView(game: game),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
               ),
             ),
           ],
@@ -131,10 +194,11 @@ class GameHomeView extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const AddGameView()),
           );
         },
-        backgroundColor: const Color(0xFF0CC0DF),
+        backgroundColor: const Color.fromARGB(255, 0, 124, 146),
+        elevation: 4,
         tooltip: 'Crear Partido',
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
     );
   }
-}
+  }

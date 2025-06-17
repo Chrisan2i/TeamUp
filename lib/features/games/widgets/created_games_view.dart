@@ -39,10 +39,11 @@ class CreatedGamesView extends StatelessWidget {
     final gameService = GameService();
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: const Text('Created Games'),
         backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
+        foregroundColor: const Color(0xFFF8FAFC),
       ),
       body: StreamBuilder<List<GameModel>>(
         stream: gameService.getGames(ownerId: userId),

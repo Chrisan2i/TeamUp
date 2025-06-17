@@ -186,7 +186,7 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
             MaterialPageRoute(builder: (_) => const AddGameView()),
           );
         },
-        backgroundColor: const Color(0xFF0CC0DF),
+        backgroundColor: const Color.fromARGB(255, 0, 124, 146),
         tooltip: 'Crear Partido',
         child: const Icon(Icons.add),
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:teamup/core/constant/colors.dart';
 
 import '../../models/game_model.dart';
 import '../../models/field_model.dart';
@@ -127,7 +128,9 @@ class _AddGameViewState extends State<AddGameView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
+        backgroundColor: const Color(0xFFF8FAFC),
         title: const Text('Crear Partido'),
         leading: _currentStep > 0
             ? IconButton(
