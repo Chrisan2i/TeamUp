@@ -8,13 +8,13 @@ import '../widgets/message_input_bar.dart';
 class ChatView extends StatefulWidget {
   final String chatId;
   final String recipientName;
-  final String recipientId; // <-- AÑADIR ESTA LÍNEA
+  final String recipientId;
 
   const ChatView({
     super.key,
     required this.chatId,
     required this.recipientName,
-    required this.recipientId, // <-- AÑADIR ESTA LÍNEA
+    required this.recipientId,
   });
 
   @override
@@ -53,7 +53,6 @@ class _ChatViewState extends State<ChatView> {
 
   @override
   Widget build(BuildContext context) {
-    // ... el resto del archivo build() permanece igual ...
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(

@@ -12,6 +12,7 @@ import '../bookings/bookings_view.dart';
 import 'package:teamup/core/widgets/custom_botton_navbar.dart';
 import 'package:teamup/features/game_details/game_detail_view.dart';
 import 'package:teamup/features/chat/views/messages_view.dart';
+import 'package:teamup/features/notification/notification_view.dart';
 
 class GameHomeView extends StatelessWidget {
   const GameHomeView({super.key});
@@ -68,12 +69,15 @@ class GameHomeView extends StatelessWidget {
           ),
         ),
         centerTitle: true,
+        // ...
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_none),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('No hay notificaciones nuevas')),
+              // ▼▼▼ NUEVA ACCIÓN ▼▼▼
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
               );
             },
           ),

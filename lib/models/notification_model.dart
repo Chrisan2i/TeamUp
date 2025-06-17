@@ -1,13 +1,16 @@
+// lib/models/notification_model.dart (ACTUALIZADO)
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class NotificationModel {
   final String id;
-  final String userId;
+  final String userId; // Quien recibe la notificación
   final String title;
   final String body;
-  final String type; // Ej: 'mensaje', 'solicitud', 'sistema'
+  final String type;
   final bool isRead;
   final DateTime createdAt;
+  final String? senderId;
 
   NotificationModel({
     required this.id,
@@ -17,6 +20,7 @@ class NotificationModel {
     required this.type,
     required this.isRead,
     required this.createdAt,
+    this.senderId,
   });
 
   factory NotificationModel.fromMap(Map<String, dynamic> map, String docId) {
@@ -28,6 +32,7 @@ class NotificationModel {
       type: map['type'] ?? '',
       isRead: map['isRead'] ?? false,
       createdAt: (map['createdAt'] as Timestamp).toDate(),
+      senderId: map['senderId'],
     );
   }
 
@@ -39,6 +44,7 @@ class NotificationModel {
       'type': type,
       'isRead': isRead,
       'createdAt': Timestamp.fromDate(createdAt),
+      'senderId': senderId,
     };
   }
 }

@@ -21,6 +21,8 @@ import 'package:teamup/features/add_games/add_game_view.dart';
 import 'package:teamup/features/games/game_home_view.dart';
 import 'package:teamup/features/profile/profile_view.dart';
 import 'package:teamup/features/bookings/bookings_view.dart';
+// lib/features/chat/views/messages_view.dart
+import 'group_chat_view.dart';
 // import 'group_chat_view.dart'; // Descomenta cuando crees esta vista
 
 class MessagesView extends StatefulWidget {
@@ -39,13 +41,16 @@ class _MessagesViewState extends State<MessagesView> {
 
     switch (index) {
       case 0:
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const GameHomeView()));
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => const GameHomeView()));
         break;
       case 1:
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const BookingsView()));
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => const BookingsView()));
         break;
       case 3:
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileView()));
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => const ProfileView()));
         break;
     }
   }
@@ -60,7 +65,8 @@ class _MessagesViewState extends State<MessagesView> {
           IconButton(
             icon: const Icon(Icons.edit_square, size: 26),
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const NewMessageView()));
+              Navigator.push(context, MaterialPageRoute(
+                  builder: (context) => const NewMessageView()));
             },
           ),
         ],
@@ -93,7 +99,8 @@ class _MessagesViewState extends State<MessagesView> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const AddGameView()));
+          Navigator.push(
+              context, MaterialPageRoute(builder: (_) => const AddGameView()));
         },
         backgroundColor: const Color(0xFF0CC0DF),
         tooltip: 'Crear Partido',
@@ -117,8 +124,10 @@ class _MessagesViewState extends State<MessagesView> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          debugPrint("Error en StreamBuilder de chats privados: ${snapshot.error}");
-          return const Center(child: Text("Ocurrió un error al cargar los chats."));
+          debugPrint(
+              "Error en StreamBuilder de chats privados: ${snapshot.error}");
+          return const Center(
+              child: Text("Ocurrió un error al cargar los chats."));
         }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -145,7 +154,8 @@ class _MessagesViewState extends State<MessagesView> {
             }
 
             return FutureBuilder<DocumentSnapshot>(
-              future: FirebaseFirestore.instance.collection('users').doc(otherUserId).get(),
+              future: FirebaseFirestore.instance.collection('users').doc(
+                  otherUserId).get(),
               builder: (context, userSnapshot) {
                 if (userSnapshot.connectionState == ConnectionState.waiting) {
                   return const _ChatListItemPlaceholder();
@@ -166,11 +176,12 @@ class _MessagesViewState extends State<MessagesView> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => ChatView(
-                          chatId: chat.id,
-                          recipientName: otherUser.fullName,
-                          recipientId: otherUser.uid,
-                        ),
+                        builder: (context) =>
+                            ChatView(
+                              chatId: chat.id,
+                              recipientName: otherUser.fullName,
+                              recipientId: otherUser.uid,
+                            ),
                       ),
                     );
                   },
@@ -182,7 +193,6 @@ class _MessagesViewState extends State<MessagesView> {
       },
     );
   }
-
   Widget _buildGroupChatsList() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -192,7 +202,8 @@ class _MessagesViewState extends State<MessagesView> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          debugPrint("Error en StreamBuilder de chats grupales: ${snapshot.error}");
+          debugPrint(
+              "Error en StreamBuilder de chats grupales: ${snapshot.error}");
           return const Center(child: Text("Error al cargar los grupos."));
         }
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -213,19 +224,25 @@ class _MessagesViewState extends State<MessagesView> {
                 groupDoc.data() as Map<String, dynamic>, groupDoc.id);
 
             String subtitle = groupChat.lastMessage;
-            if (groupChat.lastMessageSenderName != null && groupChat.lastMessageSenderName!.isNotEmpty) {
-              subtitle = "${groupChat.lastMessageSenderName}: ${groupChat.lastMessage}";
+            if (groupChat.lastMessageSenderName != null &&
+                groupChat.lastMessageSenderName!.isNotEmpty) {
+              subtitle =
+              "${groupChat.lastMessageSenderName}: ${groupChat.lastMessage}";
             }
 
             return ChatListItem(
               title: groupChat.name,
               subtitle: subtitle,
               timestamp: groupChat.lastUpdated.toDate(),
-
               avatarUrl: groupChat.groupImageUrl ?? '',
               onTap: () {
-                // TODO: Navegar a una vista de chat grupal (GroupChatView)
-                debugPrint("Navegar al chat grupal: ${groupChat.name}");
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GroupChatView(groupChat: groupChat),
+                  ),
+                );
+                // ------------------------------------
               },
             );
           },
@@ -234,6 +251,7 @@ class _MessagesViewState extends State<MessagesView> {
     );
   }
 }
+
 
 class _ChatListItemPlaceholder extends StatelessWidget {
   const _ChatListItemPlaceholder();

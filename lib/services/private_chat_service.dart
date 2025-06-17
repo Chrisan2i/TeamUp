@@ -1,61 +1,60 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/private_chat_model.dart';
+import 'package:teamup/models/private_chat_model.dart';
 
 class PrivateChatService {
-  final CollectionReference privateChats =
+  final CollectionReference _chatsCollection =
   FirebaseFirestore.instance.collection('private_chats');
 
-  /// Crear chat privado
-  Future<void> createChat(PrivateChatModel chat) async {
-    await privateChats.doc(chat.id).set(chat.toMap());
-  }
 
-  /// Obtener chat entre dos usuarios (independiente del orden)
-  Future<PrivateChatModel?> getChatBetween(String user1, String user2) async {
-    final snapshot = await privateChats
-        .where('userA', whereIn: [user1, user2])
-        .where('userB', whereIn: [user1, user2])
-        .get();
+  Future<String> findOrCreateChat({
+    required String currentUserId,
+    required String otherUserId,
+  }) async {
 
-    for (final doc in snapshot.docs) {
-      final data = doc.data() as Map<String, dynamic>;
-      if ((data['userA'] == user1 && data['userB'] == user2) ||
-          (data['userA'] == user2 && data['userB'] == user1)) {
-        return PrivateChatModel.fromMap(data, doc.id);
-      }
+    final ids = [currentUserId, otherUserId]..sort();
+    String chatId = ids.join('_');
+
+
+    final chatDoc = await _chatsCollection.doc(chatId).get();
+
+
+    if (chatDoc.exists) {
+      return chatId;
+    } else {
+
+      final newChat = PrivateChatModel(
+        id: chatId,
+        userA: ids[0],
+        userB: ids[1],
+        participants: ids,
+        lastMessage: 'Chat iniciado.',
+        lastUpdated: DateTime.now(),
+        isBlocked: false,
+      );
+
+
+      await _chatsCollection.doc(chatId).set(newChat.toMap());
+
+
+      return chatId;
     }
-
-    return null;
   }
 
-  /// Obtener chats donde participa el usuario
-  Stream<List<PrivateChatModel>> getUserChats(String userId) {
-    return privateChats
-        .where('userA', isEqualTo: userId)
-        .snapshots()
-        .asyncMap((snapshot) async {
-      final userAChats = snapshot.docs
-          .map((doc) =>
-          PrivateChatModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
-          .toList();
-
-      final userBChatsSnapshot =
-      await privateChats.where('userB', isEqualTo: userId).get();
-
-      final userBChats = userBChatsSnapshot.docs
-          .map((doc) =>
-          PrivateChatModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
-          .toList();
-
-      return [...userAChats, ...userBChats];
-    });
+  Future<void> updateLastMessage({
+    required String chatId,
+    required String lastMessage,
+    String? senderName,
+  }) async {
+    try {
+      await _chatsCollection.doc(chatId).update({
+        'lastMessage': lastMessage,
+        if (senderName != null) 'lastMessageSenderName': senderName,
+        'lastUpdated': Timestamp.now(),
+      });
+    } catch (e) {
+      print("Error al actualizar el último mensaje: $e");
+    }
   }
 
-  /// Actualizar último mensaje
-  Future<void> updateLastMessage(String chatId, String lastMessage) async {
-    await privateChats.doc(chatId).update({
-      'lastMessage': lastMessage,
-      'lastUpdated': Timestamp.now(),
-    });
-  }
+
 }
