@@ -37,5 +37,17 @@ class GroupChatService {
       'lastUpdated': Timestamp.now(),
     });
   }
+  Future<void> addUserToGroup(String groupId, String userId) async {
+    await groupChats.doc(groupId).update({
+      'participants': FieldValue.arrayUnion([userId])
+    });
+  }
+
+  /// Eliminar un usuario de un grupo
+  Future<void> removeUserFromGroup(String groupId, String userId) async {
+    await groupChats.doc(groupId).update({
+      'participants': FieldValue.arrayRemove([userId])
+    });
+  }
 }
 

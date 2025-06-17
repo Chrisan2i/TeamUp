@@ -4,6 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:teamup/models/game_model.dart';
 import 'package:teamup/services/game_players_service.dart';
 
+import 'package:teamup/features/chat/views/group_chat_view.dart';
+import 'package:teamup/services/group_chat_service.dart';
+
 import 'widgets/game_detail_header.dart';
 import 'tabs/status_tab_view.dart';
 import 'tabs/about_tab_view.dart';
@@ -20,17 +23,17 @@ class GameDetailView extends StatefulWidget {
 
 class _GameDetailViewState extends State<GameDetailView> with TickerProviderStateMixin {
   late TabController _tabController;
-  final GamePlayersService _gameService = GamePlayersService();
+  final GamePlayersService _gamePlayersService = GamePlayersService();
+
+  final GroupChatService _chatService = GroupChatService();
+  // ---------------------------------
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-
-    _tabController.addListener(() {
-      setState(() {});
-    });
+    _tabController.addListener(() => setState(() {}));
   }
 
   @override
@@ -40,9 +43,67 @@ class _GameDetailViewState extends State<GameDetailView> with TickerProviderStat
     super.dispose();
   }
 
+  // --- LÓGICA ACTUALIZADA PARA SALIR DEL PARTIDO Y DEL CHAT ---
+  Future<void> _handleLeaveGame(GameModel game) async {
+    setState(() => _isLoading = true);
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) {
+      if(mounted) setState(() => _isLoading = false);
+      return;
+    }
 
-  Future<void> _handleJoinGame(GameModel game) async { /* ... tu código ... */ }
-  Future<void> _handleLeaveGame(GameModel game) async { /* ... tu código ... */ }
+    // Intenta salir del partido
+    final success = await _gamePlayersService.leaveGame(game);
+
+    if (success && mounted) {
+      // Si tiene éxito, también elimina al usuario del chat del grupo
+      await _chatService.removeUserFromGroup(game.groupChatId, currentUserId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("✅ Has salido del partido y del chat."), backgroundColor: Colors.orange),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("❌ Error al salir del partido."), backgroundColor: Colors.red),
+      );
+    }
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  // --- NUEVA FUNCIÓN PARA NAVEGAR AL CHAT ---
+  Future<void> _navigateToChat(GameModel game) async {
+    if (game.groupChatId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Este partido aún no tiene un chat asociado."))
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final groupChat = await _chatService.getGroupById(game.groupChatId);
+
+    if(mounted) Navigator.pop(context); // Cierra el diálogo de carga
+
+    if (groupChat != null && mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => GroupChatView(groupChat: groupChat),
+        ),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No se pudo encontrar el chat del grupo."))
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +119,7 @@ class _GameDetailViewState extends State<GameDetailView> with TickerProviderStat
 
           return Stack(
             children: [
-              // FONDO: La imagen (no se desplaza)
+              // FONDO (sin cambios)
               Positioned(
                 top: 0,
                 left: 0,
@@ -74,7 +135,7 @@ class _GameDetailViewState extends State<GameDetailView> with TickerProviderStat
                 ),
               ),
 
-              // CONTENIDO SCROLLEABLE
+              // CONTENIDO SCROLLEABLE (sin cambios)
               SingleChildScrollView(
                 child: Column(
                   children: [
@@ -87,11 +148,7 @@ class _GameDetailViewState extends State<GameDetailView> with TickerProviderStat
                       unselectedLabelColor: Colors.grey.shade600,
                       indicatorColor: const Color(0xFF10B981),
                       indicatorWeight: 3.0,
-                      tabs: const [
-                        Tab(text: 'STATUS'),
-                        Tab(text: 'ABOUT'),
-                        Tab(text: 'MAP'),
-                      ],
+                      tabs: const [Tab(text: 'STATUS'), Tab(text: 'ABOUT'), Tab(text: 'MAP')],
                     ),
                     IndexedStack(
                       index: _tabController.index,
@@ -106,7 +163,7 @@ class _GameDetailViewState extends State<GameDetailView> with TickerProviderStat
                 ),
               ),
 
-              // BOTONES SUPERIORES (fijos, no se desplazan)
+              // BOTONES SUPERIORES (sin cambios)
               Positioned(
                 top: 50,
                 left: 16,
@@ -114,14 +171,12 @@ class _GameDetailViewState extends State<GameDetailView> with TickerProviderStat
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // --- CAMBIO AQUÍ: Se reemplaza el ícono de 'close' por una flecha de 'back' ---
                     _iconCircle(Icons.arrow_back_ios_new, () => Navigator.pop(context)),
-
                     const Text('Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white, shadows: [Shadow(color: Colors.black, blurRadius: 4)])),
-
                     Row(
                       children: [
-                        _iconCircle(Icons.chat_bubble_outline, () {}),
+                        // Este botón podría ser redundante si ya tienes uno abajo, pero lo dejamos por si acaso.
+                        _iconCircle(Icons.chat_bubble_outline, () => _navigateToChat(game)),
                         const SizedBox(width: 8),
                         _iconCircle(Icons.location_on_outlined, () {}),
                         const SizedBox(width: 8),
@@ -136,20 +191,24 @@ class _GameDetailViewState extends State<GameDetailView> with TickerProviderStat
         },
       ),
       bottomNavigationBar: StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance.collection('games').doc(widget.game.id).snapshots(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) return const SizedBox.shrink();
-            final game = GameModel.fromMap(snapshot.data!.data() as Map<String, dynamic>);
-            final isUserJoined = FirebaseAuth.instance.currentUser != null && game.usersJoined.contains(FirebaseAuth.instance.currentUser!.uid);
+        stream: FirebaseFirestore.instance.collection('games').doc(widget.game.id).snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return const SizedBox.shrink();
+          final game = GameModel.fromMap(snapshot.data!.data() as Map<String, dynamic>);
+          final isUserJoined = FirebaseAuth.instance.currentUser != null && game.usersJoined.contains(FirebaseAuth.instance.currentUser!.uid);
 
-            return GameDetailBottomBar(
-              game: game,
-              isUserJoined: isUserJoined,
-              isLoading: _isLoading,
-              onJoin: () => _handleJoinGame(game),
-              onLeave: () => _handleLeaveGame(game),
-            );
-          }
+          return GameDetailBottomBar(
+            game: game,
+            isUserJoined: isUserJoined,
+            isLoading: _isLoading,
+            // onJoin se maneja dentro de la barra, mostrando el bottom sheet.
+            // Por lo tanto, no necesita una función aquí.
+            onJoin: () {},
+            onLeave: () => _handleLeaveGame(game),
+            // --- PASANDO LA FUNCIÓN DE NAVEGACIÓN AL CHAT ---
+            onChatPressed: () => _navigateToChat(game),
+          );
+        },
       ),
     );
   }

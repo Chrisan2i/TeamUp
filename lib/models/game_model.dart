@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class GameModel {
   final String id;
   final String ownerId;
+  final String groupChatId;
   final String zone;
   final String fieldName;
   final DateTime date;
@@ -14,7 +15,7 @@ class GameModel {
   final double duration;
   final String createdAt;
   final String imageUrl;
-  final List<String> usersJoined; // Nombre correcto es camelCase
+  final List<String> usersJoined;
   final String skillLevel;
   final String type;
   final String format;
@@ -29,6 +30,7 @@ class GameModel {
   GameModel({
     required this.id,
     required this.ownerId,
+    required this.groupChatId,
     required this.zone,
     required this.fieldName,
     required this.date,
@@ -40,7 +42,7 @@ class GameModel {
     required this.duration,
     required this.createdAt,
     required this.imageUrl,
-    required this.usersJoined, // CORREGIDO: El nombre del campo del constructor era diferente
+    required this.usersJoined,
     required this.skillLevel,
     required this.type,
     required this.format,
@@ -54,7 +56,6 @@ class GameModel {
   });
 
   factory GameModel.fromMap(Map<String, dynamic> map) {
-    // Función para parsear la fecha de forma segura
     DateTime parseDate(dynamic value) {
       if (value is Timestamp) return value.toDate();
       if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
@@ -64,6 +65,7 @@ class GameModel {
     return GameModel(
       id: map['id'] ?? '',
       ownerId: map['ownerId'] ?? '',
+      groupChatId: map['groupChatId'] ?? '',
       zone: map['zone'] ?? '',
       fieldName: map['fieldName'] ?? '',
       date: parseDate(map['date']),
@@ -75,7 +77,6 @@ class GameModel {
       duration: (map['duration'] ?? 1.0).toDouble(),
       createdAt: map['createdAt'] ?? '',
       imageUrl: map['imageUrl'] ?? '',
-      // CORREGIDO: Usar el nombre de propiedad y la clave de mapa correctos ('usersJoined')
       usersJoined: List<String>.from(map['usersJoined'] ?? []),
       skillLevel: map['skillLevel'] ?? '',
       type: map['type'] ?? '',
@@ -94,6 +95,7 @@ class GameModel {
     return {
       'id': id,
       'ownerId': ownerId,
+      'groupChatId': groupChatId,
       'zone': zone,
       'fieldName': fieldName,
       'date': Timestamp.fromDate(date),
@@ -105,7 +107,6 @@ class GameModel {
       'duration': duration,
       'createdAt': createdAt,
       'imageUrl': imageUrl,
-      // CORREGIDO: Usar la clave y la propiedad correctas ('usersJoined')
       'usersJoined': usersJoined,
       'skillLevel': skillLevel,
       'type': type,
@@ -123,6 +124,7 @@ class GameModel {
   GameModel copyWith({
     String? id,
     String? ownerId,
+    String? groupChatId,
     String? zone,
     String? fieldName,
     DateTime? date,
@@ -134,7 +136,7 @@ class GameModel {
     double? duration,
     String? createdAt,
     String? imageUrl,
-    List<String>? usersJoined, // CORREGIDO
+    List<String>? usersJoined,
     String? skillLevel,
     String? type,
     String? format,
@@ -144,11 +146,12 @@ class GameModel {
     String? privateCode,
     double? fieldRating,
     String? report,
-    List<String>? usersPaid, // CORREGIDO
+    List<String>? usersPaid,
   }) {
     return GameModel(
       id: id ?? this.id,
       ownerId: ownerId ?? this.ownerId,
+      groupChatId: groupChatId ?? this.groupChatId,
       zone: zone ?? this.zone,
       fieldName: fieldName ?? this.fieldName,
       date: date ?? this.date,
@@ -160,7 +163,6 @@ class GameModel {
       duration: duration ?? this.duration,
       createdAt: createdAt ?? this.createdAt,
       imageUrl: imageUrl ?? this.imageUrl,
-      // CORREGIDO
       usersJoined: usersJoined ?? this.usersJoined,
       skillLevel: skillLevel ?? this.skillLevel,
       type: type ?? this.type,
@@ -171,7 +173,6 @@ class GameModel {
       privateCode: privateCode ?? this.privateCode,
       fieldRating: fieldRating ?? this.fieldRating,
       report: report ?? this.report,
-      // CORREGIDO
       usersPaid: usersPaid ?? this.usersPaid,
     );
   }

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:teamup/models/game_model.dart';
 import 'package:teamup/services/game_players_service.dart';
+// --- NUEVOS IMPORTS ---
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:teamup/services/group_chat_service.dart';
+// --------------------
 
 class JoinGameBottom extends StatefulWidget {
   final GameModel game;
-
   const JoinGameBottom({super.key, required this.game});
 
   @override
@@ -14,33 +17,86 @@ class JoinGameBottom extends StatefulWidget {
 class _JoinGameBottomState extends State<JoinGameBottom> {
   int guestCount = 0;
   String _selectedPaymentMethod = 'Pago Móvil';
-  bool _isJoining = false; // NUEVO: Estado para manejar la carga y deshabilitar el botón
+  bool _isJoining = false;
 
-  void _showPaymentMethodsSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  // ... (tu código de _showPaymentMethodsSheet y build es correcto y se mantiene) ...
+
+  // --- LÓGICA DEL BOTÓN DE UNIRSE ACTUALIZADA ---
+  Widget _buildLetsPlayButton(int spotsLeft) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: (spotsLeft > 0 && !_isJoining)
+            ? () async {
+          setState(() => _isJoining = true);
+
+          final gamePlayersService = GamePlayersService();
+          // --- NUEVAS INSTANCIAS ---
+          final chatService = GroupChatService();
+          final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+          // -------------------------
+
+          if (currentUserId == null) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text("❌ Debes iniciar sesión para unirte."),
+              backgroundColor: Colors.red,
+            ));
+            setState(() => _isJoining = false);
+            return;
+          }
+
+          // 1. Intenta unirse al juego
+          final bool success = await gamePlayersService.joinGame(widget.game);
+
+          if (success) {
+            // 2. Si tiene éxito, añade al usuario al chat del grupo
+            await chatService.addUserToGroup(widget.game.groupChatId, currentUserId);
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text("✅ ¡Te has unido al partido y al chat!"),
+                backgroundColor: Colors.green,
+              ));
+              Navigator.of(context).pop(); // Cerrar el bottom sheet
+            }
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text("❌ Error al unirse. El partido puede estar lleno."),
+                backgroundColor: Colors.red,
+              ));
+            }
+          }
+
+          if (mounted) {
+            setState(() => _isJoining = false);
+          }
+        }
+            : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF008060),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          disabledBackgroundColor: Colors.grey.shade400,
+        ),
+        child: _isJoining
+            ? const SizedBox(
+          height: 24,
+          width: 24,
+          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+        )
+            : const Text(
+          "Let's Play",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+        ),
       ),
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (modalContext, modalSetState) {
-            return _PaymentMethodsView(
-              currentMethod: _selectedPaymentMethod,
-              onMethodSelected: (method) {
-                setState(() => _selectedPaymentMethod = method);
-                modalSetState(() {});
-                Navigator.pop(modalContext);
-              },
-            );
-          },
-        );
-      },
     );
   }
 
+  // --- El resto de tus widgets (_buildHeader, _buildGameInfo, etc.) no necesitan cambios ---
+
+  // Aquí pones el resto de tus widgets que no cambian
+  // ... _buildHeader, _buildGameInfo, _buildGuestCounter, etc. ...
   @override
   Widget build(BuildContext context) {
     final game = widget.game;
@@ -80,7 +136,6 @@ class _JoinGameBottomState extends State<JoinGameBottom> {
                 ),
               ),
             ),
-            // El botón ahora usa la lógica corregida
             _buildLetsPlayButton(spotsLeft),
           ],
         ),
@@ -176,7 +231,7 @@ class _JoinGameBottomState extends State<JoinGameBottom> {
               _CounterButton(
                 icon: Icons.add,
                 onPressed: () {
-                  if (1 + guestCount < spotsLeft) { // Se cuenta el jugador actual + invitados
+                  if (1 + guestCount < spotsLeft) {
                     setState(() => guestCount++);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No hay suficientes lugares para más invitados.")));
@@ -218,6 +273,31 @@ class _JoinGameBottomState extends State<JoinGameBottom> {
     );
   }
 
+  void _showPaymentMethodsSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (modalContext, modalSetState) {
+            return _PaymentMethodsView(
+              currentMethod: _selectedPaymentMethod,
+              onMethodSelected: (method) {
+                setState(() => _selectedPaymentMethod = method);
+                modalSetState(() {});
+                Navigator.pop(modalContext);
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildPaymentDetails(Color subtextColor, VoidCallback onChangePayment) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,74 +324,6 @@ class _JoinGameBottomState extends State<JoinGameBottom> {
     );
   }
 
-
-  Widget _buildLetsPlayButton(int spotsLeft) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-
-        onPressed: (spotsLeft > 0 && !_isJoining)
-            ? () async {
-
-          setState(() => _isJoining = true);
-
-
-          final gameService = GamePlayersService();
-          final navigator = Navigator.of(context);
-          final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-
-          final bool success = await gameService.joinGame(widget.game);
-
-
-          if (mounted) {
-            setState(() => _isJoining = false);
-          }
-
-          if (!mounted) return; // Evita errores si el widget se desmontó
-
-
-          if (success) {
-            scaffoldMessenger.showSnackBar(const SnackBar(
-              content: Text("✅ ¡Te has unido al partido!"),
-              backgroundColor: Colors.green,
-            ));
-            navigator.pop(); // Cerrar el bottom sheet en caso de éxito
-          } else {
-            scaffoldMessenger.showSnackBar(const SnackBar(
-              content: Text("❌ Error al unirse. El partido puede estar lleno o ya estás dentro."),
-              backgroundColor: Colors.red,
-            ));
-          }
-        }
-            : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF008060),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          disabledBackgroundColor: Colors.grey.shade400, // Color para estado deshabilitado
-        ),
-
-        child: _isJoining
-            ? const SizedBox(
-          height: 24,
-          width: 24,
-          child: CircularProgressIndicator(
-            color: Colors.white,
-            strokeWidth: 3,
-          ),
-        )
-            : const Text(
-          "Let's Play",
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildSpotsAvatars() {
     return SizedBox(

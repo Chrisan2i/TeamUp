@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:teamup/services/game_service.dart'; // <-- 1. IMPORTA EL SERVICIO
 
 import '../../models/game_model.dart';
 import '../../models/field_model.dart';
@@ -18,9 +19,13 @@ class AddGameView extends StatefulWidget {
 }
 
 class _AddGameViewState extends State<AddGameView> {
+  // --- 2. INSTANCIA EL SERVICIO ---
+  final GameService _gameService = GameService();
+
   int _currentStep = 0;
   bool isPublishing = false;
 
+  // ... (tus otras variables de estado no cambian)
   String? selectedZone;
   DateTime? selectedDate;
   FieldModel? selectedField;
@@ -36,92 +41,97 @@ class _AddGameViewState extends State<AddGameView> {
   String selectedFormat = '7v7';
   int? minPlayersToConfirm;
 
+
   void nextStep() {
     if (_currentStep < 3) {
-      setState(() {
-        _currentStep++;
-      });
+      setState(() => _currentStep++);
     }
   }
 
   void previousStep() {
     if (_currentStep > 0) {
-      setState(() {
-        _currentStep--;
-      });
+      setState(() => _currentStep--);
     }
   }
 
   void publishGame() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null || selectedField == null) return;
+    if (user == null || selectedField == null || !_canPublish()) {
+      // Si no se puede publicar, no hacer nada.
+      return;
+    }
 
     setState(() => isPublishing = true);
 
-    final newGame = GameModel(
-      id: '',
-      ownerId: user.uid,
-      zone: selectedZone!,
-      fieldName: selectedField!.name,
-      date: selectedDate!,
-      hour: selectedHour!,
-      description: description ?? '',
-      playerCount: numberOfPlayers ?? 0,
-      isPublic: isPublic,
-      price: selectedField!.getPricePerPersonAuto(),
-      duration: selectedField!.duration,
-      skillLevel: selectedSkillLevel,
-      type: selectedType,
-      format: selectedField!.format,
-      footwear: selectedField!.footwear,
-      createdAt: DateTime.now().toIso8601String(),
-      imageUrl: selectedField!.imageUrl,
-      usersJoined: [user.uid],
-      privateCode: isPublic ? null : privateCode,
-      status: 'waiting',
-      minPlayersToConfirm: selectedField!.minPlayersToBook,
-      usersPaid: [],
-    );
-
-    final docRef = await FirebaseFirestore.instance.collection('games').add(newGame.toMap());
-    await docRef.update({'id': docRef.id});
-
     try {
-      final weekdayKey = getFullEnglishWeekday(selectedDate!);
-      final fieldRef = FirebaseFirestore.instance.collection('fields').doc(selectedField!.id);
+      // Llama al método del servicio que crea el juego Y el chat
+      final gameId = await _gameService.createGameAndChat(
+        zone: selectedZone!,
+        fieldName: selectedField!.name,
+        date: selectedDate!,
+        hour: selectedHour!,
+        description: description ?? '',
+        playerCount: numberOfPlayers ?? 0,
+        isPublic: isPublic,
+        price: selectedField!.getPricePerPersonAuto(),
+        duration: selectedField!.duration,
+        imageUrl: selectedField!.imageUrl,
+        skillLevel: selectedSkillLevel,
+        type: selectedType,
+        format: selectedField!.format,
+        footwear: selectedField!.footwear,
+        minPlayersToConfirm: minPlayersToConfirm ?? selectedField!.minPlayersToBook,
+        privateCode: isPublic ? null : privateCode,
+      );
 
-      await FirebaseFirestore.instance.runTransaction((transaction) async {
-        final snapshot = await transaction.get(fieldRef);
-        if (!snapshot.exists) return;
+      if (gameId != null) {
+        await _updateFieldAvailability();
 
-        final data = snapshot.data() as Map<String, dynamic>;
-        final availability = Map<String, dynamic>.from(data['availability'] ?? {});
-        final List<String> hours = List<String>.from(availability[weekdayKey] ?? []);
-
-        print('🔍 Día Firestore: $weekdayKey');
-        print('🕒 Hora seleccionada: "$selectedHour"');
-        print('📋 Horas disponibles antes: $hours');
-
-        if (hours.any((h) => h.trim() == selectedHour!.trim())) {
-          hours.removeWhere((h) => h.trim() == selectedHour!.trim());
-          availability[weekdayKey] = hours;
-          transaction.update(fieldRef, {'availability': availability});
-          print('✅ Hora eliminada: $selectedHour');
-        } else {
-          print('⚠️ La hora $selectedHour no se encontró en $weekdayKey');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('✅ Partido y chat creados con éxito')),
+          );
+          Navigator.pop(context);
         }
-      });
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('❌ Hubo un error al crear el partido.')),
+          );
+        }
+      }
     } catch (e) {
-      print('❌ Error al actualizar disponibilidad: $e');
+      print('❌ Error al publicar el partido: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('❌ Error inesperado. Inténtalo de nuevo.')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => isPublishing = false);
+      }
     }
+  }
 
-    setState(() => isPublishing = false);
+  Future<void> _updateFieldAvailability() async {
+    final weekdayKey = getFullEnglishWeekday(selectedDate!);
+    final fieldRef = FirebaseFirestore.instance.collection('fields').doc(selectedField!.id);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('✅ Partido creado con éxito')),
-    );
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snapshot = await transaction.get(fieldRef);
+      if (!snapshot.exists) return;
 
-    Navigator.pop(context);
+      final data = snapshot.data() as Map<String, dynamic>;
+      final availability = Map<String, dynamic>.from(data['availability'] ?? {});
+      final List<String> hours = List<String>.from(availability[weekdayKey] ?? []);
+
+      if (hours.any((h) => h.trim() == selectedHour!.trim())) {
+        hours.removeWhere((h) => h.trim() == selectedHour!.trim());
+        availability[weekdayKey] = hours;
+        transaction.update(fieldRef, {'availability': availability});
+      }
+    });
   }
 
   @override
@@ -239,6 +249,4 @@ class _AddGameViewState extends State<AddGameView> {
     ];
     return days[date.weekday - 1];
   }
-
 }
-

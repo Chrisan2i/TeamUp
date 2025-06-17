@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:teamup/models/game_model.dart';
-import 'package:teamup/features/games/widgets/join_game_botton.dart';
+import 'package:teamup/features/games/widgets/join_game_botton.dart'; // Corregido el nombre del archivo
 
 class GameDetailBottomBar extends StatelessWidget {
   final GameModel game;
@@ -8,6 +8,8 @@ class GameDetailBottomBar extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onJoin;
   final VoidCallback onLeave;
+  // --- NUEVO CALLBACK ---
+  final VoidCallback onChatPressed;
 
   const GameDetailBottomBar({
     super.key,
@@ -16,12 +18,13 @@ class GameDetailBottomBar extends StatelessWidget {
     required this.isLoading,
     required this.onJoin,
     required this.onLeave,
+    // --- AÑADIDO AL CONSTRUCTOR ---
+    required this.onChatPressed,
   });
 
   @override
   Widget build(BuildContext context) {
     final bool isGameFull = game.usersJoined.length >= game.playerCount;
-
 
     final Color buttonColor;
     final String buttonText;
@@ -30,19 +33,15 @@ class GameDetailBottomBar extends StatelessWidget {
       buttonColor = Colors.grey.shade400;
       buttonText = '';
     } else if (isUserJoined) {
-
       buttonColor = const Color(0xFFF25C54);
       buttonText = 'Leave Game';
     } else if (isGameFull) {
-
       buttonColor = Colors.grey.shade400;
       buttonText = 'Game Full';
     } else {
-
       buttonColor = const Color(0xFF10B981); // Color verde
       buttonText = 'Join Game';
     }
-
 
     return BottomAppBar(
       padding: EdgeInsets.zero,
@@ -65,14 +64,12 @@ class GameDetailBottomBar extends StatelessWidget {
           children: [
             Expanded(
               child: ElevatedButton(
-
-                onPressed: isLoading || isGameFull
+                onPressed: (isLoading || (!isUserJoined && isGameFull))
                     ? null
                     : () {
                   if (isUserJoined) {
                     onLeave();
                   } else {
-
                     showModalBottomSheet(
                       context: context,
                       isScrollControlled: true,
@@ -104,15 +101,22 @@ class GameDetailBottomBar extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
+            // --- BOTÓN DE CHAT CON LÓGICA Y CONDICIÓN ---
+            // El botón solo está activo si el usuario ya se ha unido al partido
             ElevatedButton(
-              onPressed: () { /* Lógica de chat */ },
+              onPressed: isUserJoined ? onChatPressed : null,
               style: ElevatedButton.styleFrom(
                 shape: const CircleBorder(),
                 padding: const EdgeInsets.all(16),
                 backgroundColor: Colors.white,
+                disabledBackgroundColor: Colors.grey.shade300,
                 elevation: 2,
               ),
-              child: const Icon(Icons.send, color: Colors.black87, size: 22),
+              child: Icon(
+                  Icons.send,
+                  color: isUserJoined ? Colors.black87 : Colors.grey.shade600,
+                  size: 22
+              ),
             ),
           ],
         ),
