@@ -10,15 +10,21 @@ class GameController extends ChangeNotifier {
   List<GameModel> allGames = [];
   List<GameModel> filteredGames = [];
 
-  DateTime? selectedDate;
+  // 💡 1. Se cambia a 'late' para asegurar que siempre tendrá un valor.
+  late DateTime selectedDate;
   String searchText = '';
 
-  /// Debería ser proporcionado por AuthService al iniciar sesión
   String currentUserId = '';
 
   StreamSubscription? _gamesSubscription;
 
   GameController() {
+    // 💡 2. LA CORRECCIÓN PRINCIPAL:
+    // Se inicializa la fecha seleccionada con el día de hoy al crear el controlador.
+    // Se normaliza la fecha para no incluir horas/minutos y asegurar comparaciones correctas.
+    final now = DateTime.now();
+    selectedDate = DateTime(now.year, now.month, now.day);
+
     _listenToGames();
   }
 
@@ -34,10 +40,11 @@ class GameController extends ChangeNotifier {
         .listen((snapshot) {
       allGames = snapshot.docs.map((doc) {
         final data = doc.data();
+        // Asegúrate que tu GameModel.fromMap puede manejar el ID si lo necesitas
         return GameModel.fromMap(data);
       }).toList();
 
-      applyFilters();
+      applyFilters(); // El filtro se aplicará correctamente desde la primera vez.
       isLoading = false;
       notifyListeners();
     }, onError: (e) {
@@ -49,18 +56,26 @@ class GameController extends ChangeNotifier {
 
   /// 📅 Cambiar fecha seleccionada
   void setDate(DateTime date) {
-    selectedDate = date;
+    // Se normaliza la fecha para compararla correctamente.
+    final newSelectedDate = DateTime(date.year, date.month, date.day);
+
+    // 💡 3. Mejora: Evita trabajo innecesario si la fecha no ha cambiado.
+    if (selectedDate == newSelectedDate) return;
+
+    selectedDate = newSelectedDate;
     applyFilters();
-    notifyListeners();
   }
 
   /// 🔍 Cambiar texto de búsqueda
   void setSearchText(String text) {
+    // 💡 3. Mejora: Evita trabajo innecesario si el texto de búsqueda no ha cambiado.
+    if (searchText == text) return;
+
     searchText = text;
     applyFilters();
-    notifyListeners();
   }
 
+  /// Aplica todos los filtros activos a la lista de juegos.
   void applyFilters() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -74,14 +89,12 @@ class GameController extends ChangeNotifier {
       // ⛔ Ocultar partidos privados
       if (!game.isPublic) return false;
 
-      // ⛔ Ocultar si ya está unido (opcional)
+      // ⛔ Ocultar si el usuario ya está unido
       if (game.usersJoined.contains(currentUserId)) return false;
 
-      // 📅 Filtro por fecha exacta
-      if (selectedDate != null) {
-        final selectedDay = DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day);
-        if (gameDay != selectedDay) return false;
-      }
+      // 💡 4. Lógica de filtro simplificada:
+      // Ya no se necesita `if (selectedDate != null)` porque `selectedDate` siempre está inicializada.
+      if (gameDay != selectedDate) return false;
 
       // 🔍 Filtro por texto
       if (searchText.isNotEmpty) {
@@ -95,24 +108,24 @@ class GameController extends ChangeNotifier {
         }
       }
 
+      // Si pasa todos los filtros, el partido se incluye.
       return true;
     }).toList();
 
+    // Notifica a los widgets que la lista de juegos filtrados ha cambiado.
     notifyListeners();
   }
 
-
   void setCurrentUser(String uid) {
+    if (currentUserId == uid) return;
     currentUserId = uid;
-    applyFilters(); // Para que se actualice la lista al asignar el UID
+    applyFilters(); // Actualiza la lista para ocultar los juegos a los que ya se unió.
   }
 
-
-  /// ✅ Cancelar la suscripción al cerrar la app
+  /// ✅ Cancelar la suscripción al cerrar el widget para evitar fugas de memoria.
   @override
   void dispose() {
     _gamesSubscription?.cancel();
     super.dispose();
   }
 }
-

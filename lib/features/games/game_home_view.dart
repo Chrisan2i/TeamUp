@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
 import 'package:teamup/features/chat/change_notifier.dart';
 import 'package:teamup/models/notification_model.dart';
 import 'package:teamup/services/notification_service.dart';
-
-
 import 'game_controller.dart';
 import 'widgets/game_date_selector.dart';
 import 'widgets/game_search_bar.dart';

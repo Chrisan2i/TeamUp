@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:teamup/features/bookings/widgets/bookings_empty_card.dart';
 import 'package:teamup/features/games/widgets/game_card.dart';
 import 'package:teamup/models/game_model.dart';
@@ -26,7 +25,6 @@ class BookingsGameList extends StatelessWidget {
     }
 
     final now = DateTime.now();
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return ListView.separated(
       padding: const EdgeInsets.only(top: 12, left: 16, right: 16, bottom: 16),
@@ -34,11 +32,13 @@ class BookingsGameList extends StatelessWidget {
       separatorBuilder: (_, __) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         final game = games[index];
-        final isPast = game.date.isBefore(now);
+        final gameDay = DateTime(game.date.year, game.date.month, game.date.day);
+        final today = DateTime(now.year, now.month, now.day);
+        final isPast = gameDay.isBefore(today);
 
         return GameCard(
           game: game,
-          showLeaveButton: !isPast && onLeave != null,
+          showLeaveButton: !isPast,
           onLeave: onLeave,
           onReport: onReport,
           onTap: () {
