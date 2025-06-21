@@ -155,4 +155,28 @@ class GameService {
         .map((doc) => GameModel.fromMap(doc.data() as Map<String, dynamic>))
         .toList());
   }
+  Future<void> removePlayerFromGame(String gameId, String playerId) async {
+    final gameRef = FirebaseFirestore.instance.collection('games').doc(gameId);
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final gameDoc = await transaction.get(gameRef);
+
+      if (!gameDoc.exists) {
+        throw Exception('Game not found');
+      }
+
+      final gameData = gameDoc.data() as Map<String, dynamic>;
+      final usersJoined = List<String>.from(gameData['usersJoined'] ?? []);
+
+      if (usersJoined.contains(playerId)) {
+        usersJoined.remove(playerId);
+
+        transaction.update(gameRef, {
+          'usersJoined': usersJoined,
+        });
+      }
+    });
+  }
 }
+
+

@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:teamup/services/game_service.dart';
+
+import 'package:teamup/core/constant/colors.dart';
+
+import '../../models/game_model.dart';
 import '../../models/field_model.dart';
 import 'widgets/step_zona.dart';
 import 'widgets/step_fecha.dart';
@@ -140,8 +144,10 @@ class _AddGameViewState extends State<AddGameView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: Text('Crear Partido - Paso ${_currentStep + 1} de 4'),
+        backgroundColor: const Color(0xFFF8FAFC),
         leading: _currentStep > 0
             ? IconButton(icon: const Icon(Icons.arrow_back_ios_new), onPressed: previousStep)
             : null,

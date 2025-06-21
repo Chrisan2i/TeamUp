@@ -15,6 +15,7 @@ class CustomBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BottomAppBar(
+      color: const Color.fromARGB(255, 0, 124, 146),
       shape: const CircularNotchedRectangle(),
       notchMargin: 8,
       child: Row(
@@ -23,12 +24,12 @@ class CustomBottomNavBar extends StatelessWidget {
           IconButton(
             onPressed: () => onTap(0),
             icon: const Icon(Icons.sports_soccer),
-            color: currentIndex == 0 ? const Color(0xFF0CC0DF) : Colors.grey,
+            color: currentIndex == 0 ? const Color(0xFF0CC0DF) : const Color.fromARGB(255, 210, 210, 210),
           ),
           IconButton(
             onPressed: () => onTap(1),
             icon: const Icon(Icons.bookmark),
-            color: currentIndex == 1 ? const Color(0xFF0CC0DF) : Colors.grey,
+            color: currentIndex == 1 ? const Color(0xFF0CC0DF) : const Color.fromARGB(255, 210, 210, 210),
           ),
           const SizedBox(width: 48),
 
@@ -54,14 +55,14 @@ class CustomBottomNavBar extends StatelessWidget {
                   ),
               ],
             ),
-            color: currentIndex == 2 ? const Color(0xFF0CC0DF) : Colors.grey,
+            color: currentIndex == 2 ? const Color(0xFF0CC0DF) : const Color.fromARGB(255, 210, 210, 210),
           ),
           // ---------------------------------
 
           IconButton(
             onPressed: () => onTap(3),
             icon: const Icon(Icons.person),
-            color: currentIndex == 3 ? const Color(0xFF0CC0DF) : Colors.grey,
+            color: currentIndex == 3 ? const Color(0xFF0CC0DF) : const Color.fromARGB(255, 210, 210, 210),
           ),
         ],
       ),

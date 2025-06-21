@@ -29,6 +29,8 @@ class _ProfileEditorState extends State<ProfileEditor> {
   final TextEditingController _countryController = TextEditingController();
   final TextEditingController _skillController = TextEditingController();
   final TextEditingController _positionController = TextEditingController();
+  final TextEditingController _birthdayController = TextEditingController();
+  final TextEditingController _genderController = TextEditingController();
 
   @override
   void initState() {
@@ -50,7 +52,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
         country = data['country'] ?? '';
         position = data['position'] ?? '';
         skillLevel = data['skillLevel'] ?? '';
-        profileImageUrl = data['profileImageUrl'];
+        profileImageUrl = data['profileImage'];
       });
     }
   }
@@ -75,7 +77,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null) {
         await FirebaseFirestore.instance.collection('users').doc(uid).update({
-          'profileImageUrl': imageUrl,
+          'profileImage': imageUrl,
         });
         setState(() {
           profileImageUrl = imageUrl;
@@ -106,7 +108,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile updated successfully')),
+        const SnackBar(content: Text('Perfil actualizado con éxito')),
       );
       Navigator.pop(context);
     }
@@ -133,17 +135,17 @@ class _ProfileEditorState extends State<ProfileEditor> {
       builder: (BuildContext context) {
         return _buildEditDialog(
           context,
-          title: 'What is your name?',
-          description: 'Providing your real name helps build trust among players and facilities.',
+          title: '¿Cuál es tu nombre?',
+          description: 'Proporcionar tu nombre real ayuda a generar confianza entre los jugadores y las instalaciones.',
           content: Column(
             children: [
-              const Text('First Name', style: TextStyle(color: Color(0xFF374151), fontSize: 16, fontWeight: FontWeight.w500)),
+              const Text('Nombre', style: TextStyle(color: Color(0xFF374151), fontSize: 16, fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
-              TextField(controller: _firstNameController, decoration: _inputDecoration('Enter your first name')),
+              TextField(controller: _firstNameController, decoration: _inputDecoration('Ingresa tu nombre')),
               const SizedBox(height: 24),
-              const Text('Last Name', style: TextStyle(color: Color(0xFF374151), fontSize: 16, fontWeight: FontWeight.w500)),
+              const Text('Apellido', style: TextStyle(color: Color(0xFF374151), fontSize: 16, fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
-              TextField(controller: _lastNameController, decoration: _inputDecoration('Enter your last name')),
+              TextField(controller: _lastNameController, decoration: _inputDecoration('Ingresa tu apellido')),
             ],
           ),
           onSave: () {
@@ -163,12 +165,12 @@ class _ProfileEditorState extends State<ProfileEditor> {
       builder: (BuildContext context) {
         return _buildEditDialog(
           context,
-          title: 'What is your email?',
-          description: 'Your email will be used for account notifications and password recovery.',
+          title: '¿Cuál es tu correo electrónico?',
+          description: 'Tu correo electrónico se utilizará para notificaciones de cuenta y recuperación de contraseña.',
           content: TextField(
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
-            decoration: _inputDecoration('Enter your email'),
+            decoration: _inputDecoration('Ingresa tu correo electrónico'),
           ),
           onSave: () {
             setState(() {
@@ -187,11 +189,11 @@ class _ProfileEditorState extends State<ProfileEditor> {
       builder: (BuildContext context) {
         return _buildEditDialog(
           context,
-          title: 'Which country do you represent?',
-          description: 'Select your country to connect with local players and facilities.',
+          title: '¿Qué país te encuentras?',
+          description: 'Selecciona tu país para conectarte con jugadores y instalaciones locales.',
           content: TextField(
             controller: _countryController,
-            decoration: _inputDecoration('Enter your country'),
+            decoration: _inputDecoration('Ingresa tu país'),
           ),
           onSave: () {
             setState(() {
@@ -210,11 +212,11 @@ class _ProfileEditorState extends State<ProfileEditor> {
       builder: (BuildContext context) {
         return _buildEditDialog(
           context,
-          title: 'What is your skill level?',
-          description: 'Select your current skill level to match with players of similar ability.',
+          title: 'cuál es tu nivel de habilidad?',
+          description: 'Selecciona tu nivel de habilidad para encontrar jugadores con roles complementarios.',
           content: TextField(
             controller: _skillController,
-            decoration: _inputDecoration('Enter your skill level'),
+            decoration: _inputDecoration('Ingresa tu nivel de habilidad'),
           ),
           onSave: () {
             setState(() {
@@ -233,11 +235,11 @@ class _ProfileEditorState extends State<ProfileEditor> {
       builder: (BuildContext context) {
         return _buildEditDialog(
           context,
-          title: 'What is your preferred position?',
-          description: 'Select your preferred playing position to find suitable games.',
+          title: '¿Cuál es tu posición preferida?',
+          description: 'Selecciona tu posición preferida para encontrar jugadores con roles complementarios.',
           content: TextField(
             controller: _positionController,
-            decoration: _inputDecoration('Enter your position'),
+            decoration: _inputDecoration('Ingresa tu posición'),
           ),
           onSave: () {
             setState(() {
@@ -295,7 +297,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('Save', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                    child: const Text('Guardar', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],
@@ -328,6 +330,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
         backgroundColor: const Color(0xFF0CC0DF),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
+      backgroundColor: const Color(0xFFF9FAFB),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
@@ -340,27 +343,27 @@ class _ProfileEditorState extends State<ProfileEditor> {
                   Stack(
                     children: [
                       CircleAvatar(
-                      radius: 60,
-                      backgroundColor: const Color(0xFF0CC0DF).withOpacity(0.2),
-                      backgroundImage: profileImageUrl != null && profileImageUrl!.isNotEmpty
-                          ? NetworkImage(profileImageUrl!)
-                          : null,
-                      child: (profileImageUrl == null || profileImageUrl!.isEmpty)
-                          ? Text(
-                              fullName.isNotEmpty ? fullName[0] : 'U',
-                              style: const TextStyle(
-                                color: Color(0xFF0CC0DF),
-                                fontSize: 36,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            )
-                          : null,
-                    ),
+                        radius: 60,
+                        backgroundColor: const Color(0xFF0CC0DF).withOpacity(0.2),
+                        backgroundImage: profileImageUrl != null && profileImageUrl!.isNotEmpty
+                            ? NetworkImage(profileImageUrl!)
+                            : null,
+                        child: (profileImageUrl == null || profileImageUrl!.isEmpty)
+                            ? Text(
+                          fullName.isNotEmpty ? fullName[0] : 'U',
+                          style: const TextStyle(
+                            color: Color(0xFF0CC0DF),
+                            fontSize: 36,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                            : null,
+                      ),
                       Positioned(
                         bottom: 0,
                         right: 0,
                         child: GestureDetector(
-                            onTap: _changeProfileImage,
+                          onTap: _changeProfileImage,
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
@@ -378,81 +381,166 @@ class _ProfileEditorState extends State<ProfileEditor> {
                   Text("$fullName's profile", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   const Text(
-                    'Your profile details helps personalize your TeamUp experience and connects you with the right games and players.',
+                    'Tu perfil es la primera impresión que los demás jugadores tendrán de ti.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey, fontSize: 14),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 32),
-            _buildProfileField(label: 'MY NAME', value: fullName, onEdit: () => _showNameEditorDialog(context)),
-            _buildProfileField(label: 'EMAIL', value: email, onEdit: () => _showEmailEditorDialog(context)),
-            _buildProfileField(label: 'COUNTRY', value: country, onEdit: () => _showCountryEditorDialog(context)),
-            _buildProfileField(label: 'MY SKILL LEVEL', value: skillLevel, onEdit: () => _showSkillEditorDialog(context)),
-            _buildProfileField(
-              label: 'PREFERRED POSITION',
-              value: position,
-              onEdit: () => _showPositionEditorDialog(context),
-              extraWidget: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(color: const Color(0xFFF59E0B), borderRadius: BorderRadius.circular(12)),
-                child: const Text('Missing info', style: TextStyle(color: Colors.white, fontSize: 12)),
+            const SizedBox(height: 24),
+            // Campos de perfil
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 32),
-            const SizedBox(height: 32),
-            Center(
+              padding: const EdgeInsets.symmetric(vertical: 8),
               child: Column(
                 children: [
-                  TextButton(
-                    onPressed: () async {
-                      await FirebaseAuth.instance.signOut();
-                      if (context.mounted) {
-                        Navigator.of(context).popUntil((route) => route.isFirst);
-                      }
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-                      );
-                    },
-                    child: const Text(
-                      'Log Out',
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontSize: 16,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
+                  _buildProfileField(
+                    label: 'NOMBRE COMPLETO',
+                    value: fullName,
+                    onEdit: () => _showNameEditorDialog(context),
+
                   ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () async {
-                      final user = FirebaseAuth.instance.currentUser;
-                      if (user != null) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-                        );
-                        await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
-                        await user.delete();
-                        if (context.mounted) {
-                          Navigator.of(context).popUntil((route) => route.isFirst);
-                        }
-                      }
-                    },
-                    child: const Text(
-                      'Delete Account',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
+                  const Divider(height: 1, thickness: 1, color: Color(0xFFF9FAFB)),
+                  _buildProfileField(
+                    label: 'CORREO ELECTRÓNICO',
+                    value: email,
+                    onEdit: () => _showEmailEditorDialog(context),
+
+                  ),
+                  const Divider(height: 1, thickness: 1, color: Color(0xFFF9FAFB)),
+                  _buildProfileField(
+                    label: 'PAÍS',
+                    value: country,
+                    onEdit: () => _showCountryEditorDialog(context),
+
+                  ),
+                  const Divider(height: 1, thickness: 1, color: Color(0xFFF9FAFB)),
+                  _buildProfileField(
+                    label: 'NIVEL DE HABILIDAD',
+                    value: skillLevel,
+                    onEdit: () => _showSkillEditorDialog(context),
+
+                  ),
+                  const Divider(height: 1, thickness: 1, color: Color(0xFFF9FAFB)),
+                  _buildProfileField(
+                    label: 'POSICIÓN PREFERIDA',
+                    value: position,
+                    onEdit: () => _showPositionEditorDialog(context),
+
+                    extraWidget: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF59E0B).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFF59E0B)),
+                      ),
+                      child: const Text(
+                        'Falta información',
+                        style: TextStyle(
+                          color: Color(0xFF92400E),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: 24),
+
+            // Sección de acciones peligrosas
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton.icon(
+                      onPressed: () async {
+                        await FirebaseAuth.instance.signOut();
+                        if (context.mounted) {
+                          Navigator.of(context).popUntil((route) => route.isFirst);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.logout, size: 20),
+                      label: const Text(
+                        'Cerrar Sesión',
+                        style: TextStyle(
+                          color: Color(0xFF0CC0DF),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      ),
+                    ),
+                  ),
+                  const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton.icon(
+                      onPressed: () async {
+                        final user = FirebaseAuth.instance.currentUser;
+                        if (user != null) {
+                          await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
+                          await user.delete();
+                          if (context.mounted) {
+                            Navigator.of(context).popUntil((route) => route.isFirst);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                            );
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.delete_outline, size: 20),
+                      label: const Text(
+                        'Eliminar Cuenta',
+                        style: TextStyle(
+                          color: Color(0xFFEF4444),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
@@ -494,8 +582,8 @@ class _ProfileEditorState extends State<ProfileEditor> {
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
-          top: const BorderSide(color: Color(0xFFE5E7EB)),
-          bottom: isLast ? const BorderSide(color: Color(0xFFE5E7EB)) : BorderSide.none,
+          top: const BorderSide(color: Color(0xFFF9FAFB)),
+          bottom: isLast ? const BorderSide(color: Color(0xFFF9FAFB)) : BorderSide.none,
         ),
       ),
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),

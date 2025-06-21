@@ -61,9 +61,17 @@ class _MessagesViewState extends State<MessagesView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
+        backgroundColor: const Color(0xFFF8FAFC),
         automaticallyImplyLeading: false,
-        title: const Text("Messages"),
+        title: const Text("Messages",
+        style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
+          ),
+          ),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_square, size: 26),
@@ -101,7 +109,7 @@ class _MessagesViewState extends State<MessagesView> {
         onPressed: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const AddGameView()));
         },
-        backgroundColor: const Color(0xFF0CC0DF),
+        backgroundColor: const Color.fromARGB(255, 0, 124, 146),
         tooltip: 'Crear Partido',
         elevation: 2.0,
         child: const Icon(Icons.add, color: Colors.white),
