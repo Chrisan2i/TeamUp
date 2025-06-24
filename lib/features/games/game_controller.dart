@@ -1,6 +1,8 @@
+// game_controller.dart
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';    // ← NUEVO
 import '../../models/game_model.dart';
 
 class GameController extends ChangeNotifier {
@@ -18,14 +20,26 @@ class GameController extends ChangeNotifier {
 
   StreamSubscription? _gamesSubscription;
 
+  // ── NUEVO: Geolocalización ───────────────────────────────────
+  Position? _userPosition;
+  double _searchRadiusKm = 10; // por defecto 10 km
+
+  /// Permite al usuario cambiar el radio de búsqueda
+  void setSearchRadius(double radiusKm) {
+    _searchRadiusKm = radiusKm;
+    applyFilters();
+  }
+
+  /// Expone el radio actual
+  double get searchRadiusKm => _searchRadiusKm;
+  // ─────────────────────────────────────────────────────────────
+
   GameController() {
-    // 💡 2. LA CORRECCIÓN PRINCIPAL:
-    // Se inicializa la fecha seleccionada con el día de hoy al crear el controlador.
-    // Se normaliza la fecha para no incluir horas/minutos y asegurar comparaciones correctas.
     final now = DateTime.now();
     selectedDate = DateTime(now.year, now.month, now.day);
 
     _listenToGames();
+    // _getUserLocation();  // ← Desactivado temporalmente
   }
 
   /// 🔄 Escucha en tiempo real los cambios en Firestore
@@ -40,92 +54,104 @@ class GameController extends ChangeNotifier {
         .listen((snapshot) {
       allGames = snapshot.docs.map((doc) {
         final data = doc.data();
-        // Asegúrate que tu GameModel.fromMap puede manejar el ID si lo necesitas
         return GameModel.fromMap(data);
       }).toList();
 
-      applyFilters(); // El filtro se aplicará correctamente desde la primera vez.
+      applyFilters();
       isLoading = false;
       notifyListeners();
     }, onError: (e) {
-      debugPrint('❌ Error escuchando juegos: $e');
+      debugPrint('❌ Error escuchando juegos: \$e');
       isLoading = false;
       notifyListeners();
     });
   }
 
+  /// Obtiene la ubicación del usuario (una sola vez)
+  Future<void> _getUserLocation() async {
+    try {
+      final permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        debugPrint('Permiso de ubicación denegado.');
+        return;
+      }
+      _userPosition = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      applyFilters(); // reaplica filtros con coordenadas
+    } catch (e) {
+      debugPrint('❌ Error obteniendo ubicación: \$e');
+    }
+  }
+
   /// 📅 Cambiar fecha seleccionada
   void setDate(DateTime date) {
-    // Se normaliza la fecha para compararla correctamente.
     final newSelectedDate = DateTime(date.year, date.month, date.day);
-
-    // 💡 3. Mejora: Evita trabajo innecesario si la fecha no ha cambiado.
     if (selectedDate == newSelectedDate) return;
-
     selectedDate = newSelectedDate;
     applyFilters();
   }
 
   /// 🔍 Cambiar texto de búsqueda
   void setSearchText(String text) {
-    // 💡 3. Mejora: Evita trabajo innecesario si el texto de búsqueda no ha cambiado.
     if (searchText == text) return;
-
     searchText = text;
     applyFilters();
   }
 
   /// Aplica todos los filtros activos a la lista de juegos.
   void applyFilters() {
+    // ── FILTRO POR DISTANCIA (Desactivado) ──────────────────────
+    // if (_userPosition != null) {
+    //   final userLat = _userPosition!.latitude;
+    //   final userLng = _userPosition!.longitude;
+    //   final radiusMeters = _searchRadiusKm * 1000;
+    //   allGames = allGames.where((game) {
+    //     final loc = game.location;
+    //     if (loc == null) return false;
+    //     final distance = Geolocator.distanceBetween(
+    //         userLat, userLng, loc.latitude, loc.longitude);
+    //     return distance <= radiusMeters;
+    //   }).toList();
+    // }
+    // ─────────────────────────────────────────────────────────────
+
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
     filteredGames = allGames.where((game) {
       final gameDay = DateTime(game.date.year, game.date.month, game.date.day);
-
-      // ⛔ Ocultar partidos pasados
       if (gameDay.isBefore(today)) return false;
-
-      // ⛔ Ocultar partidos privados
       if (!game.isPublic) return false;
-
-      // ⛔ Ocultar si el usuario ya está unido
       if (game.usersJoined.contains(currentUserId)) return false;
-
-      // 💡 4. Lógica de filtro simplificada:
-      // Ya no se necesita `if (selectedDate != null)` porque `selectedDate` siempre está inicializada.
       if (gameDay != selectedDate) return false;
 
-      // 🔍 Filtro por texto
       if (searchText.isNotEmpty) {
         final search = searchText.toLowerCase();
         final matchesField = game.fieldName.toLowerCase().contains(search);
         final matchesDescription = game.description.toLowerCase().contains(search);
         final matchesZone = game.zone.toLowerCase().contains(search);
-
         if (!matchesField && !matchesDescription && !matchesZone) {
           return false;
         }
       }
-
-      // Si pasa todos los filtros, el partido se incluye.
       return true;
     }).toList();
 
-    // Notifica a los widgets que la lista de juegos filtrados ha cambiado.
     notifyListeners();
   }
 
   void setCurrentUser(String uid) {
     if (currentUserId == uid) return;
     currentUserId = uid;
-    applyFilters(); // Actualiza la lista para ocultar los juegos a los que ya se unió.
+    applyFilters();
   }
 
-  /// ✅ Cancelar la suscripción al cerrar el widget para evitar fugas de memoria.
   @override
   void dispose() {
     _gamesSubscription?.cancel();
     super.dispose();
   }
 }
+

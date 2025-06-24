@@ -109,10 +109,18 @@ class _GameHomeViewState extends State<GameHomeView> {
         child: Column(
           children: [
             const SizedBox(height: kSpacingSmall),
+
+            // ① Selector de fecha
             GameDateSelector(onDateSelected: controller.setDate),
             const SizedBox(height: kSpacingSmall),
-            GameSearchBar(onSearch: controller.setSearchText),
+
+            // ② Búsqueda por texto
+            GameSearchFilterBar(onSearch: controller.setSearchText),
             const SizedBox(height: kSpacingMedium),
+
+            const SizedBox(height: kSpacingMedium),
+
+            // ④ Lista de partidos
             Expanded(
               child: controller.filteredGames.isEmpty
                   ? const Center(child: Text("No games found"))
@@ -126,7 +134,12 @@ class _GameHomeViewState extends State<GameHomeView> {
                     child: GameCard(
                       game: game,
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => GameDetailView(game: game)));
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => GameDetailView(game: game),
+                          ),
+                        );
                       },
                     ),
                   );

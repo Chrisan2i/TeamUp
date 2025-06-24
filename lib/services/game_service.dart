@@ -1,3 +1,4 @@
+// game_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:teamup/models/game_model.dart';
@@ -50,6 +51,7 @@ class GameService {
     required String footwear,
     required int minPlayersToConfirm,
     String? privateCode,
+    required GeoPoint location, // ← NUEVO: ubicación de la cancha
   }) async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
@@ -99,6 +101,9 @@ class GameService {
       minPlayersToConfirm: minPlayersToConfirm,
       privateCode: privateCode,
 
+      // Ubicación de la cancha para filtros
+      location: location,
+
       // Valores iniciales por defecto
       createdAt: DateTime.now().toIso8601String(),
       status: 'scheduled',
@@ -145,7 +150,6 @@ class GameService {
   Stream<List<GameModel>> getGames({String? ownerId}) {
     Query query = games;
     if (ownerId != null) {
-      // Usando el nombre de campo correcto de tu modelo
       query = query.where('ownerId', isEqualTo: ownerId);
     }
     return query
@@ -155,10 +159,11 @@ class GameService {
         .map((doc) => GameModel.fromMap(doc.data() as Map<String, dynamic>))
         .toList());
   }
-  Future<void> removePlayerFromGame(String gameId, String playerId) async {
-    final gameRef = FirebaseFirestore.instance.collection('games').doc(gameId);
 
-    await FirebaseFirestore.instance.runTransaction((transaction) async {
+  Future<void> removePlayerFromGame(String gameId, String playerId) async {
+    final gameRef = _firestore.collection('games').doc(gameId);
+
+    await _firestore.runTransaction((transaction) async {
       final gameDoc = await transaction.get(gameRef);
 
       if (!gameDoc.exists) {
@@ -178,5 +183,3 @@ class GameService {
     });
   }
 }
-
-

@@ -103,7 +103,9 @@ class _AddGameViewState extends State<AddGameView> {
         footwear: selectedField!.footwear,
         minPlayersToConfirm: minPlayersToConfirm ?? selectedField!.minPlayersToBook,
         privateCode: isPublic ? null : privateCode,
+        location: selectedField!.location,
       );
+
       await _updateFieldAvailability();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

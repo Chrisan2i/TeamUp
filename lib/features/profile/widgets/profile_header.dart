@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:teamup/features/profile/profile_edit_view.dart';
 import '../../auth/models/user_model.dart';
+import 'package:teamup/features/friends/friends_view.dart';
+import 'package:teamup/features/my_created_games/my_created_games_view.dart';
 
 class ProfileHeader extends StatelessWidget {
   final UserModel user;
@@ -56,18 +58,18 @@ class ProfileHeader extends StatelessWidget {
                       : null,
                   child: user.profileImageUrl.isEmpty
                       ? Text(
-                          user.fullName.isNotEmpty ? user.fullName[0] : 'U',
-                          style: const TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF64748B),
-                          ),
-                        )
+                    user.fullName.isNotEmpty ? user.fullName[0] : 'U',
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF64748B),
+                    ),
+                  )
                       : null,
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Nombre
               Text(
                 user.fullName,
@@ -78,17 +80,17 @@ class ProfileHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              
+
               // Ubicación
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.location_on, 
-                      size: 16, 
+                  Icon(Icons.location_on,
+                      size: 16,
                       color: const Color(0xFF64748B).withOpacity(0.7)),
                   const SizedBox(width: 4),
                   Text(
-                    "Venezuela",
+                    "Venezuela", // Puedes cambiar esto por una propiedad del modelo de usuario si la tienes
                     style: TextStyle(
                       fontSize: 14,
                       color: const Color(0xFF64748B).withOpacity(0.9),
@@ -97,7 +99,7 @@ class ProfileHeader extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              
+
               // Botón Editar Perfil
               ElevatedButton.icon(
                 onPressed: () {
@@ -120,14 +122,37 @@ class ProfileHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               // Botones de navegación
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildNavButton(Icons.people_alt_outlined, "Amigos"),
+                  _buildNavButton(
+                    Icons.people_alt_outlined,
+                    "Amigos",
+                        () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => FriendsView(currentUser: user),
+                        ),
+                      );
+                    },
+                  ),
                   const SizedBox(width: 16),
-                  _buildNavButton(Icons.sports_soccer_outlined, "Partidos"),
+                  _buildNavButton(
+                    Icons.sports_soccer_outlined,
+                    "Partidos Creados",
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MyCreatedGamesView(),
+                            ),
+                          );
+                      print("Botón Partidos presionado!");
+                    },
+                  ),
                 ],
               ),
             ],
@@ -137,9 +162,10 @@ class ProfileHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildNavButton(IconData icon, String label) {
+  // 2. MÉTODO ACTUALIZADO PARA ACEPTAR UNA FUNCIÓN onPressed
+  Widget _buildNavButton(IconData icon, String label, VoidCallback onPressed) {
     return ElevatedButton.icon(
-      onPressed: () {},
+      onPressed: onPressed,
       icon: Icon(icon, size: 18),
       label: Text(label),
       style: ElevatedButton.styleFrom(
@@ -148,8 +174,8 @@ class ProfileHeader extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: BorderSide(
-            color: const Color(0xFFE2E8F0),
+          side: const BorderSide(
+            color: Color(0xFFE2E8F0),
             width: 1.5,
           ),
         ),
