@@ -1,6 +1,9 @@
-// game_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Modelo que representa un partido en la aplicación.
+///
+/// Contiene toda la información relevante de un partido, desde los detalles
+/// del evento hasta la lista de jugadores y sus invitados.
 class GameModel {
   final String id;
   final String ownerId;
@@ -10,27 +13,32 @@ class GameModel {
   final DateTime date;
   final String hour;
   final String description;
-  final int playerCount;
+  final int playerCount; 
   final bool isPublic;
   final double price;
   final double duration;
   final String createdAt;
   final String imageUrl;
-  final List<String> usersJoined;
   final String skillLevel;
   final String type;
   final String format;
   final String footwear;
-
-  /// Coordenadas de la cancha (lat/lng) para filtros de distancia
   final GeoPoint? location;
-
   final String status;
   final int minPlayersToConfirm;
   final String? privateCode;
   final double? fieldRating;
   final String? report;
   final List<String> usersPaid;
+
+  /// Lista de UIDs de los usuarios que se han unido directamente.
+  final List<String> usersJoined;
+
+  /// Mapa para gestionar los invitados.
+  /// La clave (String) es el UID del usuario anfitrión.
+  /// El valor (int) es el número de invitados que trae ese usuario.
+  /// Ejemplo: {'uid_de_carlos': 2} significa que Carlos trae a 2 invitados.
+  final Map<String, int> guests;
 
   GameModel({
     required this.id,
@@ -59,9 +67,16 @@ class GameModel {
     this.fieldRating,
     this.report,
     required this.usersPaid,
+    required this.guests, // <-- Añadido al constructor
   });
 
+  /// Getter para calcular el número total de plazas ocupadas.
+  /// Suma los usuarios unidos directamente más todos los invitados.
+  int get totalPlayers => usersJoined.length + guests.values.fold(0, (sum, count) => sum + count);
+
+  /// Constructor factory para crear una instancia de GameModel desde un mapa (documento de Firestore).
   factory GameModel.fromMap(Map<String, dynamic> map) {
+    // Función de ayuda para parsear la fecha de forma segura
     DateTime parseDate(dynamic value) {
       if (value is Timestamp) return value.toDate();
       if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
@@ -95,9 +110,12 @@ class GameModel {
       fieldRating: map['fieldRating'] != null ? (map['fieldRating'] as num).toDouble() : null,
       report: map['report'],
       usersPaid: List<String>.from(map['usersPaid'] ?? []),
+      // Parsea el mapa de invitados. Si no existe, devuelve un mapa vacío.
+      guests: Map<String, int>.from(map['guests'] ?? {}),
     );
   }
 
+  /// Convierte la instancia de GameModel a un mapa para guardarlo en Firestore.
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -126,9 +144,11 @@ class GameModel {
       'fieldRating': fieldRating,
       'report': report,
       'usersPaid': usersPaid,
+      'guests': guests, // <-- Añadido al mapa
     };
   }
 
+  /// Crea una copia del objeto GameModel con los campos proporcionados actualizados.
   GameModel copyWith({
     String? id,
     String? ownerId,
@@ -156,6 +176,7 @@ class GameModel {
     double? fieldRating,
     String? report,
     List<String>? usersPaid,
+    Map<String, int>? guests, // <-- Añadido al copyWith
   }) {
     return GameModel(
       id: id ?? this.id,
@@ -184,6 +205,7 @@ class GameModel {
       fieldRating: fieldRating ?? this.fieldRating,
       report: report ?? this.report,
       usersPaid: usersPaid ?? this.usersPaid,
+      guests: guests ?? this.guests, // <-- Añadido al copyWith
     );
   }
 }

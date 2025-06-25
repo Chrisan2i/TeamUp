@@ -12,7 +12,7 @@ class ProfileStats extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
-          // Sección de posición y nivel de habilidad
+          // Sección de posición y nivel de habilidad (sin cambios)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -40,8 +40,8 @@ class ProfileStats extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          
-          // Tarjeta de estadísticas
+
+          // Tarjeta de estadísticas (MODIFICADA)
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -67,12 +67,12 @@ class ProfileStats extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
+                // --- CAMBIO AQUÍ: Se eliminó el item de "Instalaciones" ---
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  // Se cambió a 'spaceEvenly' para un mejor espaciado entre dos elementos
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _buildStatItem('${user.totalGamesJoined}', 'Partidos'),
-                    _buildStatDivider(),
-                    _buildStatItem('${user.totalGamesCreated}', 'Instalaciones'),
                     _buildStatDivider(),
                     _buildStatItem('${user.averageRating.toStringAsFixed(1)}', 'Rating'),
                   ],
@@ -84,6 +84,8 @@ class ProfileStats extends StatelessWidget {
       ),
     );
   }
+
+  // --- El resto de los widgets de construcción se mantienen igual ---
 
   Widget _buildPositionField(String label, String value) {
     return Padding(

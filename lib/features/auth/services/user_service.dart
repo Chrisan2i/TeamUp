@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 import 'package:teamup/services/notification_service.dart';
+import 'package:teamup/models/game_model.dart';
 
 class UserService {
   final _db = FirebaseFirestore.instance;
@@ -159,6 +160,38 @@ class UserService {
     } catch (e) {
       debugPrint("Error getting friends: $e");
       return [];
+    }
+  }
+  Future<Map<String, dynamic>> getProfilePageData(String userId) async {
+    try {
+      // Tarea 1: Obtener el perfil del usuario
+      final userDoc = await _db.collection(_collection).doc(userId).get();
+      if (!userDoc.exists) {
+        throw Exception('Usuario no encontrado.');
+      }
+      final user = UserModel.fromMap(userDoc.data()!, userDoc.id);
+
+      // Tarea 2: Obtener los partidos recientes del usuario
+      final gamesSnapshot = await _db
+          .collection('games')
+          .where('usersJoined', arrayContains: userId)
+          .orderBy('date', descending: true)
+          .limit(15) // Limitamos a 15 para no cargar demasiados datos
+          .get();
+
+      final recentGames = gamesSnapshot.docs
+          .map((doc) => GameModel.fromMap(doc.data()))
+          .toList();
+
+      // Devuelve ambos resultados en un mapa
+      return {
+        'user': user,
+        'recentGames': recentGames,
+      };
+
+    } catch (e) {
+      debugPrint("Error obteniendo los datos de la página de perfil: $e");
+      rethrow; // Lanza el error para que el FutureBuilder lo pueda capturar
     }
   }
 

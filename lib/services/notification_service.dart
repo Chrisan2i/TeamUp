@@ -1,4 +1,4 @@
-// lib/services/notification_service.dart  (o la ruta donde lo tengas)
+  // lib/services/notification_service.dart  (o la ruta donde lo tengas)
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:teamup/models/notification_model.dart'; // ¡Asegúrate que la ruta del modelo es correcta!

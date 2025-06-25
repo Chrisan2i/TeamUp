@@ -66,8 +66,9 @@ class AuthService {
         createdAt: DateTime.now(),
         notesByAdmin: '',
         verification: VerificationData(
-          idCardUrl: '',
-          faceImageUrl: '',
+          idCardFrontUrl: '',
+          idCardBackUrl: '',
+          faceWithIdUrl: '',
           status: 'pending',
           rejectionReason: null,
         ),

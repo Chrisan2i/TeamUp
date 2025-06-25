@@ -56,8 +56,9 @@ class _RegisterStep4State extends State<RegisterStep4> {
         createdAt: DateTime.now(),
         notesByAdmin: '',
         verification: VerificationData(
-          idCardUrl: '',
-          faceImageUrl: '',
+          idCardFrontUrl: '',
+          idCardBackUrl: '',
+          faceWithIdUrl: '',
           status: 'pending',
           rejectionReason: null,
         ),

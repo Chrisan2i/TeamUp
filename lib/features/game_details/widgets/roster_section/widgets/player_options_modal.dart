@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:teamup/features/auth/models/user_model.dart';
-import 'package:teamup/features/auth/services/user_service.dart';
+import 'package:teamup/services/game_players_service.dart';  // <-- 1. IMPORTAR EL SERVICIO CORRECTO
 import 'package:teamup/features/chat/views/chat_view.dart';
 import 'player_avatar.dart';
 import 'package:teamup/features/player_profile/player_profile_view.dart';
@@ -17,70 +17,72 @@ class PlayerOptionsModal extends StatefulWidget {
 }
 
 class _PlayerOptionsModalState extends State<PlayerOptionsModal> {
-  final UserService _userService = UserService();
+  // 2. USAR LA INSTANCIA DEL SERVICIO CENTRALIZADO
+  final GamePlayersService _playersService = GamePlayersService();
   final PrivateChatService _privateChatService = PrivateChatService();
   final String? _currentUserId = FirebaseAuth.instance.currentUser?.uid;
 
-  // Los métodos de acción se mueven aquí, dentro del widget que los usa.
-  void _sendFriendRequest(BuildContext modalContext) async {
-    if (_currentUserId == null) return;
+  bool _isProcessing = false; // Estado para evitar múltiples clics
 
-    // Obtener datos del usuario actual para el nombre
-    final currentUserData = await _userService.getUserById(_currentUserId!);
-    if (currentUserData == null) return;
+  // --- MÉTODOS DE ACCIÓN ACTUALIZADOS ---
+  // Ahora son más simples y llaman al servicio central
 
-    Navigator.pop(modalContext);
+  Future<void> _handleAction(BuildContext modalContext, Future<void> Function() action) async {
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
+
+    Navigator.pop(modalContext); // Cierra el modal inmediatamente
 
     try {
-      await _userService.sendFriendRequest(
-        currentUserId: _currentUserId!,
-        targetUserId: widget.targetPlayer.uid,
-        currentUserName: currentUserData.fullName,
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Solicitud de amistad enviada.")));
+      await action();
+      // El SnackBar se puede mover a un nivel superior si se prefiere, o mantenerse aquí.
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
-  void _acceptFriendRequest(BuildContext modalContext) async {
-    if (_currentUserId == null) return;
-    Navigator.pop(modalContext);
+  void _sendFriendRequest(BuildContext modalContext, String currentUserName) {
+    _handleAction(modalContext, () async {
+      await _playersService.sendFriendRequest(
+        currentUserId: _currentUserId!,
+        profileUserId: widget.targetPlayer.uid,
+        currentUserName: currentUserName,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Solicitud de amistad enviada.")),
+      );
+    });
+  }
 
-    try {
-      await _userService.acceptFriendRequest(
+  void _acceptFriendRequest(BuildContext modalContext) {
+    _handleAction(modalContext, () async {
+      await _playersService.acceptFriendRequest(
         currentUserId: _currentUserId!,
         friendId: widget.targetPlayer.uid,
       );
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Ahora eres amigo de ${widget.targetPlayer.fullName}.")));
-    } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error al aceptar: $e")));
-    }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Ahora eres amigo de ${widget.targetPlayer.fullName}.")),
+      );
+    });
   }
 
-  void _rejectFriendRequest(BuildContext modalContext) async {
-    if (_currentUserId == null) return;
-    Navigator.pop(modalContext);
-
-    try {
-      await _userService.rejectOrCancelFriendRequest(
+  void _rejectFriendRequest(BuildContext modalContext) {
+    _handleAction(modalContext, () async {
+      await _playersService.cancelOrDeclineFriendRequest(
         currentUserId: _currentUserId!,
         otherUserId: widget.targetPlayer.uid,
       );
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Solicitud rechazada.")));
-    } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error al rechazar: $e")));
-    }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Solicitud rechazada.")),
+      );
+    });
   }
 
   void _handleSendMessage(BuildContext modalContext) async {
-    if (_currentUserId == null) return;
+    if (_currentUserId == null || _isProcessing) return;
+    setState(() => _isProcessing = true);
     Navigator.pop(modalContext); // Cierra el modal
 
     showDialog(
@@ -107,10 +109,12 @@ class _PlayerOptionsModalState extends State<PlayerOptionsModal> {
         ),
       );
     } catch (e) {
-      Navigator.pop(context); // Cierra el loading indicator en caso de error
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("No se pudo iniciar el chat: $e")),
       );
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
@@ -120,12 +124,13 @@ class _PlayerOptionsModalState extends State<PlayerOptionsModal> {
       return const Center(child: Text("Error: Usuario no autenticado."));
     }
 
-    // El StreamBuilder se queda aquí, para que el modal reaccione a cambios de estado.
+    // 3. EL STREAM AHORA USA EL SERVICIO CORRECTO
     return StreamBuilder<UserModel?>(
-      stream: _userService.streamUser(_currentUserId!),
+      stream: _playersService.firestore.collection('users').doc(_currentUserId!).snapshots().map((doc) =>
+      doc.exists ? UserModel.fromMap(doc.data()!, doc.id) : null),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
         }
 
         final currentUserData = snapshot.data!;
@@ -135,32 +140,28 @@ class _PlayerOptionsModalState extends State<PlayerOptionsModal> {
           friendActionWidget = _buildOptionButton(
             icon: Icons.check_circle_outline,
             text: 'Ya son amigos',
-            onTap: null, // Deshabilitado
+            onTap: null,
           );
         } else if (currentUserData.friendRequestsSent.contains(widget.targetPlayer.uid)) {
           friendActionWidget = _buildOptionButton(
             icon: Icons.pending_outlined,
             text: 'Solicitud enviada',
-            onTap: null, // Deshabilitado
+            onTap: null,
           );
         } else if (currentUserData.friendRequestsReceived.contains(widget.targetPlayer.uid)) {
           friendActionWidget = Row(
             children: [
               Expanded(
                 child: _buildSmallOptionButton(
-                  icon: Icons.check,
-                  text: 'Aceptar',
-                  color: Colors.green,
-                  onTap: () => _acceptFriendRequest(context),
+                  icon: Icons.check, text: 'Aceptar', color: Colors.green,
+                  onTap: _isProcessing ? null : () => _acceptFriendRequest(context),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _buildSmallOptionButton(
-                  icon: Icons.close,
-                  text: 'Rechazar',
-                  color: Colors.red,
-                  onTap: () => _rejectFriendRequest(context),
+                  icon: Icons.close, text: 'Rechazar', color: Colors.red,
+                  onTap: _isProcessing ? null : () => _rejectFriendRequest(context),
                 ),
               ),
             ],
@@ -169,10 +170,11 @@ class _PlayerOptionsModalState extends State<PlayerOptionsModal> {
           friendActionWidget = _buildOptionButton(
             icon: Icons.person_add_alt_1_outlined,
             text: 'Añadir amigo',
-            onTap: () => _sendFriendRequest(context),
+            onTap: _isProcessing ? null : () => _sendFriendRequest(context, currentUserData.fullName),
           );
         }
 
+        // El resto del diseño del widget no cambia en absoluto.
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           child: Column(
@@ -203,19 +205,19 @@ class _PlayerOptionsModalState extends State<PlayerOptionsModal> {
               _buildOptionButton(
                 icon: Icons.chat_bubble_outline,
                 text: 'Enviar Mensaje',
-                onTap: () => _handleSendMessage(context),
+                onTap: _isProcessing ? null : () => _handleSendMessage(context),
               ),
               const SizedBox(height: 12),
               _buildOptionButton(
                 icon: Icons.person_outline,
                 text: 'Ver Perfil',
                 onTap: () {
-                  Navigator.pop(context); // Cierra el modal
+                  Navigator.pop(context);
                   Navigator.push(
                       context,
                       MaterialPageRoute(
                           builder: (_) =>
-                              PlayerProfileView(player: widget.targetPlayer)));
+                              PlayerProfileScreen(userId: widget.targetPlayer.uid)));
                 },
               ),
             ],
@@ -225,7 +227,7 @@ class _PlayerOptionsModalState extends State<PlayerOptionsModal> {
     );
   }
 
-  // Los widgets de construcción de botones se mantienen privados aquí
+  // Los widgets de construcción de botones no se modifican.
   Widget _buildOptionButton({required IconData icon, required String text, VoidCallback? onTap}) {
     final bool isEnabled = onTap != null;
     return OutlinedButton.icon(

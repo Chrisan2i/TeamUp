@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:teamup/models/game_model.dart';
 import '../../../core/constant/app_sizes.dart';
-import 'join_game_botton.dart';
+import 'package:teamup/features/games/join_game_botton/join_game_bottom_sheet.dart';
 
 class GameCardButtons extends StatelessWidget {
   final GameModel game;
@@ -109,7 +109,7 @@ class GameCardButtons extends StatelessWidget {
             context: context,
             isScrollControlled: true,
             shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-            builder: (_) => JoinGameBottom(game: game),
+            builder: (_) => JoinGameBottomSheet(game: game),
           );
         },
         style: OutlinedButton.styleFrom(

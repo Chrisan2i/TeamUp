@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:teamup/models/game_model.dart';
-import 'package:teamup/features/games/widgets/join_game_botton.dart'; // Corregido el nombre del archivo
+import 'package:teamup/features/games/join_game_botton/join_game_bottom_sheet.dart';
 
 class GameDetailBottomBar extends StatelessWidget {
   final GameModel game;
@@ -77,7 +77,7 @@ class GameDetailBottomBar extends StatelessWidget {
                       shape: const RoundedRectangleBorder(
                         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                       ),
-                      builder: (ctx) => JoinGameBottom(game: game),
+                      builder: (ctx) => JoinGameBottomSheet(game: game),
                     );
                   }
                 },
@@ -101,8 +101,6 @@ class GameDetailBottomBar extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            // --- BOTÓN DE CHAT CON LÓGICA Y CONDICIÓN ---
-            // El botón solo está activo si el usuario ya se ha unido al partido
             ElevatedButton(
               onPressed: isUserJoined ? onChatPressed : null,
               style: ElevatedButton.styleFrom(

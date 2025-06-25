@@ -172,22 +172,26 @@ class UserModel {
 
 @immutable
 class VerificationData {
-  final String idCardUrl;
-  final String faceImageUrl;
+  // CAMPOS ACTUALIZADOS
+  final String idCardFrontUrl;
+  final String idCardBackUrl;     // URL de la parte trasera
+  final String faceWithIdUrl;     // URL de la selfie con el documento
   final String status;
   final String? rejectionReason;
 
   const VerificationData({
-    required this.idCardUrl,
-    required this.faceImageUrl,
+    required this.idCardFrontUrl,
+    required this.idCardBackUrl,
+    required this.faceWithIdUrl,
     required this.status,
     this.rejectionReason,
   });
 
   factory VerificationData.fromMap(Map<String, dynamic> map) {
     return VerificationData(
-      idCardUrl: map['idCardUrl'] ?? '',
-      faceImageUrl: map['faceImageUrl'] ?? '',
+      idCardFrontUrl: map['idCardFrontUrl'] ?? '',
+      idCardBackUrl: map['idCardBackUrl'] ?? '',
+      faceWithIdUrl: map['faceWithIdUrl'] ?? '',
       status: map['status'] ?? 'pending',
       rejectionReason: map['rejectionReason'],
     );
@@ -195,8 +199,9 @@ class VerificationData {
 
   Map<String, dynamic> toMap() {
     return {
-      'idCardUrl': idCardUrl,
-      'faceImageUrl': faceImageUrl,
+      'idCardFrontUrl': idCardFrontUrl,
+      'idCardBackUrl': idCardBackUrl,
+      'faceWithIdUrl': faceWithIdUrl,
       'status': status,
       'rejectionReason': rejectionReason,
     };

@@ -1,7 +1,7 @@
 // lib/features/my_games/widgets/game_list_item_card.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../models/game_model.dart'; // Asegúrate que la ruta sea correcta
+import '../../../models/game_model.dart';
 import 'game_card_actions.dart';
 import 'game_status_chip.dart';
 

@@ -1,40 +1,50 @@
-// game_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:teamup/models/game_model.dart';
 import 'package:teamup/models/group_chat_model.dart';
 
+/// Servicio para gestionar las operaciones CRUD y la lógica de negocio de los partidos.
 class GameService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  late final CollectionReference games = _firestore.collection('games');
-  late final CollectionReference groupChats = _firestore.collection('group_chats');
 
+  late final CollectionReference<Map<String, dynamic>> _gamesCollection = _firestore.collection('games');
+  late final CollectionReference<Map<String, dynamic>> _groupChatsCollection = _firestore.collection('group_chats');
+
+  /// Actualiza el estado de un partido ('scheduled', 'confirmed', 'full')
   Future<void> updateGameStatus(GameModel game) async {
-    final gameRef = games.doc(game.id);
+    final gameRef = _gamesCollection.doc(game.id);
+
     final doc = await gameRef.get();
     if (!doc.exists) return;
 
-    final updatedGame = GameModel.fromMap(doc.data() as Map<String, dynamic>);
-    final int joined = updatedGame.usersJoined.length;
-    final int minToConfirm = updatedGame.minPlayersToConfirm;
-    final int total = updatedGame.playerCount;
+    final updatedGame = GameModel.fromMap(doc.data()!);
 
-    String newStatus = 'scheduled';
-    if (joined >= total) {
+    final int currentPlayers = updatedGame.totalPlayers;
+    final int minToConfirm = updatedGame.minPlayersToConfirm;
+    final int capacity = updatedGame.playerCount;
+
+    String newStatus;
+    if (currentPlayers >= capacity) {
       newStatus = 'full';
-    } else if (joined >= minToConfirm) {
+    } else if (currentPlayers >= minToConfirm) {
       newStatus = 'confirmed';
+    } else {
+      newStatus = 'scheduled';
     }
 
     if (updatedGame.status != newStatus) {
       await gameRef.update({'status': newStatus});
+      // CORRECCIÓN: Usar un logger o kDebugMode para los prints.
+      if (kDebugMode) {
+        print('🔄 Estado del partido ${game.id} actualizado a: $newStatus');
+      }
     }
   }
 
   /// Crea un nuevo partido y su chat de grupo asociado de forma atómica.
-  /// Devuelve el ID del juego creado o null si hay un error.
   Future<String?> createGameAndChat({
-    // Parámetros que coinciden con tu GameModel
+    // ... (todos tus parámetros se mantienen igual)
     required String zone,
     required String fieldName,
     required DateTime date,
@@ -51,22 +61,22 @@ class GameService {
     required String footwear,
     required int minPlayersToConfirm,
     String? privateCode,
-    required GeoPoint location, // ← NUEVO: ubicación de la cancha
+    required GeoPoint location,
   }) async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
-      print("Error: Usuario no autenticado.");
+      if (kDebugMode) {
+        print("Error: Usuario no autenticado para crear un partido.");
+      }
       return null;
     }
 
-    // 1. Prepara las referencias a los nuevos documentos
-    final newGameDoc = games.doc();
-    final newChatDoc = groupChats.doc();
+    final newGameDoc = _gamesCollection.doc();
+    final newChatDoc = _groupChatsCollection.doc();
 
-    // 2. Crea el modelo del chat de grupo
     final groupChat = GroupChatModel(
+      // ... (el modelo del chat se mantiene igual)
       id: newChatDoc.id,
-      // Usamos fieldName o una combinación como nombre del chat
       name: 'Partido en $fieldName',
       groupImageUrl: imageUrl,
       creatorId: currentUser.uid,
@@ -77,13 +87,13 @@ class GameService {
       lastMessageSenderName: "Sistema",
     );
 
-    // 3. Crea el modelo del partido, usando todos tus campos
     final game = GameModel(
+      // ... (el modelo del juego se mantiene igual)
       id: newGameDoc.id,
       ownerId: currentUser.uid,
       groupChatId: newChatDoc.id,
       usersJoined: [currentUser.uid],
-
+      guests: {},
       zone: zone,
       fieldName: fieldName,
       date: date,
@@ -100,86 +110,99 @@ class GameService {
       footwear: footwear,
       minPlayersToConfirm: minPlayersToConfirm,
       privateCode: privateCode,
-
-      // Ubicación de la cancha para filtros
       location: location,
-
-      // Valores iniciales por defecto
       createdAt: DateTime.now().toIso8601String(),
       status: 'scheduled',
-      usersPaid: [], // Inicialmente nadie ha pagado
+      usersPaid: [],
       fieldRating: null,
       report: null,
     );
 
-    // 4. Usa un WriteBatch para la operación atómica
     final batch = _firestore.batch();
     batch.set(newGameDoc, game.toMap());
     batch.set(newChatDoc, groupChat.toMap());
 
-    // 5. Ejecuta el batch
-    await batch.commit();
-
-    print("✅ Partido y chat creados. GameID: ${game.id}, ChatID: ${groupChat.id}");
-    return game.id;
+    try {
+      await batch.commit();
+      if (kDebugMode) {
+        print("✅ Partido y chat creados. GameID: ${game.id}, ChatID: ${groupChat.id}");
+      }
+      return game.id;
+    } catch (e) {
+      if (kDebugMode) {
+        print("❌ Error al crear partido y chat en batch: $e");
+      }
+      return null;
+    }
   }
 
-  // --- El resto de tus métodos ---
+  /// Elimina a un jugador y a sus invitados de un partido.
+  Future<void> removePlayerFromGame(String gameId, String playerId) async {
+    final gameRef = _gamesCollection.doc(gameId);
 
-  /// Obtiene un partido por ID
+    try {
+      await _firestore.runTransaction((transaction) async {
+        final gameDoc = await transaction.get(gameRef);
+
+        if (!gameDoc.exists) {
+          throw Exception('El partido no fue encontrado.');
+        }
+
+        transaction.update(gameRef, {
+          'usersJoined': FieldValue.arrayRemove([playerId]),
+          'guests.$playerId': FieldValue.delete(),
+        });
+      });
+      if (kDebugMode) {
+        print("🗑️ Jugador $playerId y sus invitados eliminados del partido $gameId.");
+      }
+
+      final game = await getGame(gameId);
+      if (game != null) {
+        await updateGameStatus(game);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print("❌ Error al eliminar jugador $playerId del partido $gameId: $e");
+      }
+    }
+  }
+
+  /// Obtiene un único partido por su ID.
   Future<GameModel?> getGame(String id) async {
-    final doc = await games.doc(id).get();
+    final doc = await _gamesCollection.doc(id).get();
     if (doc.exists) {
-      return GameModel.fromMap(doc.data() as Map<String, dynamic>);
+      // CORRECCIÓN: Hacemos el "cast" aquí también para ser consistentes y seguros.
+      return GameModel.fromMap(doc.data()! as Map<String, dynamic>);
     }
     return null;
   }
 
-  /// Actualiza un partido completo
+  /// Actualiza un documento de partido completo con un nuevo objeto GameModel.
   Future<void> updateGame(GameModel game) async {
-    await games.doc(game.id).update(game.toMap());
+    await _gamesCollection.doc(game.id).update(game.toMap());
   }
 
-  /// Elimina un partido
+  /// Elimina un partido de la base de datos.
   Future<void> deleteGame(String id) async {
-    // TODO: Considerar eliminar el chat asociado también en un futuro.
-    await games.doc(id).delete();
+    await _gamesCollection.doc(id).delete();
   }
 
-  /// Stream de partidos públicos o de un usuario
+  /// Obtiene un Stream de una lista de partidos.
   Stream<List<GameModel>> getGames({String? ownerId}) {
-    Query query = games;
+    Query query = _gamesCollection;
     if (ownerId != null) {
       query = query.where('ownerId', isEqualTo: ownerId);
     }
     return query
-        .orderBy('date')
+        .orderBy('date', descending: false)
         .snapshots()
         .map((snapshot) => snapshot.docs
-        .map((doc) => GameModel.fromMap(doc.data() as Map<String, dynamic>))
+        .map((doc) {
+      // CORRECCIÓN: Hacemos el "cast" aquí. Esta es la línea que causaba tu error.
+      final data = doc.data() as Map<String, dynamic>;
+      return GameModel.fromMap(data);
+    })
         .toList());
-  }
-
-  Future<void> removePlayerFromGame(String gameId, String playerId) async {
-    final gameRef = _firestore.collection('games').doc(gameId);
-
-    await _firestore.runTransaction((transaction) async {
-      final gameDoc = await transaction.get(gameRef);
-
-      if (!gameDoc.exists) {
-        throw Exception('Game not found');
-      }
-
-      final gameData = gameDoc.data() as Map<String, dynamic>;
-      final usersJoined = List<String>.from(gameData['usersJoined'] ?? []);
-
-      if (usersJoined.contains(playerId)) {
-        usersJoined.remove(playerId);
-
-        transaction.update(gameRef, {
-          'usersJoined': usersJoined,
-        });
-      }
-    });
   }
 }
