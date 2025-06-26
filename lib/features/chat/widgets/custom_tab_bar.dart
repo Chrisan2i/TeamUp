@@ -17,7 +17,7 @@ class _CustomTabBarState extends State<CustomTabBar> {
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F0F0), // Fondo gris claro de la barra
+        color: const Color(0xFFF0F0F0),
         borderRadius: BorderRadius.circular(30),
       ),
       child: Row(

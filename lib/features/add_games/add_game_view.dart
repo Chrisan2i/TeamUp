@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:teamup/services/game_service.dart';
+
+import 'package:teamup/core/constant/colors.dart';
 
 import '../../models/game_model.dart';
 import '../../models/field_model.dart';
-
 import 'widgets/step_zona.dart';
 import 'widgets/step_fecha.dart';
 import 'widgets/step_cancha.dart';
 import 'widgets/step_detalles.dart';
+
+String getFullEnglishWeekday(DateTime date) {
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  return days[date.weekday - 1];
+}
 
 class AddGameView extends StatefulWidget {
   const AddGameView({super.key});
@@ -18,9 +25,12 @@ class AddGameView extends StatefulWidget {
 }
 
 class _AddGameViewState extends State<AddGameView> {
+  final GameService _gameService = GameService();
   int _currentStep = 0;
-  bool isPublishing = false;
+  bool _isPublishing = false;
+  bool _isFetchingAvailability = false; // 💡 Nuevo estado para la carga de disponibilidad
 
+  // Estado del formulario
   String? selectedZone;
   DateTime? selectedDate;
   FieldModel? selectedField;
@@ -29,139 +39,152 @@ class _AddGameViewState extends State<AddGameView> {
   int? numberOfPlayers;
   bool isPublic = true;
   String? privateCode;
-
   String selectedSkillLevel = 'Beginner';
-  double selectedDuration = 1.0;
   String selectedType = 'Amistoso';
-  String selectedFormat = '7v7';
   int? minPlayersToConfirm;
 
+
+  Map<String, bool> _availabilityByWeekday = {};
+
   void nextStep() {
-    if (_currentStep < 3) {
-      setState(() {
-        _currentStep++;
-      });
-    }
+    if (_currentStep < 3) setState(() => _currentStep++);
   }
 
   void previousStep() {
-    if (_currentStep > 0) {
-      setState(() {
-        _currentStep--;
-      });
-    }
+    if (_currentStep > 0) setState(() => _currentStep--);
   }
 
-  void publishGame() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null || selectedField == null) return;
+  /// 💡 NUEVO MÉTODO: Obtiene la disponibilidad de canchas para una zona específica.
+  Future<void> _fetchAvailabilityForZone(String zoneName) async {
+    setState(() => _isFetchingAvailability = true);
 
-    setState(() => isPublishing = true);
+    final snapshot = await FirebaseFirestore.instance
+        .collection('fields')
+        .where('zone', isEqualTo: zoneName)
+        .where('isActive', isEqualTo: true)
+        .get();
 
-    final newGame = GameModel(
-      id: '',
-      ownerId: user.uid,
-      zone: selectedZone!,
-      fieldName: selectedField!.name,
-      date: selectedDate!,
-      hour: selectedHour!,
-      description: description ?? '',
-      playerCount: numberOfPlayers ?? 0,
-      isPublic: isPublic,
-      price: selectedField!.getPricePerPersonAuto(),
-      duration: selectedField!.duration,
-      skillLevel: selectedSkillLevel,
-      type: selectedType,
-      format: selectedField!.format,
-      footwear: selectedField!.footwear,
-      createdAt: DateTime.now().toIso8601String(),
-      imageUrl: selectedField!.imageUrl,
-      usersJoined: [user.uid],
-      privateCode: isPublic ? null : privateCode,
-      status: 'waiting',
-      minPlayersToConfirm: selectedField!.minPlayersToBook,
-      usersPaid: [],
-    );
-
-    final docRef = await FirebaseFirestore.instance.collection('games').add(newGame.toMap());
-    await docRef.update({'id': docRef.id});
-
-    try {
-      final weekdayKey = getFullEnglishWeekday(selectedDate!);
-      final fieldRef = FirebaseFirestore.instance.collection('fields').doc(selectedField!.id);
-
-      await FirebaseFirestore.instance.runTransaction((transaction) async {
-        final snapshot = await transaction.get(fieldRef);
-        if (!snapshot.exists) return;
-
-        final data = snapshot.data() as Map<String, dynamic>;
-        final availability = Map<String, dynamic>.from(data['availability'] ?? {});
-        final List<String> hours = List<String>.from(availability[weekdayKey] ?? []);
-
-        print('🔍 Día Firestore: $weekdayKey');
-        print('🕒 Hora seleccionada: "$selectedHour"');
-        print('📋 Horas disponibles antes: $hours');
-
-        if (hours.any((h) => h.trim() == selectedHour!.trim())) {
-          hours.removeWhere((h) => h.trim() == selectedHour!.trim());
-          availability[weekdayKey] = hours;
-          transaction.update(fieldRef, {'availability': availability});
-          print('✅ Hora eliminada: $selectedHour');
-        } else {
-          print('⚠️ La hora $selectedHour no se encontró en $weekdayKey');
+    final Map<String, bool> availabilityMap = {};
+    for (var doc in snapshot.docs) {
+      final field = FieldModel.fromMap(doc.data(), doc.id);
+      field.availability.forEach((weekday, hours) {
+        if (hours.isNotEmpty) {
+          availabilityMap[weekday] = true;
         }
       });
-    } catch (e) {
-      print('❌ Error al actualizar disponibilidad: $e');
     }
 
-    setState(() => isPublishing = false);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('✅ Partido creado con éxito')),
-    );
-
-    Navigator.pop(context);
+    setState(() {
+      _availabilityByWeekday = availabilityMap;
+      _isFetchingAvailability = false;
+    });
   }
+
+  // ... (el método publishGame no necesita grandes cambios, pero lo incluyo por completitud)
+  void publishGame() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null || selectedField == null || !_canPublish()) return;
+    setState(() => _isPublishing = true);
+    try {
+      await _gameService.createGameAndChat(
+        zone: selectedZone!,
+        fieldName: selectedField!.name,
+        date: selectedDate!,
+        hour: selectedHour!,
+        description: description ?? '',
+        playerCount: numberOfPlayers ?? 0,
+        isPublic: isPublic,
+        price: selectedField!.getPricePerPersonAuto(),
+        duration: selectedField!.duration,
+        imageUrl: selectedField!.imageUrl,
+        skillLevel: selectedSkillLevel,
+        type: selectedType,
+        format: selectedField!.format,
+        footwear: selectedField!.footwear,
+        minPlayersToConfirm: minPlayersToConfirm ?? selectedField!.minPlayersToBook,
+        privateCode: isPublic ? null : privateCode,
+        location: selectedField!.location,
+      );
+
+      await _updateFieldAvailability();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ Partido y chat creados con éxito')),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      debugPrint('❌ Error al publicar el partido: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('❌ Error inesperado. Inténtalo de nuevo.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isPublishing = false);
+    }
+  }
+
+  Future<void> _updateFieldAvailability() async {
+    final weekdayKey = getFullEnglishWeekday(selectedDate!);
+    final fieldRef = FirebaseFirestore.instance.collection('fields').doc(selectedField!.id);
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snapshot = await transaction.get(fieldRef);
+      if (!snapshot.exists) return;
+      final data = snapshot.data() as Map<String, dynamic>;
+      final availability = Map<String, dynamic>.from(data['availability'] ?? {});
+      final List<String> hours = List<String>.from(availability[weekdayKey] ?? []);
+      if (hours.any((h) => h.trim() == selectedHour!.trim())) {
+        hours.removeWhere((h) => h.trim() == selectedHour!.trim());
+        availability[weekdayKey] = hours;
+        transaction.update(fieldRef, {'availability': availability});
+      }
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Crear Partido'),
+        title: Text('Crear Partido - Paso ${_currentStep + 1} de 4'),
+        backgroundColor: const Color(0xFFF8FAFC),
         leading: _currentStep > 0
-            ? IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: previousStep,
-        )
+            ? IconButton(icon: const Icon(Icons.arrow_back_ios_new), onPressed: previousStep)
             : null,
       ),
       body: Stack(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Builder(
               builder: (_) {
+                if (_isFetchingAvailability) {
+                  return const Center(child: CircularProgressIndicator());
+                }
                 switch (_currentStep) {
                   case 0:
                     return StepZona(
                       selectedZone: selectedZone,
-                      onSelect: (zona) {
+                      onSelect: (zona) async {
                         setState(() {
                           selectedZone = zona;
-                          nextStep();
+                          selectedDate = null;
+                          selectedField = null;
+                          selectedHour = null;
                         });
+                        await _fetchAvailabilityForZone(zona);
+                        nextStep();
                       },
-                      onNext: nextStep,
                     );
                   case 1:
                     return StepFecha(
                       selectedDate: selectedDate,
+                      availableWeekdays: _availabilityByWeekday,
                       onSelect: (date) {
-                        setState(() {
-                          selectedDate = date;
-                          nextStep();
-                        });
+                        setState(() => selectedDate = date);
+                        nextStep();
                       },
                     );
                   case 2:
@@ -171,9 +194,9 @@ class _AddGameViewState extends State<AddGameView> {
                     return StepCancha(
                       selectedZone: selectedZone!,
                       selectedDate: selectedDate!,
-                      selectedField: selectedField?.name,
+                      selectedField: selectedField?.id,
                       selectedHour: selectedHour,
-                      onSelect: (fieldName, hour, fieldObject) {
+                      onSelect: (hour, fieldObject) {
                         setState(() {
                           selectedField = fieldObject;
                           selectedHour = hour;
@@ -216,7 +239,7 @@ class _AddGameViewState extends State<AddGameView> {
               },
             ),
           ),
-          if (isPublishing)
+          if (_isPublishing)
             Container(
               color: Colors.black.withOpacity(0.4),
               child: const Center(child: CircularProgressIndicator()),
@@ -230,15 +253,8 @@ class _AddGameViewState extends State<AddGameView> {
     return selectedZone != null &&
         selectedDate != null &&
         selectedField != null &&
-        selectedHour != null;
+        selectedHour != null &&
+        numberOfPlayers != null &&
+        numberOfPlayers! > 0;
   }
-
-  String getFullEnglishWeekday(DateTime date) {
-    const days = [
-      'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
-    ];
-    return days[date.weekday - 1];
-  }
-
 }
-

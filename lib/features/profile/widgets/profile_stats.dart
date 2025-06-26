@@ -9,102 +9,187 @@ class ProfileStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
-          Row(
-            children: [
-              Expanded(child: _labelValue('Position', user.position)),
-              const SizedBox(width: 16),
-              Expanded(child: _labelValue('Skill Level', user.skillLevel)),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _statsCard(user),
-        ],
-      ),
-    );
-  }
-
-  Widget _labelValue(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFF6B7280),
-            fontSize: 14,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          height: 48,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          alignment: Alignment.centerLeft,
-          decoration: BoxDecoration(
-            color: label == 'Skill Level' ? const Color(0xFFD9D9D9) : Colors.white,
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: 16,
-              color: label == 'Skill Level' ? Colors.black : const Color(0xFF9CA3AF),
+          // Sección de posición y nivel de habilidad (sin cambios)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(child: _buildPositionField('Posición', user.position)),
+                Container(
+                  height: 40,
+                  width: 1,
+                  color: const Color(0xFFE2E8F0),
+                ),
+                Expanded(child: _buildSkillLevelField('Nivel de Habilidad', user.skillLevel)),
+              ],
             ),
           ),
-        ),
-      ],
-    );
-  }
+          const SizedBox(height: 24),
 
-  Widget _statsCard(UserModel user) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x19000000),
-            blurRadius: 6,
-            offset: Offset(0, 4),
+          // Tarjeta de estadísticas (MODIFICADA)
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0CC0DF).withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                const Text(
+                  'Tus Estadísticas',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // --- CAMBIO AQUÍ: Se eliminó el item de "Instalaciones" ---
+                Row(
+                  // Se cambió a 'spaceEvenly' para un mejor espaciado entre dos elementos
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildStatItem('${user.totalGamesJoined}', 'Partidos'),
+                    _buildStatDivider(),
+                    _buildStatItem('${user.averageRating.toStringAsFixed(1)}', 'Rating'),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    );
+  }
+
+  // --- El resto de los widgets de construcción se mantienen igual ---
+
+  Widget _buildPositionField(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _statColumn('${user.totalGamesJoined}', 'Games'),
-          _statColumn('${user.totalGamesCreated}', 'Facilities'),
-          _statColumn('${user.averageRating.toInt()}', 'Ratings'),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              value.isNotEmpty ? value : 'No especificada',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _statColumn(String value, String label) {
+  Widget _buildSkillLevelField(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF0CC0DF).withOpacity(0.1),
+                  const Color(0xFF0CC0DF).withOpacity(0.2),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              value.isNotEmpty ? value : 'No especificado',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0CC0DF),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String value, String label) {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
           value,
           style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF111827),
+            color: Color(0xFF1E293B),
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
-            color: Color(0xFF6B7280),
+            color: const Color(0xFF64748B).withOpacity(0.8),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildStatDivider() {
+    return Container(
+      height: 40,
+      width: 1,
+      color: const Color(0xFFE2E8F0),
     );
   }
 }

@@ -1,12 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import '../models/user_model.dart'; // ajusta el path según tu proyecto
+import '../models/user_model.dart';
+import 'package:teamup/services/notification_service.dart';
+import 'package:teamup/models/game_model.dart';
 
 class UserService {
   final _db = FirebaseFirestore.instance;
   final String _collection = 'users';
+  final NotificationService _notificationService = NotificationService();
 
-  // --- User Management ---
 
   /// Obtener un usuario por su UID.
   Future<UserModel?> getUserById(String uid) async {
@@ -21,7 +23,7 @@ class UserService {
     return null;
   }
 
-  /// Crear o actualizar un usuario. Usa merge:true para no sobrescribir campos existentes no incluidos en el mapa.
+  /// Crear o actualizar un usuario.
   Future<void> createOrUpdateUser(UserModel user) async {
     await _db.collection(_collection).doc(user.uid).set(
         user.toMap(), SetOptions(merge: true));
@@ -37,98 +39,161 @@ class UserService {
     });
   }
 
-  // --- Social (Friends) Actions ---
 
-  /// Envía una solicitud de amistad de un usuario a otro.
-  Future<void> sendFriendRequest({required String currentUserId, required String targetUserId}) async {
+  /// Envía una solicitud de amistad y una notificación.
+  Future<void> sendFriendRequest({
+    required String currentUserId,
+    required String targetUserId,
+    required String currentUserName,
+  }) async {
     final batch = _db.batch();
 
-    // Añade al target a la lista de 'enviadas' del usuario actual
     final currentUserRef = _db.collection(_collection).doc(currentUserId);
     batch.update(currentUserRef, {'friendRequestsSent': FieldValue.arrayUnion([targetUserId])});
 
-    // Añade al usuario actual a la lista de 'recibidas' del target
     final targetUserRef = _db.collection(_collection).doc(targetUserId);
     batch.update(targetUserRef, {'friendRequestsReceived': FieldValue.arrayUnion([currentUserId])});
 
     await batch.commit();
+
+
+    await _notificationService.createNotification(
+      userId: targetUserId,
+      title: '$currentUserName te ha enviado una solicitud de amistad',
+      body: 'Toca para responder.',
+      type: 'friend_request',
+      senderId: currentUserId,
+    );
   }
 
   /// Acepta una solicitud de amistad.
-  Future<void> acceptFriendRequest({required String currentUserId, required String friendId}) async {
+  Future<void> acceptFriendRequest({
+    required String currentUserId,
+    required String friendId,
+    String? notificationId, // <<<--- PARÁMETRO CORREGIDO
+  }) async {
     final batch = _db.batch();
 
-    // Usuario actual: añade a amigos, quita de recibidas
     final currentUserRef = _db.collection(_collection).doc(currentUserId);
     batch.update(currentUserRef, {
       'friends': FieldValue.arrayUnion([friendId]),
       'friendRequestsReceived': FieldValue.arrayRemove([friendId]),
     });
 
-    // Otro usuario: añade a amigos, quita de enviadas
     final friendRef = _db.collection(_collection).doc(friendId);
     batch.update(friendRef, {
       'friends': FieldValue.arrayUnion([currentUserId]),
-      'friendRequestsSent': FieldValue.arrayRemove([currentUserId]),
+      'friendRequestsSent': FieldValue.arrayRemove([friendId]),
     });
 
     await batch.commit();
+
+    if (notificationId != null) {
+      await _notificationService.deleteNotification(notificationId);
+    }
   }
 
-  /// Cancela una solicitud de amistad enviada o rechaza una recibida.
-  Future<void> cancelFriendRequest({required String currentUserId, required String targetUserId}) async {
+  /// Cancela una solicitud enviada O rechaza una recibida.
+  Future<void> rejectOrCancelFriendRequest({
+    required String currentUserId,
+    required String otherUserId,
+    String? notificationId, // <<<--- PARÁMETRO CORREGIDO
+  }) async {
     final batch = _db.batch();
 
-    // Quita de la lista 'enviadas' del usuario actual
     final currentUserRef = _db.collection(_collection).doc(currentUserId);
-    batch.update(currentUserRef, {'friendRequestsSent': FieldValue.arrayRemove([targetUserId])});
+    batch.update(currentUserRef, {
+      'friendRequestsSent': FieldValue.arrayRemove([otherUserId]),
+      'friendRequestsReceived': FieldValue.arrayRemove([otherUserId]),
+    });
 
-    // Quita de la lista 'recibidas' del otro usuario
-    final targetUserRef = _db.collection(_collection).doc(targetUserId);
-    batch.update(targetUserRef, {'friendRequestsReceived': FieldValue.arrayRemove([currentUserId])});
+    final otherUserRef = _db.collection(_collection).doc(otherUserId);
+    batch.update(otherUserRef, {
+      'friendRequestsSent': FieldValue.arrayRemove([currentUserId]),
+      'friendRequestsReceived': FieldValue.arrayRemove([currentUserId]),
+    });
 
     await batch.commit();
-  }
 
+    if (notificationId != null) {
+      await _notificationService.deleteNotification(notificationId);
+    }
+  }
   /// Elimina a un amigo de ambas listas de amigos.
   Future<void> removeFriend({required String currentUserId, required String friendId}) async {
     final batch = _db.batch();
 
-    // Quita al amigo de la lista del usuario actual
+
     final currentUserRef = _db.collection(_collection).doc(currentUserId);
     batch.update(currentUserRef, {'friends': FieldValue.arrayRemove([friendId])});
 
-    // Quita al usuario actual de la lista del amigo
+
     final friendRef = _db.collection(_collection).doc(friendId);
     batch.update(friendRef, {'friends': FieldValue.arrayRemove([currentUserId])});
 
+
     await batch.commit();
   }
+  Future<List<UserModel>> getFriends(String userId) async {
+    try {
 
-  // --- Admin Actions ---
+      final userDoc = await _db.collection(_collection).doc(userId).get();
+      if (!userDoc.exists) return []; // Si el usuario no existe, no tiene amigos.
 
-  /// Actualiza el estado de verificación de un usuario.
-  Future<void> updateVerificationStatus(String uid, String status, {String? rejectionReason}) async {
-    await _db.collection(_collection).doc(uid).update({
-      'isVerified': status == 'approved',
-      'verification.status': status,
-      'verification.rejectionReason': rejectionReason,
-    });
+      final List<String> friendIds = List<String>.from(userDoc.data()?['friends'] ?? []);
+
+      if (friendIds.isEmpty) {
+        return [];
+      }
+
+
+      final friendsSnapshot = await _db
+          .collection(_collection)
+          .where(FieldPath.documentId, whereIn: friendIds)
+          .get();
+
+
+      return friendsSnapshot.docs
+          .map((doc) => UserModel.fromMap(doc.data(), doc.id))
+          .toList();
+
+    } catch (e) {
+      debugPrint("Error getting friends: $e");
+      return [];
+    }
+  }
+  Future<Map<String, dynamic>> getProfilePageData(String userId) async {
+    try {
+      // Tarea 1: Obtener el perfil del usuario
+      final userDoc = await _db.collection(_collection).doc(userId).get();
+      if (!userDoc.exists) {
+        throw Exception('Usuario no encontrado.');
+      }
+      final user = UserModel.fromMap(userDoc.data()!, userDoc.id);
+
+      // Tarea 2: Obtener los partidos recientes del usuario
+      final gamesSnapshot = await _db
+          .collection('games')
+          .where('usersJoined', arrayContains: userId)
+          .orderBy('date', descending: true)
+          .limit(15) // Limitamos a 15 para no cargar demasiados datos
+          .get();
+
+      final recentGames = gamesSnapshot.docs
+          .map((doc) => GameModel.fromMap(doc.data()))
+          .toList();
+
+      // Devuelve ambos resultados en un mapa
+      return {
+        'user': user,
+        'recentGames': recentGames,
+      };
+
+    } catch (e) {
+      debugPrint("Error obteniendo los datos de la página de perfil: $e");
+      rethrow; // Lanza el error para que el FutureBuilder lo pueda capturar
+    }
   }
 
-  /// Banea a un usuario.
-  Future<void> banUser(String uid, String reason) async {
-    await _db.collection(_collection).doc(uid).update({
-      'blocked': true,
-      'banReason': reason,
-    });
-  }
-
-  /// Desbanea a un usuario.
-  Future<void> unbanUser(String uid) async {
-    await _db.collection(_collection).doc(uid).update({
-      'blocked': false,
-      'banReason': null,
-    });
-  }
 }
+

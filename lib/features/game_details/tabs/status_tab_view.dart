@@ -1,10 +1,9 @@
 // lib/features/game_details/tabs/status_tab_view.dart
-
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:intl/intl.dart';
 import 'package:teamup/models/game_model.dart';
-import 'package:teamup/features/game_details/widgets/game_roster_section.dart'; // Tu Roster actual
+import 'package:teamup/features/game_details/widgets/roster_section/game_roster_section.dart'; // Tu Roster actual
 
 class StatusTabView extends StatelessWidget {
   final GameModel game;

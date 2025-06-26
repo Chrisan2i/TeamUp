@@ -1,27 +1,33 @@
+// lib/features/chat/views/messages_view.dart
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import 'package:teamup/features/chat/change_notifier.dart';
+import 'package:teamup/services/private_chat_service.dart';
 
-// Modelos
+import 'package:teamup/services/group_chat_service.dart';
+import 'package:teamup/features/chat/views/group_chat_view.dart';
+
 import 'package:teamup/models/group_chat_model.dart';
 import 'package:teamup/models/private_chat_model.dart';
-import "package:teamup/features/auth/models/user_model.dart"; // Asegúrate de que la ruta sea correcta
+import "package:teamup/features/auth/models/user_model.dart";
 
-//  Widgets
-import 'package:teamup/features/chat/widgets/custom_tab_bar.dart'; // Asegúrate de que la ruta sea correcta
-import 'package:teamup/features/chat/widgets/custom_search_bar.dart'; // Asegúrate de que la ruta sea correcta
-import 'package:teamup/features/chat/widgets/empty_state_widget.dart'; // Asegúrate de que la ruta sea correcta
-import 'package:teamup/features/chat/widgets/chat_list_item.dart'; // Asegúrate de que la ruta sea correcta
-import 'package:teamup/core/widgets/custom_botton_navbar.dart'; // Asegúrate de que la ruta sea correcta
+// Widgets
+import 'package:teamup/features/chat/widgets/custom_tab_bar.dart';
+import 'package:teamup/features/chat/widgets/custom_search_bar.dart';
+import 'package:teamup/features/chat/widgets/empty_state_widget.dart';
+import 'package:teamup/features/chat/widgets/chat_list_item.dart';
+import 'package:teamup/core/widgets/custom_botton_navbar.dart';
 
-//  Vistas
+// Vistas
 import 'new_message_view.dart';
 import 'chat_view.dart';
 import 'package:teamup/features/add_games/add_game_view.dart';
 import 'package:teamup/features/games/game_home_view.dart';
 import 'package:teamup/features/profile/profile_view.dart';
 import 'package:teamup/features/bookings/bookings_view.dart';
-// import 'group_chat_view.dart'; // Descomenta cuando crees esta vista
 
 class MessagesView extends StatefulWidget {
   const MessagesView({super.key});
@@ -34,9 +40,11 @@ class _MessagesViewState extends State<MessagesView> {
   int _selectedTabIndex = 0;
   final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
+  final PrivateChatService _privateChatService = PrivateChatService();
+  final GroupChatService _groupChatService = GroupChatService();
+
   void _handleNavigation(BuildContext context, int index) {
     if (index == 2) return;
-
     switch (index) {
       case 0:
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const GameHomeView()));
@@ -53,9 +61,17 @@ class _MessagesViewState extends State<MessagesView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
+        backgroundColor: const Color(0xFFF8FAFC),
         automaticallyImplyLeading: false,
-        title: const Text("Messages"),
+        title: const Text("Messages",
+        style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
+          ),
+          ),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_square, size: 26),
@@ -71,9 +87,7 @@ class _MessagesViewState extends State<MessagesView> {
           children: [
             CustomTabBar(
               onTabSelected: (index) {
-                setState(() {
-                  _selectedTabIndex = index;
-                });
+                setState(() { _selectedTabIndex = index; });
               },
             ),
             const SizedBox(height: 16),
@@ -95,15 +109,20 @@ class _MessagesViewState extends State<MessagesView> {
         onPressed: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const AddGameView()));
         },
-        backgroundColor: const Color(0xFF0CC0DF),
+        backgroundColor: const Color.fromARGB(255, 0, 124, 146),
         tooltip: 'Crear Partido',
         elevation: 2.0,
         child: const Icon(Icons.add, color: Colors.white),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: 2,
-        onTap: (index) => _handleNavigation(context, index),
+      bottomNavigationBar: Consumer<ChatNotifier>(
+        builder: (context, chatNotifier, child) {
+          return CustomBottomNavBar(
+            currentIndex: 2,
+            onTap: (index) => _handleNavigation(context, index),
+            hasUnreadMessages: chatNotifier.hasUnreadMessages,
+          );
+        },
       ),
     );
   }
@@ -117,8 +136,8 @@ class _MessagesViewState extends State<MessagesView> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          debugPrint("Error en StreamBuilder de chats privados: ${snapshot.error}");
-          return const Center(child: Text("Ocurrió un error al cargar los chats."));
+          debugPrint("Error en StreamBuilder: ${snapshot.error}");
+          return const Center(child: Text("Ocurrió un error."));
         }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -132,17 +151,16 @@ class _MessagesViewState extends State<MessagesView> {
           itemCount: chatDocs.length,
           itemBuilder: (context, index) {
             final chatDoc = chatDocs[index];
-            final chat = PrivateChatModel.fromMap(
-                chatDoc.data() as Map<String, dynamic>, chatDoc.id);
+            final chat = PrivateChatModel.fromMap(chatDoc.data() as Map<String, dynamic>, chatDoc.id);
 
             final otherUserId = chat.participants.firstWhere(
                   (id) => id != currentUserId,
               orElse: () => '',
             );
 
-            if (otherUserId.isEmpty) {
-              return const SizedBox.shrink();
-            }
+            if (otherUserId.isEmpty) return const SizedBox.shrink();
+
+            final bool hayMensajesSinLeer = (chat.unreadCount[currentUserId] ?? 0) > 0;
 
             return FutureBuilder<DocumentSnapshot>(
               future: FirebaseFirestore.instance.collection('users').doc(otherUserId).get(),
@@ -153,16 +171,21 @@ class _MessagesViewState extends State<MessagesView> {
                 if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
                   return const SizedBox.shrink();
                 }
-                final otherUser = UserModel.fromMap(
-                    userSnapshot.data!.data() as Map<String, dynamic>,
-                    userSnapshot.data!.id);
+                final otherUser = UserModel.fromMap(userSnapshot.data!.data() as Map<String, dynamic>, userSnapshot.data!.id);
 
                 return ChatListItem(
                   title: otherUser.fullName,
                   subtitle: chat.lastMessage,
-                  timestamp: chat.lastUpdated,
-                  avatarUrl: otherUser.profileImageUrl ?? '',
+                  // --- ¡¡AQUÍ ESTÁ LA CORRECCIÓN!! ---
+                  // Convertimos el DateTime a Timestamp antes de pasarlo
+                  timestamp: Timestamp.fromDate(chat.lastUpdated),
+                  avatarUrl: otherUser.profileImageUrl,
+                  hasUnread: hayMensajesSinLeer,
+                  isGroup: false,
                   onTap: () {
+                    if (hayMensajesSinLeer) {
+                      _privateChatService.markChatAsRead(chat.id, currentUserId);
+                    }
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -184,48 +207,48 @@ class _MessagesViewState extends State<MessagesView> {
   }
 
   Widget _buildGroupChatsList() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('group_chats')
-          .where('participants', arrayContains: currentUserId)
-          .orderBy('lastUpdated', descending: true)
-          .snapshots(),
+    return StreamBuilder<List<GroupChatModel>>(
+      stream: _groupChatService.getUserGroups(currentUserId),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          debugPrint("Error en StreamBuilder de chats grupales: ${snapshot.error}");
+          debugPrint("Error al cargar grupos: ${snapshot.error}");
           return const Center(child: Text("Error al cargar los grupos."));
         }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const EmptyStateWidget(
             icon: Icons.group_outlined,
             message: "No Groups Yet",
           );
         }
-        final groupChatDocs = snapshot.data!.docs;
-        return ListView.builder(
-          itemCount: groupChatDocs.length,
-          itemBuilder: (context, index) {
-            final groupDoc = groupChatDocs[index];
-            final groupChat = GroupChatModel.fromMap(
-                groupDoc.data() as Map<String, dynamic>, groupDoc.id);
 
-            String subtitle = groupChat.lastMessage;
-            if (groupChat.lastMessageSenderName != null && groupChat.lastMessageSenderName!.isNotEmpty) {
-              subtitle = "${groupChat.lastMessageSenderName}: ${groupChat.lastMessage}";
-            }
+        final groups = snapshot.data!;
+
+        return ListView.builder(
+          itemCount: groups.length,
+          itemBuilder: (context, index) {
+            final group = groups[index];
+
+            final subtitle = (group.lastMessageSenderName != null && group.lastMessageSenderName!.isNotEmpty)
+                ? "${group.lastMessageSenderName}: ${group.lastMessage}"
+                : group.lastMessage;
 
             return ChatListItem(
-              title: groupChat.name,
+              title: group.name,
               subtitle: subtitle,
-              timestamp: groupChat.lastUpdated.toDate(),
-
-              avatarUrl: groupChat.groupImageUrl ?? '',
+              timestamp: group.lastUpdated, // Este ya es un Timestamp, está correcto
+              avatarUrl: group.groupImageUrl,
+              isGroup: true,
+              hasUnread: false,
               onTap: () {
-                // TODO: Navegar a una vista de chat grupal (GroupChatView)
-                debugPrint("Navegar al chat grupal: ${groupChat.name}");
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GroupChatView(groupChat: group),
+                  ),
+                );
               },
             );
           },
@@ -237,10 +260,10 @@ class _MessagesViewState extends State<MessagesView> {
 
 class _ChatListItemPlaceholder extends StatelessWidget {
   const _ChatListItemPlaceholder();
-
   @override
   Widget build(BuildContext context) {
     return ListTile(
+      contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
       leading: const CircleAvatar(
         radius: 28,
         backgroundColor: Colors.black12,
@@ -254,17 +277,6 @@ class _ChatListItemPlaceholder extends StatelessWidget {
         height: 14,
         color: Colors.grey.shade200,
         margin: const EdgeInsets.only(right: 40.0),
-      ),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Container(
-            height: 12,
-            width: 50,
-            color: Colors.grey.shade200,
-          ),
-        ],
       ),
     );
   }

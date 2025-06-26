@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../auth/models/user_model.dart';
+import 'package:teamup/models/game_model.dart';
+import 'package:teamup/features/auth/models/user_model.dart';
+import 'package:teamup/features/auth/services/user_service.dart'; // Importa tu servicio
 import 'profile_header.dart';
 import 'profile_stats.dart';
 import 'profile_activity.dart';
@@ -14,25 +15,36 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
-  late Future<UserModel> _userFuture;
+  // 1. El Future ahora cargará un Mapa que contiene tanto el usuario como los juegos.
+  late Future<Map<String, dynamic>> _profileDataFuture;
+  final UserService _userService = UserService(); // Instancia del servicio
 
   @override
   void initState() {
     super.initState();
-    _userFuture = _loadUserData();
+    // 2. Llamamos a la nueva función para cargar todos los datos necesarios.
+    _loadProfileData();
   }
 
-  Future<UserModel> _loadUserData() async {
+  void _loadProfileData() {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception('No authenticated user');
-    final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-    return UserModel.fromMap(doc.data()!, user.uid);
+    if (user != null) {
+      setState(() {
+        _profileDataFuture = _userService.getProfilePageData(user.uid);
+      });
+    } else {
+      // Si no hay usuario, el Future lanzará un error que el FutureBuilder manejará.
+      setState(() {
+        _profileDataFuture = Future.error('No hay un usuario autenticado.');
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<UserModel>(
-      future: _userFuture,
+    // 3. El FutureBuilder ahora espera un Mapa.
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _profileDataFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -40,7 +52,9 @@ class _ProfileState extends State<Profile> {
           return Scaffold(body: Center(child: Text('Error: ${snapshot.error}')));
         }
 
-        final user = snapshot.data!;
+        // 4. Extraemos el usuario y la lista de juegos del mapa.
+        final UserModel user = snapshot.data!['user'];
+        final List<GameModel> recentGames = snapshot.data!['recentGames'];
 
         return Scaffold(
           backgroundColor: const Color(0xFFF9FAFB),
@@ -51,7 +65,8 @@ class _ProfileState extends State<Profile> {
                 const SizedBox(height: 24),
                 ProfileStats(user: user),
                 const SizedBox(height: 24),
-                const ProfileActivity(),
+                // 5. Pasamos la lista de juegos al widget ProfileActivity.
+                ProfileActivity(recentGames: recentGames),
                 const SizedBox(height: 32),
               ],
             ),
@@ -61,5 +76,3 @@ class _ProfileState extends State<Profile> {
     );
   }
 }
-
-

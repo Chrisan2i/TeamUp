@@ -1,126 +1,104 @@
 import 'package:flutter/material.dart';
-import 'join_by_code.dart'; // Asegúrate de importar correctamente
-import '../../../core/constant/colors.dart';
+import 'package:provider/provider.dart';
+import 'package:teamup/features/games/game_controller.dart';
+import 'join_by_code.dart';
 import '../../../core/constant/app_sizes.dart';
-import '../../../core/theme/typography.dart';
 
-class GameSearchBar extends StatefulWidget {
+class GameSearchFilterBar extends StatefulWidget {
   final Function(String) onSearch;
-
-  const GameSearchBar({super.key, required this.onSearch});
+  const GameSearchFilterBar({Key? key, required this.onSearch}) : super(key: key);
 
   @override
-  State<GameSearchBar> createState() => _GameSearchBarState();
+  State<GameSearchFilterBar> createState() => _GameSearchFilterBarState();
 }
 
-class _GameSearchBarState extends State<GameSearchBar> {
-  final TextEditingController _controller = TextEditingController();
+class _GameSearchFilterBarState extends State<GameSearchFilterBar> {
+  final TextEditingController _textController = TextEditingController();
 
-  void _onChanged(String value) {
-    widget.onSearch(value);
-  }
+  void _onTextChanged(String v) => widget.onSearch(v);
 
-  void _openTypeFilterDialog() async {
-    final result = await showModalBottomSheet<String>(
+  void _openTypeFilter() async {
+    final choice = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (context) =>
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(title: const Text('Todos los tipos'),
-                  onTap: () => Navigator.pop(context, '')),
-              ListTile(title: const Text('Amistoso'),
-                  onTap: () => Navigator.pop(context, 'amistoso')),
-              ListTile(title: const Text('Competitivo'),
-                  onTap: () => Navigator.pop(context, 'competitivo')),
-              ListTile(title: const Text('Torneo'),
-                  onTap: () => Navigator.pop(context, 'torneo')),
-              ListTile(title: const Text('Entrenamiento'),
-                  onTap: () => Navigator.pop(context, 'entrenamiento')),
-            ],
-          ),
+      builder: (_) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(title: const Text('All types'), onTap: () => Navigator.pop(context, '')),
+          ListTile(title: const Text('Friendly'), onTap: () => Navigator.pop(context, 'friendly')),
+          ListTile(title: const Text('Competitive'), onTap: () => Navigator.pop(context, 'competitive')),
+          ListTile(title: const Text('Tournament'), onTap: () => Navigator.pop(context, 'tournament')),
+          ListTile(title: const Text('Training'), onTap: () => Navigator.pop(context, 'training')),
+        ],
+      ),
     );
-
-    if (result != null) {
-      _controller.text = result;
-      widget.onSearch(result);
+    if (choice != null) {
+      _textController.text = choice;
+      widget.onSearch(choice);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final controller = context.watch<GameController>();
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Row(
-        children: [
-          // 🔍 Campo de búsqueda
-          Expanded(
-            child: Container(
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: Row(
-                children: [
-                  const SizedBox(width: 12),
-                  const Icon(Icons.search, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      onChanged: _onChanged,
-                      style: const TextStyle(fontSize: 14),
-                      decoration: const InputDecoration(
-                        hintText: 'Search games',
-                        border: InputBorder.none,
-                        isCollapsed: true,
-                      ),
-                    ),
-                  ),
-                ],
+      padding: const EdgeInsets.symmetric(horizontal: kPaddingMedium, vertical: kPaddingSmall),
+      child: Container(
+        height: 44,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          children: [
+            // 🔍 Búsqueda
+            Expanded(
+              child: TextField(
+                controller: _textController,
+                onChanged: _onTextChanged,
+                decoration: const InputDecoration(
+                  hintText: 'Search games',
+                  icon: Icon(Icons.search, color: Colors.grey),
+                  border: InputBorder.none,
+                  isCollapsed: true,
+                ),
               ),
             ),
-          ),
 
-          const SizedBox(width: 10),
-
-          // ⚙️ Botón de filtro
-          Container(
-            height: 44,
-            width: 44,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
+            // ⚙️ Filtro por tipo
+            IconButton(
+              icon: const Icon(Icons.filter_list, size: 20),
+              onPressed: _openTypeFilter,
+              tooltip: 'Filter by type',
             ),
-            child: IconButton(
-              icon: const Icon(
-                  Icons.filter_alt_outlined, size: 22, color: Colors.black),
-              onPressed: _openTypeFilterDialog,
-              tooltip: 'Filter games',
-            ),
-          ),
 
-          const SizedBox(width: 8),
+            const SizedBox(width: 8),
 
-          // 🔒 Botón unirse por código
-          Container(
-            height: 44,
-            width: 44,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
+            // 📏 Radio de distancia
+            DropdownButton<double>(
+              underline: const SizedBox(),
+              value: controller.searchRadiusKm,
+              items: [5, 10, 20, 50].map((km) {
+                return DropdownMenuItem(
+                  value: km.toDouble(),
+                  child: Text('${km} km', style: const TextStyle(fontSize: 14)),
+                );
+              }).toList(),
+              onChanged: (v) {
+                if (v != null) controller.setSearchRadius(v);
+              },
             ),
-            child: IconButton(
-              icon: const Icon(
-                  Icons.lock_outline, size: 22, color: Colors.black),
+
+            const SizedBox(width: 8),
+
+            // 🔒 Unirse por código
+            IconButton(
+              icon: const Icon(Icons.lock_outline, size: 20),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -129,8 +107,8 @@ class _GameSearchBarState extends State<GameSearchBar> {
               },
               tooltip: 'Join by code',
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

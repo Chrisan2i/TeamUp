@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:teamup/models/game_model.dart';
 import '../../../core/constant/colors.dart';
 import '../../../core/constant/app_sizes.dart';
 import 'game_card_buttons.dart';
 import 'game_card_info.dart';
 import 'game_card_rating_dialog.dart';
-
 
 class FacilityBannerClipper extends CustomClipper<Path> {
   @override
@@ -43,7 +42,6 @@ class GameCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final gameDay = DateTime(game.date.year, game.date.month, game.date.day);
@@ -52,31 +50,24 @@ class GameCard extends StatelessWidget {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
     final userParticipated = game.usersJoined.contains(currentUserId);
 
-    final showPastBanner = isPast && userParticipated;
-    final showReport = isPast && userParticipated;
-    // --- Fin de la lógica original ---
+    // 💡 La lógica para mostrar el banner "Finalizado" ahora es más clara
+    final bool showFinalizadoBanner = isPast && userParticipated;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white, // Fondo blanco
+          color: Colors.white,
           borderRadius: BorderRadius.circular(kCardRadius),
           border: Border.all(color: Colors.grey.shade300, width: 1.0),
           boxShadow: const [
-            BoxShadow(
-              color: shadowColor,
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
+            BoxShadow(color: shadowColor, blurRadius: 8, offset: Offset(0, 4)),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             Stack(
               clipBehavior: Clip.none,
               children: [
@@ -96,7 +87,7 @@ class GameCard extends StatelessWidget {
                   ),
                 ),
 
-                // Logo del grupo superpuesto
+                // ... (Logo, Banner "New Facility", Botón de ubicación - SIN CAMBIOS) ...
                 Positioned(
                   bottom: 12,
                   left: 12,
@@ -107,13 +98,11 @@ class GameCard extends StatelessWidget {
                     ),
                     child: CircleAvatar(
                       radius: 25,
-                      backgroundColor: Colors.blue.shade900, // Color de ejemplo como en el diseño
+                      backgroundColor: Colors.blue.shade900,
                       child: const Text('GO', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ),
-
-                // Banner "New Facility"
                 Positioned(
                   top: 0,
                   right: 12,
@@ -132,8 +121,6 @@ class GameCard extends StatelessWidget {
                     ),
                   ),
                 ),
-
-                // Botón de ubicación/mapa
                 Positioned(
                     bottom: 12,
                     right: 12,
@@ -155,38 +142,26 @@ class GameCard extends StatelessWidget {
                 ),
 
                 // Banner "Finalizado"
-                if (showPastBanner)
+                if (showFinalizadoBanner)
                   Positioned(
                     top: 8,
                     left: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(8)),
-                      child: const Text('Finalizado', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-
-                // Icono de reporte
-                if (showReport)
-                  Positioned(
-                    top: 44,
-                    left: 4,
-                    child: IconButton(
-                      icon: const Icon(Icons.flag, color: Colors.white, shadows: [Shadow(color: Colors.black, blurRadius: 4)]),
-                      tooltip: 'Reportar partido',
-                      onPressed: () => onReport?.call(game),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4B5563), // Un gris oscuro, menos agresivo que el rojo
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text('Finalizado', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
                     ),
                   ),
               ],
             ),
-
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: kPaddingMedium),
               child: StreamBuilder<DocumentSnapshot>(
                 stream: FirebaseFirestore.instance.collection('games').doc(game.id).snapshots(),
                 builder: (context, snapshot) {
-
                   final updatedGame = snapshot.hasData && snapshot.data!.exists
                       ? GameModel.fromMap(snapshot.data!.data() as Map<String, dynamic>)
                       : game;
@@ -202,6 +177,7 @@ class GameCard extends StatelessWidget {
                           isPast: isPast,
                           showLeaveButton: !isPast && showLeaveButton,
                           onLeave: onLeave,
+                          onReport: onReport, // 💡 Pasamos el callback
                           showRateButton: isPast && userParticipated,
                           onRate: (game) {
                             showDialog(

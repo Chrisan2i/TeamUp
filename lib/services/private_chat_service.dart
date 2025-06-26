@@ -1,61 +1,87 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/private_chat_model.dart';
+import 'package:teamup/models/private_chat_model.dart'; // Asegúrate que la ruta a tu modelo sea correcta
 
 class PrivateChatService {
-  final CollectionReference privateChats =
+  final CollectionReference _chatsCollection =
   FirebaseFirestore.instance.collection('private_chats');
 
-  /// Crear chat privado
-  Future<void> createChat(PrivateChatModel chat) async {
-    await privateChats.doc(chat.id).set(chat.toMap());
-  }
+  /// Busca un chat existente entre dos usuarios o crea uno nuevo si no existe.
+  Future<String> findOrCreateChat({
+    required String currentUserId,
+    required String otherUserId,
+  }) async {
+    // Genera un ID de chat predecible para evitar duplicados
+    final ids = [currentUserId, otherUserId]..sort();
+    String chatId = ids.join('_');
 
-  /// Obtener chat entre dos usuarios (independiente del orden)
-  Future<PrivateChatModel?> getChatBetween(String user1, String user2) async {
-    final snapshot = await privateChats
-        .where('userA', whereIn: [user1, user2])
-        .where('userB', whereIn: [user1, user2])
-        .get();
+    final chatDoc = await _chatsCollection.doc(chatId).get();
 
-    for (final doc in snapshot.docs) {
-      final data = doc.data() as Map<String, dynamic>;
-      if ((data['userA'] == user1 && data['userB'] == user2) ||
-          (data['userA'] == user2 && data['userB'] == user1)) {
-        return PrivateChatModel.fromMap(data, doc.id);
-      }
+    if (chatDoc.exists) {
+      // Si el chat ya existe, simplemente devuelve su ID
+      return chatId;
+    } else {
+      // Si el chat no existe, crea un nuevo modelo de chat
+      final newChat = PrivateChatModel(
+        id: chatId,
+        participants: ids,
+        lastMessage: 'Chat iniciado.',
+        lastUpdated: DateTime.now(),
+        isBlocked: false,
+        // --- LÓGICA CLAVE: Inicializa el contador de no leídos para ambos en 0 ---
+        unreadCount: {
+          currentUserId: 0,
+          otherUserId: 0,
+        },
+      );
+
+      // Guarda el nuevo chat en Firestore
+      // El método toMap() ahora debe incluir el 'unreadCount'
+      await _chatsCollection.doc(chatId).set(newChat.toMap());
+
+      return chatId;
     }
-
-    return null;
   }
 
-  /// Obtener chats donde participa el usuario
-  Stream<List<PrivateChatModel>> getUserChats(String userId) {
-    return privateChats
-        .where('userA', isEqualTo: userId)
-        .snapshots()
-        .asyncMap((snapshot) async {
-      final userAChats = snapshot.docs
-          .map((doc) =>
-          PrivateChatModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
-          .toList();
+  /// Envía un mensaje y actualiza el estado del chat.
+  /// ESTA FUNCIÓN REEMPLAZA a la antigua `updateLastMessage`.
+  Future<void> sendPrivateMessage({
+    required String chatId,
+    required String content,
+    required String senderId,
+    required String receiverId,
+  }) async {
+    try {
+      // 1. Añadir el nuevo mensaje a la subcolección 'messages'
+      await _chatsCollection.doc(chatId).collection('messages').add({
+        'content': content,
+        'senderId': senderId,
+        'receiverId': receiverId,
+        'timestamp': FieldValue.serverTimestamp(),
+        'seen': false, // Puedes mantenerlo si lo usas para otra cosa
+      });
 
-      final userBChatsSnapshot =
-      await privateChats.where('userB', isEqualTo: userId).get();
-
-      final userBChats = userBChatsSnapshot.docs
-          .map((doc) =>
-          PrivateChatModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
-          .toList();
-
-      return [...userAChats, ...userBChats];
-    });
+      // 2. Actualizar el documento principal del chat de forma atómica
+      await _chatsCollection.doc(chatId).update({
+        'lastMessage': content,
+        'lastUpdated': FieldValue.serverTimestamp(),
+        // --- LÓGICA CLAVE: Incrementa el contador del receptor en 1 ---
+        'unreadCount.$receiverId': FieldValue.increment(1),
+      });
+    } catch (e) {
+      print("Error al enviar el mensaje privado: $e");
+    }
   }
 
-  /// Actualizar último mensaje
-  Future<void> updateLastMessage(String chatId, String lastMessage) async {
-    await privateChats.doc(chatId).update({
-      'lastMessage': lastMessage,
-      'lastUpdated': Timestamp.now(),
-    });
+  /// --- NUEVO MÉTODO: Marca un chat como leído por un usuario específico ---
+  /// Resetea el contador de mensajes no leídos para ese usuario a 0.
+  Future<void> markChatAsRead(String chatId, String userId) async {
+    try {
+      // Usamos la notación de punto para actualizar solo el campo del usuario en el mapa
+      await _chatsCollection.doc(chatId).update({
+        'unreadCount.$userId': 0,
+      });
+    } catch (e) {
+      print("Error al marcar el chat como leído: $e");
+    }
   }
 }

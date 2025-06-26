@@ -22,7 +22,7 @@ class GroupChatService {
   /// Obtener todos los grupos donde esté el usuario
   Stream<List<GroupChatModel>> getUserGroups(String userId) {
     return groupChats
-        .where('members', arrayContains: userId)
+        .where('participants', arrayContains: userId)
         .orderBy('lastUpdated', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
@@ -35,6 +35,18 @@ class GroupChatService {
     await groupChats.doc(groupId).update({
       'lastMessage': lastMessage,
       'lastUpdated': Timestamp.now(),
+    });
+  }
+  Future<void> addUserToGroup(String groupId, String userId) async {
+    await groupChats.doc(groupId).update({
+      'participants': FieldValue.arrayUnion([userId])
+    });
+  }
+
+  /// Eliminar un usuario de un grupo
+  Future<void> removeUserFromGroup(String groupId, String userId) async {
+    await groupChats.doc(groupId).update({
+      'participants': FieldValue.arrayRemove([userId])
     });
   }
 }

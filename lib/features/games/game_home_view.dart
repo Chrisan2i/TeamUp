@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:teamup/features/chat/change_notifier.dart';
+import 'package:teamup/models/notification_model.dart';
+import 'package:teamup/services/notification_service.dart';
 import 'game_controller.dart';
 import 'widgets/game_date_selector.dart';
 import 'widgets/game_search_bar.dart';
@@ -12,40 +15,52 @@ import '../bookings/bookings_view.dart';
 import 'package:teamup/core/widgets/custom_botton_navbar.dart';
 import 'package:teamup/features/game_details/game_detail_view.dart';
 import 'package:teamup/features/chat/views/messages_view.dart';
+import 'package:teamup/features/notification/notification_view.dart';
 
-class GameHomeView extends StatelessWidget {
+class GameHomeView extends StatefulWidget {
   const GameHomeView({super.key});
 
-  void _handleNavigation(BuildContext context, int index) {
-    if (index == 0) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const GameHomeView()),
-      );
-    } else if (index == 1) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const BookingsView()),
-      );
-    } else if (index == 2) {
+  @override
+  State<GameHomeView> createState() => _GameHomeViewState();
+}
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MessagesView()),
-      );
-    }else if (index == 3) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const ProfileView()),
-      );
+class _GameHomeViewState extends State<GameHomeView> {
+  final NotificationService _notificationService = NotificationService();
+  late Stream<List<NotificationModel>> _unreadNotificationsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _unreadNotificationsStream = _getUnreadNotifications();
+  }
+
+  Stream<List<NotificationModel>> _getUnreadNotifications() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return Stream.value([]);
+    }
+    return _notificationService.getNotificationsStream(user.uid)
+        .map((notifications) => notifications.where((n) => !n.isRead).toList());
+  }
+
+  void _handleNavigation(BuildContext context, int index) {
+    if (index == 0) return;
+    switch (index) {
+      case 1:
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const BookingsView()));
+        break;
+      case 2:
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MessagesView()));
+        break;
+      case 3:
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileView()));
+        break;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final controller = Provider.of<GameController>(context);
-
-    // ✅ Corrección para evitar notifyListeners() durante build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null && controller.currentUserId.isEmpty) {
@@ -59,21 +74,32 @@ class GameHomeView extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: const Text(
-          'Discover',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
+        title: const Text('Games', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('No hay notificaciones nuevas')),
+          StreamBuilder<List<NotificationModel>>(
+            stream: _unreadNotificationsStream,
+            builder: (context, snapshot) {
+              final hasUnread = snapshot.hasData && snapshot.data!.isNotEmpty;
+              return IconButton(
+                icon: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.notifications_none),
+                    if (hasUnread)
+                      Positioned(
+                        top: 2,
+                        right: 2,
+                        child: Container(
+                          width: 8, height: 8,
+                          decoration: const BoxDecoration(color: Colors.blueAccent, shape: BoxShape.circle),
+                        ),
+                      ),
+                  ],
+                ),
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+                },
               );
             },
           ),
@@ -83,14 +109,18 @@ class GameHomeView extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: kSpacingSmall),
-            GameDateSelector(
-              onDateSelected: controller.setDate,
-            ),
+
+            // ① Selector de fecha
+            GameDateSelector(onDateSelected: controller.setDate),
             const SizedBox(height: kSpacingSmall),
-            GameSearchBar(
-              onSearch: controller.setSearchText,
-            ),
+
+            // ② Búsqueda por texto
+            GameSearchFilterBar(onSearch: controller.setSearchText),
             const SizedBox(height: kSpacingMedium),
+
+            const SizedBox(height: kSpacingMedium),
+
+            // ④ Lista de partidos
             Expanded(
               child: controller.filteredGames.isEmpty
                   ? const Center(child: Text("No games found"))
@@ -119,17 +149,19 @@ class GameHomeView extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: 0,
-        onTap: (index) => _handleNavigation(context, index),
+      bottomNavigationBar: Consumer<ChatNotifier>(
+        builder: (context, chatNotifier, child) {
+          return CustomBottomNavBar(
+            currentIndex: 0,
+            onTap: (index) => _handleNavigation(context, index),
+            hasUnreadMessages: chatNotifier.hasUnreadMessages,
+          );
+        },
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AddGameView()),
-          );
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const AddGameView()));
         },
         backgroundColor: const Color(0xFF0CC0DF),
         tooltip: 'Crear Partido',

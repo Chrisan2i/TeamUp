@@ -1,35 +1,56 @@
+  // lib/services/notification_service.dart  (o la ruta donde lo tengas)
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/notification_model.dart';
+import 'package:teamup/models/notification_model.dart'; // ¡Asegúrate que la ruta del modelo es correcta!
 
 class NotificationService {
-  final CollectionReference notifications =
+  final CollectionReference _notificationsCollection =
   FirebaseFirestore.instance.collection('notifications');
 
-  /// Crear nueva notificación
-  Future<void> sendNotification(NotificationModel notification) async {
-    await notifications.doc(notification.id).set(notification.toMap());
-  }
-
-  /// Obtener notificaciones por usuario
-  Stream<List<NotificationModel>> getNotifications(String userId) {
-    return notifications
+  /// Obtener notificaciones de un usuario en tiempo real.
+  Stream<List<NotificationModel>> getNotificationsStream(String userId) {
+    return _notificationsCollection
         .where('userId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-        .map((doc) =>
-        NotificationModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
-        .toList());
+        .snapshots() // Obtiene el stream de datos
+        .map((snapshot) {
+      // Convierte cada documento en un objeto NotificationModel
+      return snapshot.docs.map((doc) {
+        return NotificationModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      }).toList();
+    });
   }
 
-  /// Marcar como leída
+  /// --- ESTE ES EL MÉTODO QUE FALTABA ---
+  /// Crear una nueva notificación, dejando que Firestore genere el ID.
+  Future<void> createNotification({
+    required String userId,
+    required String title,
+    required String body,
+    required String type,
+    String? senderId, // --- NUEVO Y OPCIONAL ---
+  }) async {
+    final notification = NotificationModel(
+      id: '',
+      userId: userId,
+      title: title,
+      body: body,
+      type: type,
+      isRead: false,
+      createdAt: DateTime.now(),
+      senderId: senderId,
+    );
+    await _notificationsCollection.add(notification.toMap());
+  }
+
+  /// Marcar una notificación como leída.
   Future<void> markAsRead(String notificationId) async {
-    await notifications.doc(notificationId).update({'isRead': true});
+    await _notificationsCollection.doc(notificationId).update({'isRead': true});
   }
 
-  /// Eliminar notificación
+  /// Eliminar una notificación.
   Future<void> deleteNotification(String notificationId) async {
-    await notifications.doc(notificationId).delete();
+    await _notificationsCollection.doc(notificationId).delete();
   }
 }
 

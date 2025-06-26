@@ -57,7 +57,6 @@ class _GameCardRatingDialogState extends State<GameCardRatingDialog> {
         ElevatedButton(
           onPressed: () {
             Navigator.pop(context);
-            // Aquí podrías enviar la data a Firestore u otra lógica
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
