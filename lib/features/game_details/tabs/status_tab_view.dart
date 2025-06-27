@@ -52,98 +52,181 @@ class StatusTabView extends StatelessWidget {
         children: [
           // Info de Hora
           Text(
-            "This afternoon, ${_buildTimeRange(game.hour, game.duration)}",
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
+          "This afternoon, ${_buildTimeRange(game.hour, game.duration)}",
+          style: const TextStyle(
+            color: Color(0xFF64748B),
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
           ),
-          const SizedBox(height: 24),
-          // Info Principal
-          Row(
-            children: [
-              CircularPercentIndicator(
-                radius: 40.0,
-                lineWidth: 8.0,
-                percent: percent,
-                center: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text("$joinedCount/$totalPlayers", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    Text("Spots Filled", style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+        ),
+        const SizedBox(height: 24),
+        
+        // Info Principal
+        Row(
+          children: [
+            CircularPercentIndicator(
+              radius: 40.0,
+              lineWidth: 8.0,
+              percent: percent,
+              center: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "$joinedCount/$totalPlayers", 
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold, 
+                      fontSize: 16,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                  const Text(
+                    "Spots Filled", 
+                    style: TextStyle(
+                      fontSize: 10, 
+                      color: Color(0xFF94A3B8),
+                    ),
+                  ),
+                ],
+              ),
+              progressColor: const Color(0xFF10B981),
+              backgroundColor: const Color(0xFFF1F5F9),
+              circularStrokeCap: CircularStrokeCap.round,
+            ),
+            const SizedBox(width: 24),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _infoRow(Icons.people_outline, '$totalPlayers Players (${game.format})'),
+                  const SizedBox(height: 8),
+                  _infoRow(Icons.shield_outlined, game.skillLevel),
+                  const SizedBox(height: 8),
+                  _infoRow(Icons.location_on_outlined, game.fieldName),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+        
+        // Barra de Progreso
+        const Text(
+          "PROGRESS", 
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF10B981),
+            fontSize: 14,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.center,
+          children: [
+            LinearProgressIndicator(
+              value: (currentStatusIndex + 1) / 3.0,
+              minHeight: 6,
+              backgroundColor: const Color(0xFFF1F5F9),
+              color: const Color(0xFF10B981),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            Positioned(
+              left: (MediaQuery.of(context).size.width / 3) * playersToConfirm / spotsLeft - 60,
+              top: -25,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981),
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF10B981).withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
                   ],
                 ),
-                progressColor: const Color(0xFFF97316),
-                backgroundColor: Colors.grey.shade200,
-                circularStrokeCap: CircularStrokeCap.round,
-              ),
-              const SizedBox(width: 24),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _infoRow(Icons.people_outline, '$totalPlayers Players (${game.format})'),
-                    const SizedBox(height: 8),
-                    _infoRow(Icons.shield_outlined, game.skillLevel),
-                    const SizedBox(height: 8),
-                    _infoRow(Icons.location_on_outlined, game.fieldName),
-                  ],
+                child: Text(
+                  "$playersToConfirm more to go!", 
+                  style: const TextStyle(
+                    color: Colors.white, 
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          // Barra de Progreso
-          const Text("PROGRESS", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-          const SizedBox(height: 16),
-          Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.center,
-            children: [
-              LinearProgressIndicator(
-                value: (currentStatusIndex + 1) / 3.0,
-                minHeight: 4,
-                backgroundColor: Colors.grey.shade200,
-                color: const Color(0xFFF97316),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: const [
+            Text(
+              'Scheduled', 
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1E293B),
               ),
-              Positioned(
-                left: (MediaQuery.of(context).size.width / 3) * playersToConfirm / spotsLeft - 60, // Lógica aproximada para la posición
-                top: -25,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(8)),
-                  child: Text("$playersToConfirm more to go!", style: const TextStyle(color: Colors.white, fontSize: 12)),
-                ),
-              )
-            ],
+            ),
+            Text(
+              'Confirmed', 
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+            Text(
+              'Game Full', 
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          "We'll let you know by 15:00 if the game is confirmed.",
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Color(0xFF64748B),
+            fontSize: 14,
           ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text('Scheduled', style: TextStyle(fontWeight: FontWeight.w500)),
-              Text('Confirmed', style: TextStyle(fontWeight: FontWeight.w500)),
-              Text('Game Full', style: TextStyle(fontWeight: FontWeight.w500)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            "We'll let you know by 15:00 if the game is confirmed.",
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade600),
-          ),
-          const SizedBox(height: 32),
-          // Tu Roster
-          GameRosterSection(userIds: game.usersJoined),
-        ],
-      ),
-    );
-  }
-
-  Widget _infoRow(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, color: Colors.grey.shade600, size: 20),
-        const SizedBox(width: 8),
-        Expanded(child: Text(text, style: TextStyle(fontSize: 14, color: Colors.grey.shade800))),
+        ),
+        const SizedBox(height: 32),
+        
+        // Tu Roster
+        GameRosterSection(userIds: game.usersJoined),
       ],
-    );
-  }
+    ),
+  );
+}
+
+
+ 
+Widget _infoRow(IconData icon, String text) {
+  return Row(
+    children: [
+      Icon(
+        icon, 
+        color: const Color(0xFF64748B), 
+        size: 20,
+      ),
+      const SizedBox(width: 8),
+      Expanded(
+        child: Text(
+          text, 
+          style: const TextStyle(
+            fontSize: 14, 
+            color: Color(0xFF1E293B),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
 }

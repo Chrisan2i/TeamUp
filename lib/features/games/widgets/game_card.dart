@@ -98,7 +98,7 @@ class GameCard extends StatelessWidget {
                     ),
                     child: CircleAvatar(
                       radius: 25,
-                      backgroundColor: Colors.blue.shade900,
+                      backgroundColor: Color(0xFF0CC0DF),
                       child: const Text('GO', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     ),
                   ),
@@ -111,7 +111,7 @@ class GameCard extends StatelessWidget {
                     child: Container(
                       width: 65,
                       height: 55,
-                      color: const Color(0xFF1E4FFD),
+                      color: const Color(0xFF0CC0DF),
                       padding: const EdgeInsets.only(top: 6, left: 2, right: 2),
                       child: const Text(
                         'New Facility',

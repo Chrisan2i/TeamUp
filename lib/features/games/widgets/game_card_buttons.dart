@@ -113,8 +113,8 @@ class GameCardButtons extends StatelessWidget {
           );
         },
         style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.black87,
-          backgroundColor: Colors.blue.shade600,
+          foregroundColor: Colors.white,
+          backgroundColor: Color(0xFF0CC0DF),
           minimumSize: const Size.fromHeight(48),
           side: BorderSide(color: Colors.grey.shade400, width: 1.5),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

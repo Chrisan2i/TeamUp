@@ -75,6 +75,15 @@ class _JoinGameBottomSheetState extends State<JoinGameBottomSheet> {
     final totalCost = widget.game.price * totalPeopleJoining;
 
     return SafeArea(
+      child: Align(
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        decoration: const BoxDecoration(
+      color: const Color(0xFFF5F5F7), // Fondo gris claro
+      borderRadius: BorderRadius.vertical(
+            top: Radius.circular(20), // Bordes redondeados solo arriba
+          ),
+        ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Column(
@@ -122,6 +131,8 @@ class _JoinGameBottomSheetState extends State<JoinGameBottomSheet> {
           ],
         ),
       ),
-    );
+      ),
+      ),
+      );
   }
 }

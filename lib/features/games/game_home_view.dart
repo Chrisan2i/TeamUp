@@ -165,7 +165,7 @@ class _GameHomeViewState extends State<GameHomeView> {
                             },
                             child: const Text(
                               'Crear nuevo partido',
-                              style: TextStyle(color: Colors.blue),
+                              style: TextStyle(color: Color(0xFF0CC0DF)),
                             ),
                           ),
                         ],

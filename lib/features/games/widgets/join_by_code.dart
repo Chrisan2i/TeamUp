@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:teamup/core/constant/colors.dart';
 import 'package:teamup/models/game_model.dart';
 import 'package:teamup/services/game_players_service.dart';
-
+import 'package:intl/intl.dart';
 class JoinByCodeView extends StatefulWidget {
   const JoinByCodeView({super.key});
 
@@ -106,52 +107,142 @@ class _JoinByCodeViewState extends State<JoinByCodeView> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Unirse con código')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(
-              controller: _codeController,
-              decoration: InputDecoration(
-                labelText: 'Código del partido',
-                border: const OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: isLoading ? null : searchGame,
-                ),
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: const Color(0xFFF8FAFC),
+    appBar: AppBar(
+      title: const Text('Unirse con código'),
+      backgroundColor: Colors.white,
+      elevation: 0,
+      foregroundColor: Colors.black,
+    ),
+    body: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: _codeController,
+            decoration: InputDecoration(
+              labelText: 'Código del partido',
+              labelStyle: const TextStyle(color: Color(0xFF64748B)),
+              floatingLabelStyle: const TextStyle(color: Color(0xFF0CC0DF)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
               ),
-              onSubmitted: (_) => isLoading ? null : searchGame(),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF0CC0DF), width: 2),
+              ),
+              filled: true,
+              fillColor: Colors.grey[50],
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.search_rounded),
+                color: const Color(0xFF0CC0DF),
+                onPressed: isLoading ? null : searchGame,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
-            const SizedBox(height: 20),
+            style: const TextStyle(fontSize: 16),
+            onSubmitted: (_) => isLoading ? null : searchGame(),
+          ),
+          const SizedBox(height: 24),
 
-            if (isLoading)
-              const Center(child: CircularProgressIndicator()),
-
-            if (errorMessage != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Text(errorMessage!, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          if (isLoading)
+            const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0CC0DF)),
               ),
+            ),
 
-            if (foundGame != null && !isLoading) ...[
-              Card(
-                elevation: 2,
-                child: ListTile(
-                  title: Text(foundGame!.fieldName),
-                  subtitle: Text('${foundGame!.zone} - ${foundGame!.date.toLocal().toString().substring(0, 10)}'),
-                  trailing: ElevatedButton(
-                    onPressed: handleJoinGame,
-                    child: const Text('Unirse'),
+          if (errorMessage != null)
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red[100]!),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline_rounded, color: Colors.red, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
+
+          if (foundGame != null && !isLoading) ...[
+            const SizedBox(height: 24),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+                border: Border.all(color: Colors.grey[100]!),
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    foundGame!.fieldName,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${foundGame!.zone} • ${DateFormat('dd/MM/yyyy').format(foundGame!.date)}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: handleJoinGame,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0CC0DF),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: const Text(
+                        'Unirse al partido',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
-        ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
