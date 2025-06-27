@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:teamup/features/auth/models/user_model.dart';
-import 'package:teamup/services/game_players_service.dart';  // <-- 1. IMPORTAR EL SERVICIO CORRECTO
+import 'package:teamup/services/game_players_service.dart';
 import 'package:teamup/features/chat/views/chat_view.dart';
 import 'player_avatar.dart';
 import 'package:teamup/features/player_profile/player_profile_view.dart';
@@ -17,89 +17,98 @@ class PlayerOptionsModal extends StatefulWidget {
 }
 
 class _PlayerOptionsModalState extends State<PlayerOptionsModal> {
-  // 2. USAR LA INSTANCIA DEL SERVICIO CENTRALIZADO
   final GamePlayersService _playersService = GamePlayersService();
   final PrivateChatService _privateChatService = PrivateChatService();
   final String? _currentUserId = FirebaseAuth.instance.currentUser?.uid;
 
-  bool _isProcessing = false; // Estado para evitar múltiples clics
+  bool _isProcessing = false;
 
-  // --- MÉTODOS DE ACCIÓN ACTUALIZADOS ---
-  // Ahora son más simples y llaman al servicio central
-
-  Future<void> _handleAction(BuildContext modalContext, Future<void> Function() action) async {
+  Future<void> _handleAction(Future<void> Function() action, {String? successMessage}) async {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
 
-    Navigator.pop(modalContext); // Cierra el modal inmediatamente
-
     try {
       await action();
-      // El SnackBar se puede mover a un nivel superior si se prefiere, o mantenerse aquí.
+
+      if (mounted) {
+
+        if (successMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(successMessage)),
+          );
+        }
+
+        Navigator.pop(context);
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: ${e.toString()}")),
+        );
+      }
     } finally {
-      if (mounted) setState(() => _isProcessing = false);
+
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
     }
   }
 
-  void _sendFriendRequest(BuildContext modalContext, String currentUserName) {
-    _handleAction(modalContext, () async {
-      await _playersService.sendFriendRequest(
+  void _sendFriendRequest(String currentUserName) {
+    _handleAction(
+          () => _playersService.sendFriendRequest(
         currentUserId: _currentUserId!,
         profileUserId: widget.targetPlayer.uid,
         currentUserName: currentUserName,
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Solicitud de amistad enviada.")),
-      );
-    });
+      ),
+      successMessage: "Solicitud de amistad enviada.",
+    );
   }
 
-  void _acceptFriendRequest(BuildContext modalContext) {
-    _handleAction(modalContext, () async {
-      await _playersService.acceptFriendRequest(
+  void _acceptFriendRequest() {
+    _handleAction(
+          () => _playersService.acceptFriendRequest(
         currentUserId: _currentUserId!,
         friendId: widget.targetPlayer.uid,
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Ahora eres amigo de ${widget.targetPlayer.fullName}.")),
-      );
-    });
+      ),
+      successMessage: "Ahora eres amigo de ${widget.targetPlayer.fullName}.",
+    );
   }
 
-  void _rejectFriendRequest(BuildContext modalContext) {
-    _handleAction(modalContext, () async {
-      await _playersService.cancelOrDeclineFriendRequest(
+  void _rejectFriendRequest() {
+    _handleAction(
+          () => _playersService.cancelOrDeclineFriendRequest(
         currentUserId: _currentUserId!,
         otherUserId: widget.targetPlayer.uid,
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Solicitud rechazada.")),
-      );
-    });
+      ),
+      successMessage: "Solicitud rechazada.",
+    );
   }
 
-  void _handleSendMessage(BuildContext modalContext) async {
+  // --- FUNCIÓN DE ENVIAR MENSAJE CORREGIDA ---
+  void _handleSendMessage() async {
     if (_currentUserId == null || _isProcessing) return;
     setState(() => _isProcessing = true);
-    Navigator.pop(modalContext); // Cierra el modal
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
 
     try {
-      String chatId = await _privateChatService.findOrCreateChat(
+      // 1. PRIMERO, buscamos o creamos el chat.
+      final String chatId = await _privateChatService.findOrCreateChat(
         currentUserId: _currentUserId!,
         otherUserId: widget.targetPlayer.uid,
       );
-      Navigator.pop(context); // Cierra el loading indicator
 
-      Navigator.push(
-        context,
+      // 2. Comprobamos si el widget sigue "montado" antes de navegar.
+      // Es una buena práctica de seguridad.
+      if (!mounted) return;
+
+      // 3. Obtenemos el Navigator ANTES de cerrar el modal actual.
+      final navigator = Navigator.of(context);
+
+      // 4. Cerramos el modal.
+      navigator.pop(); // Esto es igual a Navigator.pop(context)
+
+      // 5. AHORA, navegamos a la pantalla de chat.
+      navigator.push(
         MaterialPageRoute(
           builder: (context) => ChatView(
             chatId: chatId,
@@ -108,15 +117,21 @@ class _PlayerOptionsModalState extends State<PlayerOptionsModal> {
           ),
         ),
       );
+
     } catch (e) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("No se pudo iniciar el chat: $e")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("No se pudo iniciar el chat: $e")),
+        );
+      }
     } finally {
-      if (mounted) setState(() => _isProcessing = false);
+      // Nos aseguramos de que el estado de 'processing' se limpie
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -124,29 +139,34 @@ class _PlayerOptionsModalState extends State<PlayerOptionsModal> {
       return const Center(child: Text("Error: Usuario no autenticado."));
     }
 
-    // 3. EL STREAM AHORA USA EL SERVICIO CORRECTO
     return StreamBuilder<UserModel?>(
-      stream: _playersService.firestore.collection('users').doc(_currentUserId!).snapshots().map((doc) =>
-      doc.exists ? UserModel.fromMap(doc.data()!, doc.id) : null),
+      stream: _playersService.firestore.collection('users').doc(_currentUserId!).snapshots().map(
+              (doc) => doc.exists ? UserModel.fromMap(doc.data()!, doc.id) : null),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+              height: 250, child: Center(child: CircularProgressIndicator()));
+        }
+        if (!snapshot.hasData || snapshot.data == null) {
+          return const SizedBox(
+              height: 250, child: Center(child: Text("No se pudo cargar el usuario.")));
         }
 
         final currentUserData = snapshot.data!;
         Widget friendActionWidget;
 
+        // Lógica de botones sin cambios, pero ahora llaman a las funciones corregidas
         if (currentUserData.friends.contains(widget.targetPlayer.uid)) {
           friendActionWidget = _buildOptionButton(
             icon: Icons.check_circle_outline,
             text: 'Ya son amigos',
-            onTap: null,
+            onTap: null, // Deshabilitado
           );
         } else if (currentUserData.friendRequestsSent.contains(widget.targetPlayer.uid)) {
           friendActionWidget = _buildOptionButton(
             icon: Icons.pending_outlined,
             text: 'Solicitud enviada',
-            onTap: null,
+            onTap: null, // Deshabilitado
           );
         } else if (currentUserData.friendRequestsReceived.contains(widget.targetPlayer.uid)) {
           friendActionWidget = Row(
@@ -154,14 +174,14 @@ class _PlayerOptionsModalState extends State<PlayerOptionsModal> {
               Expanded(
                 child: _buildSmallOptionButton(
                   icon: Icons.check, text: 'Aceptar', color: Colors.green,
-                  onTap: _isProcessing ? null : () => _acceptFriendRequest(context),
+                  onTap: () => _acceptFriendRequest(),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _buildSmallOptionButton(
                   icon: Icons.close, text: 'Rechazar', color: Colors.red,
-                  onTap: _isProcessing ? null : () => _rejectFriendRequest(context),
+                  onTap: () => _rejectFriendRequest(),
                 ),
               ),
             ],
@@ -170,11 +190,10 @@ class _PlayerOptionsModalState extends State<PlayerOptionsModal> {
           friendActionWidget = _buildOptionButton(
             icon: Icons.person_add_alt_1_outlined,
             text: 'Añadir amigo',
-            onTap: _isProcessing ? null : () => _sendFriendRequest(context, currentUserData.fullName),
+            onTap: () => _sendFriendRequest(currentUserData.fullName),
           );
         }
 
-        // El resto del diseño del widget no cambia en absoluto.
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           child: Column(
@@ -195,7 +214,7 @@ class _PlayerOptionsModalState extends State<PlayerOptionsModal> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: _isProcessing ? null : () => Navigator.pop(context),
                   ),
                 ],
               ),
@@ -205,13 +224,14 @@ class _PlayerOptionsModalState extends State<PlayerOptionsModal> {
               _buildOptionButton(
                 icon: Icons.chat_bubble_outline,
                 text: 'Enviar Mensaje',
-                onTap: _isProcessing ? null : () => _handleSendMessage(context),
+                onTap: () => _handleSendMessage(),
               ),
               const SizedBox(height: 12),
               _buildOptionButton(
                 icon: Icons.person_outline,
                 text: 'Ver Perfil',
                 onTap: () {
+                  // Esta acción es síncrona, no hay problema
                   Navigator.pop(context);
                   Navigator.push(
                       context,
@@ -227,12 +247,14 @@ class _PlayerOptionsModalState extends State<PlayerOptionsModal> {
     );
   }
 
-  // Los widgets de construcción de botones no se modifican.
+  // --- WIDGETS DE BOTONES CON ESTADO DE CARGA ---
   Widget _buildOptionButton({required IconData icon, required String text, VoidCallback? onTap}) {
-    final bool isEnabled = onTap != null;
+    final bool isEnabled = onTap != null && !_isProcessing;
     return OutlinedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, color: isEnabled ? Colors.black87 : Colors.grey),
+      onPressed: isEnabled ? onTap : null,
+      icon: _isProcessing && onTap != null
+          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+          : Icon(icon, color: isEnabled ? Colors.black87 : Colors.grey),
       label: Text(text,
           style: TextStyle(
               color: isEnabled ? Colors.black87 : Colors.grey,
@@ -247,16 +269,19 @@ class _PlayerOptionsModalState extends State<PlayerOptionsModal> {
   }
 
   Widget _buildSmallOptionButton({required IconData icon, required String text, required Color color, VoidCallback? onTap}) {
+    final bool isEnabled = onTap != null && !_isProcessing;
     return ElevatedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, color: Colors.white, size: 18),
+      onPressed: isEnabled ? onTap : null,
+      icon: _isProcessing && onTap != null
+          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+          : Icon(icon, color: Colors.white, size: 18),
       label: Text(text,
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       style: ElevatedButton.styleFrom(
-        backgroundColor: color,
+        backgroundColor: isEnabled ? color : Colors.grey,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
         padding: const EdgeInsets.symmetric(vertical: 14),
-        elevation: 2,
+        elevation: isEnabled ? 2 : 0,
       ),
     );
   }

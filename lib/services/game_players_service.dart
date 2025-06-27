@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:teamup/models/game_model.dart';
 import 'package:teamup/features/auth/models/user_model.dart';
-// 1. IMPORTAR EL SERVICIO DE NOTIFICACIONES
 import 'package:teamup/services/notification_service.dart'; // Asegúrate de que la ruta sea correcta
 import 'game_service.dart';
 import 'group_chat_service.dart';
