@@ -22,46 +22,119 @@ class _MessageInputBarState extends State<MessageInputBar> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey.shade200, width: 1)),
+Widget build(BuildContext context) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border(
+        top: BorderSide(
+          color: Colors.grey.shade100, // Borde más suave
+          width: 1.5,
+        ),
       ),
-      child: SafeArea(
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.add_circle_outline, color: Color(0xFF008060)),
-              onPressed: () {
-                // Lógica para adjuntar archivos
-              },
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 8,
+          offset: const Offset(0, -2),
+        ),
+      ],
+    ),
+    child: SafeArea(
+      child: Row(
+        children: [
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFFF8FAFC), // Fondo circular
+              ),
+              child: const Icon(
+                Icons.add_rounded,
+                color: Color(0xFF0CC0DF), // Azul característico
+                size: 24,
+              ),
             ),
-            Expanded(
+            onPressed: () {
+              // Lógica para adjuntar archivos
+            },
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF0CC0DF).withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
               child: TextField(
                 controller: _controller,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
-                  hintText: "Message...",
+                  hintText: "Type a message...",
+                  hintStyle: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontSize: 15,
+                  ),
                   filled: true,
-                  fillColor: const Color(0xFFF0F0F0),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                  fillColor: const Color(0xFFF8FAFC), // Fondo más claro
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 20,
+                  ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(24),
                     borderSide: BorderSide.none,
                   ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF0CC0DF), // Borde azul al enfocar
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: Color(0xFF1E293B), // Texto oscuro
                 ),
                 onSubmitted: (_) => _sendMessage(),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.send_rounded, color: Color(0xFF008060)),
-              onPressed: _sendMessage,
+          ),
+          const SizedBox(width: 8),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0CC0DF), Color(0xFF0A9EBF)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0CC0DF).withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-          ],
-        ),
+            child: IconButton(
+              icon: const Icon(Icons.send_rounded, color: Colors.white),
+              onPressed: _sendMessage,
+              padding: const EdgeInsets.all(12),
+            ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

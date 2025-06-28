@@ -74,7 +74,7 @@ class _MessagesViewState extends State<MessagesView> {
           ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_square, size: 26),
+            icon: const Icon(Icons.edit_square, size: 26, color: Color(0xFF0CC0DF)),
             onPressed: () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const NewMessageView()));
             },
@@ -109,7 +109,7 @@ class _MessagesViewState extends State<MessagesView> {
         onPressed: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const AddGameView()));
         },
-        backgroundColor: const Color.fromARGB(255, 0, 124, 146),
+        backgroundColor: const Color(0xFF0CC0DF),
         tooltip: 'Crear Partido',
         elevation: 2.0,
         child: const Icon(Icons.add, color: Colors.white),

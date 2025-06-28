@@ -162,6 +162,7 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
         title: const Text('Bookings', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF111827))),
         backgroundColor: Colors.white,
         elevation: 0,
+        shadowColor: Colors.transparent, // Elimina la línea gris
         centerTitle: true,
         automaticallyImplyLeading: false, // Opcional: para que no aparezca flecha de atrás
         bottom: BookingsTabBar(tabController: _tabController),
@@ -173,6 +174,7 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
         child: Padding(
           padding: const EdgeInsets.only(top: 8),
           child: TabBarView(
+            
             controller: _tabController,
             children: [
               BookingsGameList(
@@ -196,9 +198,9 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
         onPressed: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const AddGameView()));
         },
-        backgroundColor: const Color.fromARGB(255, 0, 124, 146),
+        backgroundColor: const Color(0xFF0CC0DF),
         tooltip: 'Crear Partido',
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, color: Colors.white, size: 30),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: Consumer<ChatNotifier>(
