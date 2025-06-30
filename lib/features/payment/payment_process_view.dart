@@ -1,10 +1,12 @@
+// lib/features/payment/payment_process_view.dart
+
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:teamup/models/game_model.dart';
 import 'package:teamup/services/payment_service.dart';
 
 // Datos estáticos para los métodos de pago.
-// Idealmente, esto podría venir de una configuración en Firestore
-// para que puedas cambiarlos sin actualizar la app.
 const Map<String, dynamic> paymentData = {
   'pago_movil': {
     'title': 'Pago Móvil',
@@ -25,7 +27,7 @@ const Map<String, dynamic> paymentData = {
   },
   'binance': {
     'title': 'Binance Pay',
-    'icon': Icons.currency_bitcoin, // Icono representativo
+    'icon': Icons.currency_bitcoin,
     'details': {
       'Correo/Teléfono': 'operaciones@teamup.com',
       'Pay ID': '123445677'
@@ -45,7 +47,7 @@ const Map<String, dynamic> paymentData = {
 
 class PaymentProcessView extends StatefulWidget {
   final GameModel game;
-  final int totalPeopleJoining; // El usuario + sus invitados
+  final int totalPeopleJoining;
 
   const PaymentProcessView({
     super.key,
@@ -60,13 +62,23 @@ class PaymentProcessView extends StatefulWidget {
 class _PaymentProcessViewState extends State<PaymentProcessView> {
   String? _selectedMethodKey;
   bool _isLoading = false;
+  File? _selectedImage;
 
   final _formKey = GlobalKey<FormState>();
   final _referenceController = TextEditingController();
   final PaymentService _paymentService = PaymentService();
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
+
   Future<void> _notifyPayment() async {
-    // Validar que se haya seleccionado un método y el formulario sea correcto
     if (_selectedMethodKey == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text("Por favor, selecciona un método de pago."),
@@ -78,14 +90,14 @@ class _PaymentProcessViewState extends State<PaymentProcessView> {
 
     setState(() => _isLoading = true);
 
-    // ▼▼▼ AQUÍ ESTÁ LA CORRECCIÓN PRINCIPAL ▼▼▼
-    // La llamada ahora coincide con la firma del método en PaymentService.
+    // ▼▼▼ AQUÍ ESTÁ LA CORRECCIÓN ▼▼▼
     final result = await _paymentService.notifyPayment(
-      game: widget.game, // <-- CORRECCIÓN: Se pasa el objeto 'game' completo.
+      game: widget.game,
+      method: _selectedMethodKey!, // <-- CORRECCIÓN: Se añade el parámetro que faltaba.
       reference: _referenceController.text,
       amount: widget.game.price * widget.totalPeopleJoining,
       guestsCount: widget.totalPeopleJoining - 1,
-      // Se eliminan 'gameId' y 'method' porque ya no son necesarios aquí.
+      receiptImage: _selectedImage,
     );
     // ▲▲▲ FIN DE LA CORRECCIÓN ▲▲▲
 
@@ -95,7 +107,6 @@ class _PaymentProcessViewState extends State<PaymentProcessView> {
           content: Text("✅ ¡Pago notificado! Recibirás una confirmación pronto."),
           backgroundColor: Color(0xFF008060),
         ));
-        // Navega hacia atrás hasta llegar a la primera ruta de la pila (la lista de partidos)
         Navigator.of(context).popUntil((route) => route.isFirst);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -160,8 +171,6 @@ class _PaymentProcessViewState extends State<PaymentProcessView> {
     );
   }
 
-  // ----- WIDGETS DE CONSTRUCCIÓN AUXILIARES -----
-
   Widget _buildSectionTitle(String title) {
     return Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E)));
   }
@@ -169,8 +178,7 @@ class _PaymentProcessViewState extends State<PaymentProcessView> {
   Widget _buildSummaryCard(double totalCost) {
     return Card(
       elevation: 2,
-      // <-- CORRECCIÓN: Advertencia menor de 'withOpacity'
-      shadowColor: Colors.black.withAlpha(25), // Equivalente a withOpacity(0.1)
+      shadowColor: Colors.black.withAlpha(25),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -187,8 +195,7 @@ class _PaymentProcessViewState extends State<PaymentProcessView> {
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              // <-- CORRECCIÓN: Advertencia menor de 'withOpacity'
-              decoration: BoxDecoration(color: const Color(0xFF008060).withAlpha(26), borderRadius: BorderRadius.circular(8)), // withOpacity(0.1)
+              decoration: BoxDecoration(color: const Color(0xFF008060).withAlpha(26), borderRadius: BorderRadius.circular(8)),
               child: Text(
                 "${widget.totalPeopleJoining} Jugador${widget.totalPeopleJoining > 1 ? 'es' : ''}",
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF008060)),
@@ -221,8 +228,7 @@ class _PaymentProcessViewState extends State<PaymentProcessView> {
       borderRadius: BorderRadius.circular(12),
       child: Container(
         decoration: BoxDecoration(
-          // <-- CORRECCIÓN: Advertencia menor de 'withOpacity'
-          color: isSelected ? const Color(0xFF008060).withAlpha(26) : Colors.white, // withOpacity(0.1)
+          color: isSelected ? const Color(0xFF008060).withAlpha(26) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? const Color(0xFF008060) : Colors.grey.shade300,
@@ -275,8 +281,7 @@ class _PaymentProcessViewState extends State<PaymentProcessView> {
       key: _formKey,
       child: Card(
         elevation: 2,
-        // <-- CORRECCIÓN: Advertencia menor de 'withOpacity'
-        shadowColor: Colors.black.withAlpha(25), // withOpacity(0.1)
+        shadowColor: Colors.black.withAlpha(25),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -302,13 +307,27 @@ class _PaymentProcessViewState extends State<PaymentProcessView> {
                 },
               ),
               const SizedBox(height: 16),
+              if (_selectedImage != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Stack(
+                    alignment: Alignment.topRight,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(_selectedImage!, height: 150, width: double.infinity, fit: BoxFit.cover),
+                      ),
+                      IconButton(
+                        icon: const CircleAvatar(backgroundColor: Colors.black54, child: Icon(Icons.close, color: Colors.white, size: 18)),
+                        onPressed: () => setState(() => _selectedImage = null),
+                      )
+                    ],
+                  ),
+                ),
               OutlinedButton.icon(
-                onPressed: () {
-                  // TODO: Implementar image_picker para seleccionar y subir un comprobante
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Próximamente: Adjuntar comprobante.")));
-                },
-                icon: const Icon(Icons.attach_file_outlined),
-                label: const Text("Adjuntar Comprobante (Opcional)"),
+                onPressed: _pickImage,
+                icon: Icon(_selectedImage == null ? Icons.attach_file_outlined : Icons.check_circle, color: _selectedImage != null ? Colors.green : null),
+                label: Text(_selectedImage == null ? "Adjuntar Comprobante" : "Comprobante Adjunto"),
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 48),
                   foregroundColor: const Color(0xFF008060),

@@ -80,6 +80,7 @@ class NotificationService {
     required String payingUserEmail,
     required double amount,
     required String reference,
+    required String method, // <-- CORRECCIÓN: Se añade el parámetro que faltaba.
   }) async {
     // Llama a tu método createNotification con los datos correctos.
     await createNotification(
@@ -93,6 +94,7 @@ class NotificationService {
         'gameId': game.id,
         'reference': reference,
         'payingUserId': payingUserId, // Repetimos el ID aquí para fácil acceso.
+        'method': method, // <-- CORRECCIÓN: Ahora se guarda el método en el contexto.
       },
     );
   }

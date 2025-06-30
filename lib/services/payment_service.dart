@@ -1,68 +1,122 @@
+// lib/services/payment_service.dart
+
+import 'dart:io';
+import 'dart:convert'; // Necesario para decodificar la respuesta JSON de Cloudinary
+import 'package:http/http.dart' as http; // Importamos el paquete http
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:teamup/models/game_model.dart';
-import 'package:teamup/services/notification_service.dart'; // Importamos tu servicio de notificaciones
+import 'notification_service.dart';
 
 /// Este servicio centraliza la lógica de negocio relacionada con la notificación de pagos.
-/// Su principal responsabilidad es actualizar el estado del juego y delegar la
-/// creación de notificaciones al NotificationService.
+/// Utiliza Cloudinary para la gestión de imágenes de comprobantes.
 class PaymentService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final NotificationService _notificationService = NotificationService(); // Instanciamos tu servicio para usarlo
+  final NotificationService _notificationService = NotificationService();
+
+  // --- CONFIGURACIÓN DE CLOUDINARY ---
+  // Reemplaza estos valores con los de tu cuenta de Cloudinary.
+  final String _cloudinaryCloudName = 'drnkgp6xe'; // Tu Cloud Name
+  final String _cloudinaryUploadPreset = 'TeamUp'; // Tu Upload Preset (Unsigned)
+
+  /// Sube la imagen del comprobante a Cloudinary y devuelve la URL segura.
+  ///
+  /// [imageFile]: El archivo de la imagen seleccionada por el usuario.
+  /// Retorna la URL segura como un String, o null si ocurre un error.
+  Future<String?> _uploadReceiptToCloudinary(File imageFile) async {
+    try {
+      final url = Uri.parse('https://api.cloudinary.com/v1_1/$_cloudinaryCloudName/image/upload');
+
+      final request = http.MultipartRequest('POST', url)
+        ..fields['upload_preset'] = _cloudinaryUploadPreset
+        ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+
+      final response = await request.send();
+
+      if (response.statusCode == 200) {
+        final responseData = await response.stream.bytesToString();
+        // Decodificamos la respuesta JSON y extraemos la 'secure_url'
+        final imageUrl = json.decode(responseData)['secure_url'];
+        print('✅ Imagen subida a Cloudinary: $imageUrl');
+        return imageUrl;
+      } else {
+        // Si el estado no es 200, algo salió mal.
+        print('❌ Error al subir a Cloudinary. Status code: ${response.statusCode}');
+        final errorResponse = await response.stream.bytesToString();
+        print('Error response: $errorResponse');
+        return null;
+      }
+    } catch (e) {
+      print('❌ Excepción al subir imagen a Cloudinary: $e');
+      return null;
+    }
+  }
 
   /// Procesa la notificación de un pago realizado por un usuario.
-  ///
-  /// [game]: El objeto `GameModel` del partido al que se une el usuario.
-  /// [reference]: El número de referencia o identificador del pago.
-  /// [amount]: El monto total pagado (incluyendo invitados).
-  /// [guestsCount]: El número de invitados que el usuario lleva consigo.
-  ///
-  /// Retorna "Success" si la operación es exitosa, o un mensaje de error en caso contrario.
   Future<String> notifyPayment({
-    required GameModel game, // Pasamos el objeto Game completo para tener todos los datos
+    required GameModel game,
+    required String method,
     required String reference,
     required double amount,
     required int guestsCount,
+    File? receiptImage,
   }) async {
     try {
       final user = _auth.currentUser;
-      if (user == null) {
-        return "Error: No hay un usuario autenticado para realizar la operación.";
-      }
+      if (user == null) return "Error: No hay un usuario autenticado.";
 
       final userId = user.uid;
-      final gameRef = _firestore.collection('games').doc(game.id);
+      final paymentNotificationRef = _firestore.collection('payment_notifications').doc();
+      String? receiptUrl;
 
-      // Paso 1: Actualizar atómicamente el documento del partido.
-      // Esta operación es crucial: reserva el cupo del jugador y lo pone en estado pendiente.
-      // Usamos dot notation ('paymentStatus.$userId') para actualizar un campo específico dentro de un mapa.
-      await gameRef.update({
-        'usersJoined': FieldValue.arrayUnion([userId]),
-        'paymentStatus.$userId': 'pending', // Marca el estado del pago del usuario como pendiente
-        'guests.$userId': guestsCount,      // Registra cuántos invitados trae este usuario
+      // --- PASO CLAVE: SUBIR LA IMAGEN A CLOUDINARY (SI EXISTE) ---
+      if (receiptImage != null) {
+        receiptUrl = await _uploadReceiptToCloudinary(receiptImage);
+        if (receiptUrl == null) {
+          return "Error al subir la imagen del comprobante. Por favor, inténtalo de nuevo.";
+        }
+      }
+
+      // --- CREAR EL DOCUMENTO DE NOTIFICACIÓN DE PAGO PARA EL ADMIN ---
+      await paymentNotificationRef.set({
+        'notificationId': paymentNotificationRef.id,
+        'gameId': game.id,
+        'userId': userId,
+        'userEmail': user.email ?? 'No disponible',
+        'method': method,
+        'reference': reference,
+        'amount': amount,
+        'status': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+        'guestsCount': guestsCount,
+        'receiptUrl': receiptUrl, // Se guarda la URL de Cloudinary (o null)
       });
 
-      // Paso 2: Delegar la creación de la notificación al NotificationService.
-      // Esto mantiene el código limpio, ya que PaymentService no necesita saber
-      // cómo se construyen o almacenan las notificaciones.
+      // --- ACTUALIZAR EL DOCUMENTO DEL PARTIDO ---
+      final gameRef = _firestore.collection('games').doc(game.id);
+      await gameRef.update({
+        'usersJoined': FieldValue.arrayUnion([userId]),
+        'paymentStatus.$userId': 'pending',
+        'guests.$userId': guestsCount,
+      });
+
+      // --- ENVIAR NOTIFICACIÓN PUSH AL DUEÑO DEL PARTIDO ---
       await _notificationService.sendPaymentApprovalRequest(
         game: game,
         payingUserId: userId,
         payingUserEmail: user.email ?? 'No disponible',
         amount: amount,
         reference: reference,
+        method: method,
       );
 
-      // Si ambas operaciones son exitosas, retornamos "Success".
       return "Success";
 
     } on FirebaseException catch (e) {
-      // Capturamos errores específicos de Firebase (ej. sin conexión, permisos denegados).
       print("Error de Firebase al notificar pago: ${e.message}");
       return "Hubo un problema de conexión. Por favor, inténtalo de nuevo.";
     } catch (e) {
-      // Capturamos cualquier otro error inesperado.
       print("Error inesperado al notificar pago: $e");
       return "Ocurrió un error inesperado. Por favor, contacta a soporte.";
     }
