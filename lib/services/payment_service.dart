@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:teamup/models/game_model.dart';
 import 'notification_service.dart';
+import 'package:teamup/models/payment_notification_model.dart';
 
 /// Este servicio centraliza la lógica de negocio relacionada con la notificación de pagos.
 /// Utiliza Cloudinary para la gestión de imágenes de comprobantes.
@@ -78,20 +79,23 @@ class PaymentService {
         }
       }
 
-      // --- CREAR EL DOCUMENTO DE NOTIFICACIÓN DE PAGO PARA EL ADMIN ---
-      await paymentNotificationRef.set({
-        'notificationId': paymentNotificationRef.id,
-        'gameId': game.id,
-        'userId': userId,
-        'userEmail': user.email ?? 'No disponible',
-        'method': method,
-        'reference': reference,
-        'amount': amount,
-        'status': 'pending',
-        'createdAt': FieldValue.serverTimestamp(),
-        'guestsCount': guestsCount,
-        'receiptUrl': receiptUrl, // Se guarda la URL de Cloudinary (o null)
-      });
+      // --- PASO CLAVE: USAMOS EL NUEVO MODELO ---
+      final newPaymentNotification = PaymentNotificationModel(
+        notificationId: paymentNotificationRef.id,
+        gameId: game.id,
+        userId: userId,
+        userEmail: user.email ?? 'No disponible',
+        method: method,
+        reference: reference,
+        amount: amount,
+        status: 'pending', // Siempre se crea como pendiente
+        createdAt: DateTime.now(), // Se puede usar DateTime.now() directamente
+        guestsCount: guestsCount,
+        receiptUrl: receiptUrl,
+      );
+
+      // Guardamos el modelo convertido a mapa en Firestore.
+      await paymentNotificationRef.set(newPaymentNotification.toMap());
 
       // --- ACTUALIZAR EL DOCUMENTO DEL PARTIDO ---
       final gameRef = _firestore.collection('games').doc(game.id);
