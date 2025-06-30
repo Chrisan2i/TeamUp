@@ -8,6 +8,7 @@ import 'package:teamup/models/group_chat_model.dart';
 class GameService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  // Definir el tipo en la CollectionReference es una buena práctica y ayuda a evitar errores de casteo.
   late final CollectionReference<Map<String, dynamic>> _gamesCollection = _firestore.collection('games');
   late final CollectionReference<Map<String, dynamic>> _groupChatsCollection = _firestore.collection('group_chats');
 
@@ -18,6 +19,7 @@ class GameService {
     final doc = await gameRef.get();
     if (!doc.exists) return;
 
+    // <-- CORRECCIÓN: Llamada a fromMap estandarizada y segura.
     final updatedGame = GameModel.fromMap(doc.data()!);
 
     final int currentPlayers = updatedGame.totalPlayers;
@@ -35,7 +37,6 @@ class GameService {
 
     if (updatedGame.status != newStatus) {
       await gameRef.update({'status': newStatus});
-      // CORRECCIÓN: Usar un logger o kDebugMode para los prints.
       if (kDebugMode) {
         print('🔄 Estado del partido ${game.id} actualizado a: $newStatus');
       }
@@ -44,7 +45,6 @@ class GameService {
 
   /// Crea un nuevo partido y su chat de grupo asociado de forma atómica.
   Future<String?> createGameAndChat({
-    // ... (todos tus parámetros se mantienen igual)
     required String zone,
     required String fieldName,
     required DateTime date,
@@ -75,7 +75,6 @@ class GameService {
     final newChatDoc = _groupChatsCollection.doc();
 
     final groupChat = GroupChatModel(
-      // ... (el modelo del chat se mantiene igual)
       id: newChatDoc.id,
       name: 'Partido en $fieldName',
       groupImageUrl: imageUrl,
@@ -88,7 +87,6 @@ class GameService {
     );
 
     final game = GameModel(
-      // ... (el modelo del juego se mantiene igual)
       id: newGameDoc.id,
       ownerId: currentUser.uid,
       groupChatId: newChatDoc.id,
@@ -113,7 +111,8 @@ class GameService {
       location: location,
       createdAt: DateTime.now().toIso8601String(),
       status: 'scheduled',
-      usersPaid: [],
+      // <-- CORRECCIÓN: Se elimina `usersPaid` y se añade el nuevo campo `paymentStatus`.
+      paymentStatus: {}, // Inicializamos el mapa de pagos como vacío.
       fieldRating: null,
       report: null,
     );
@@ -148,13 +147,16 @@ class GameService {
           throw Exception('El partido no fue encontrado.');
         }
 
+        // Elimina al jugador de la lista, su mapa de invitados y su estado de pago.
         transaction.update(gameRef, {
           'usersJoined': FieldValue.arrayRemove([playerId]),
           'guests.$playerId': FieldValue.delete(),
+          // <-- CORRECCIÓN: También eliminamos su estado de pago para mantener la consistencia.
+          'paymentStatus.$playerId': FieldValue.delete(),
         });
       });
       if (kDebugMode) {
-        print("🗑️ Jugador $playerId y sus invitados eliminados del partido $gameId.");
+        print("🗑️ Jugador $playerId y sus datos eliminados del partido $gameId.");
       }
 
       final game = await getGame(gameId);
@@ -172,8 +174,8 @@ class GameService {
   Future<GameModel?> getGame(String id) async {
     final doc = await _gamesCollection.doc(id).get();
     if (doc.exists) {
-      // CORRECCIÓN: Hacemos el "cast" aquí también para ser consistentes y seguros.
-      return GameModel.fromMap(doc.data()! as Map<String, dynamic>);
+      // <-- CORRECCIÓN: Se elimina el casteo innecesario y se usa el operador '!' para seguridad.
+      return GameModel.fromMap(doc.data()!);
     }
     return null;
   }
@@ -190,7 +192,7 @@ class GameService {
 
   /// Obtiene un Stream de una lista de partidos.
   Stream<List<GameModel>> getGames({String? ownerId}) {
-    Query query = _gamesCollection;
+    Query<Map<String, dynamic>> query = _gamesCollection;
     if (ownerId != null) {
       query = query.where('ownerId', isEqualTo: ownerId);
     }
@@ -199,9 +201,8 @@ class GameService {
         .snapshots()
         .map((snapshot) => snapshot.docs
         .map((doc) {
-      // CORRECCIÓN: Hacemos el "cast" aquí. Esta es la línea que causaba tu error.
-      final data = doc.data() as Map<String, dynamic>;
-      return GameModel.fromMap(data);
+      // <-- CORRECCIÓN: Se elimina el casteo innecesario.
+      return GameModel.fromMap(doc.data());
     })
         .toList());
   }

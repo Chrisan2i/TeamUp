@@ -57,9 +57,9 @@ class TeamUpApp extends StatelessWidget {
                     body: Center(child: CircularProgressIndicator()),
                   );
                 } else if (snapshot.hasData) {
-                  return const GameHomeView(); // Usuario autenticado
+                  return const GameHomeView();
                 } else {
-                  return const WelcomeScreen(); // Usuario no autenticado
+                  return const WelcomeScreen();
                 }
               },
             ),
