@@ -378,7 +378,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Text("$fullName's profile", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  Text("Perfil de $fullName", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   const Text(
                     'Tu perfil es la primera impresión que los demás jugadores tendrán de ti.',
