@@ -12,7 +12,7 @@ class FriendsSearchBar extends StatelessWidget {
     return TextField(
       controller: controller,
       decoration: InputDecoration(
-        hintText: 'Search friends',
+        hintText: 'Buscar amigos',
         prefixIcon: const Icon(Icons.search, color: Color(0xFF94A3B8)),
         filled: true,
         fillColor: const Color(0xFFF8FAFC),

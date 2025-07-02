@@ -3,6 +3,7 @@ import 'package:teamup/features/profile/profile_edit_view.dart';
 import '../../auth/models/user_model.dart';
 import 'package:teamup/features/friends/friends_view.dart';
 import 'package:teamup/features/my_created_games/my_created_games_view.dart';
+import 'package:teamup/features/profile/verification_view.dart';
 
 class ProfileHeader extends StatelessWidget {
   final UserModel user;

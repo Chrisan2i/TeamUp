@@ -20,7 +20,7 @@ class BookingsEmptyCard extends StatelessWidget {
               const Icon(Icons.sports_soccer, size: 80, color: Colors.grey),
               const SizedBox(height: 20),
               const Text(
-                'No games booked.. yet!',
+                'No hay partidos reservados...todavía!',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -48,7 +48,7 @@ class BookingsEmptyCard extends StatelessWidget {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  child: const Text('Find Games'),
+                  child: const Text('Unirse a un partido'),
                 ),
               ),
             ],

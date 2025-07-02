@@ -43,7 +43,7 @@ class _MessageInputBarState extends State<MessageInputBar> {
                 controller: _controller,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
-                  hintText: "Message...",
+                  hintText: "Mensaje...",
                   filled: true,
                   fillColor: const Color(0xFFF0F0F0),
                   contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),

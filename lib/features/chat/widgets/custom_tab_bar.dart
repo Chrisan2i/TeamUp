@@ -22,8 +22,8 @@ class _CustomTabBarState extends State<CustomTabBar> {
       ),
       child: Row(
         children: [
-          _buildTabItem(0, "DIRECT"),
-          _buildTabItem(1, "GROUPS"),
+          _buildTabItem(0, "DIRECTOS"),
+          _buildTabItem(1, "GRUPOS"),
         ],
       ),
     );

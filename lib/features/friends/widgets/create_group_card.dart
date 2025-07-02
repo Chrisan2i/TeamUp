@@ -34,7 +34,7 @@ class CreateGroupCard extends StatelessWidget {
               ),
               SizedBox(height: 8),
               Text(
-                'Create group',
+                'Crear grupo',
                 style: TextStyle(
                   color: Color(0xFF1E293B),
                   fontWeight: FontWeight.w600,

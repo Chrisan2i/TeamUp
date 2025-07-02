@@ -36,8 +36,8 @@ class BookingsTabBar extends StatelessWidget implements PreferredSizeWidget {
               fontSize: 14,
             ),
             tabs: const [
-              Tab(text: 'Upcoming'),
-              Tab(text: 'Past'),
+              Tab(text: 'Próximos'),
+              Tab(text: 'Pasados'),
             ],
           ),
         ),

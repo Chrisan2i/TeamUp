@@ -112,7 +112,7 @@ class _GroupChatViewState extends State<GroupChatView> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text("Be the first to say something!"));
+                  return const Center(child: Text("Se el primero en decir algo!"));
                 }
                 final messages = snapshot.data!.docs;
 

@@ -96,7 +96,7 @@ class _FriendsViewState extends State<FriendsView> {
         elevation: 0,
         centerTitle: true,
         title: const Text(
-          'Friends',
+          'Amigos',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -135,7 +135,7 @@ class _FriendsViewState extends State<FriendsView> {
                 FriendsSearchBar(controller: _searchController),
                 const SizedBox(height: 24),
                 const Text(
-                  'Groups',
+                  'Grupos',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
@@ -147,7 +147,7 @@ class _FriendsViewState extends State<FriendsView> {
                       CreateGroupCard(
                         onTap: () {
                           // TODO: Lógica para crear grupo
-                          print('Create group tapped!');
+                          print('¡Crear grupo pulsado!');
                         },
                       ),
                       // Aquí podrías añadir más tarjetas de grupos si las tuvieras
@@ -155,7 +155,7 @@ class _FriendsViewState extends State<FriendsView> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                _buildSectionHeader('My Friends', onViewAll: () {
+                _buildSectionHeader('Mis amigos', onViewAll: () {
                   // TODO: Lógica para ver todos los amigos
                 }),
                 const SizedBox(height: 8),
@@ -200,7 +200,7 @@ class _FriendsViewState extends State<FriendsView> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'View all',
+                  'Ver más',
                   style: TextStyle(color: Color(0xFF0CC0DF), fontWeight: FontWeight.bold),
                 ),
                 SizedBox(width: 4),
@@ -243,7 +243,7 @@ class _FriendsViewState extends State<FriendsView> {
           return const SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.all(32.0),
-              child: Center(child: Text("No friends found with that name.")),
+              child: Center(child: Text("No se encontraron amigos con ese nombre")),
             ),
           );
         }
