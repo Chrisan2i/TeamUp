@@ -17,6 +17,7 @@ class GameInfoSection extends StatelessWidget {
     const subtextColor = Color(0xFF8A8A8E);
 
     return Column(
+            
       children: [
         // Fila para la fecha y hora
         Row(

@@ -69,12 +69,19 @@ class _GameHomeViewState extends State<GameHomeView> {
     });
 
     return Scaffold(
-      backgroundColor: const Color(0xFFC9C9C9),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: const Text('Games', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
+        title: const Text(
+          'Juegos',
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+          ),
+        ),
         centerTitle: true,
         actions: [
           StreamBuilder<List<NotificationModel>>(
@@ -85,20 +92,27 @@ class _GameHomeViewState extends State<GameHomeView> {
                 icon: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    const Icon(Icons.notifications_none),
+                    const Icon(Icons.notifications_none, color: Colors.black),
                     if (hasUnread)
                       Positioned(
                         top: 2,
                         right: 2,
                         child: Container(
-                          width: 8, height: 8,
-                          decoration: const BoxDecoration(color: Colors.blueAccent, shape: BoxShape.circle),
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
                         ),
                       ),
                   ],
                 ),
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                  );
                 },
               );
             },
@@ -108,43 +122,76 @@ class _GameHomeViewState extends State<GameHomeView> {
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: kSpacingSmall),
-
-            // ① Selector de fecha
+            const SizedBox(height: 8),
+            
+            // Selector de fecha (sin contenedor blanco)
             GameDateSelector(onDateSelected: controller.setDate),
-            const SizedBox(height: kSpacingSmall),
-
-            // ② Búsqueda por texto
-            GameSearchFilterBar(onSearch: controller.setSearchText),
-            const SizedBox(height: kSpacingMedium),
-
-            const SizedBox(height: kSpacingMedium),
-
-            // ④ Lista de partidos
+            const SizedBox(height: 8),
+            
+            // Barra de búsqueda
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: GameSearchFilterBar(onSearch: controller.setSearchText),
+            ),
+            const SizedBox(height: 16),
+            
+            // Lista de partidos
             Expanded(
               child: controller.filteredGames.isEmpty
-                  ? const Center(child: Text("No games found"))
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.sports_soccer,
+                            size: 48,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            "No se encontraron partidos",
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const AddGameView()),
+                              );
+                            },
+                            child: const Text(
+                              'Crear nuevo partido',
+                              style: TextStyle(color: Color(0xFF0CC0DF)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
                   : ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: kPaddingMedium),
-                itemCount: controller.filteredGames.length,
-                itemBuilder: (context, index) {
-                  final game = controller.filteredGames[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: kSpacingMedium),
-                    child: GameCard(
-                      game: game,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => GameDetailView(game: game),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: controller.filteredGames.length,
+                      itemBuilder: (context, index) {
+                        final game = controller.filteredGames[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: GameCard(
+                            game: game,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => GameDetailView(game: game),
+                                ),
+                              );
+                            },
                           ),
                         );
                       },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),
@@ -161,11 +208,15 @@ class _GameHomeViewState extends State<GameHomeView> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const AddGameView()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AddGameView()),
+          );
         },
         backgroundColor: const Color(0xFF0CC0DF),
+        elevation: 2,
         tooltip: 'Crear Partido',
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

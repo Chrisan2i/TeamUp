@@ -144,9 +144,9 @@ class _GameDetailViewState extends State<GameDetailView> with TickerProviderStat
                     const SizedBox(height: 24),
                     TabBar(
                       controller: _tabController,
-                      labelColor: const Color(0xFF10B981),
+                      labelColor: const Color(0xFF0CC0DF),
                       unselectedLabelColor: Colors.grey.shade600,
-                      indicatorColor: const Color(0xFF10B981),
+                      indicatorColor: const Color(0xFF0CC0DF),
                       indicatorWeight: 3.0,
                       tabs: const [Tab(text: 'STATUS'), Tab(text: 'ABOUT'), Tab(text: 'MAP')],
                     ),

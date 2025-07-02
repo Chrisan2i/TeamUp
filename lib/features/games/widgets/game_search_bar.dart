@@ -62,7 +62,7 @@ class _GameSearchFilterBarState extends State<GameSearchFilterBar> {
                 controller: _textController,
                 onChanged: _onTextChanged,
                 decoration: const InputDecoration(
-                  hintText: 'Search games',
+                  hintText: 'Buscar partidos...',
                   icon: Icon(Icons.search, color: Colors.grey),
                   border: InputBorder.none,
                   isCollapsed: true,
@@ -74,7 +74,7 @@ class _GameSearchFilterBarState extends State<GameSearchFilterBar> {
             IconButton(
               icon: const Icon(Icons.filter_list, size: 20),
               onPressed: _openTypeFilter,
-              tooltip: 'Filter by type',
+              tooltip: 'Filtrar por tipo',
             ),
 
             const SizedBox(width: 8),

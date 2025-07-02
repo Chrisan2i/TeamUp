@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// Modelo que representa un partido en la aplicación.
 ///
 /// Contiene toda la información relevante de un partido, desde los detalles
-/// del evento hasta la lista de jugadores y sus invitados.
+/// del evento hasta la lista de jugadores, sus invitados y el estado de sus pagos.
 class GameModel {
   final String id;
   final String ownerId;
@@ -13,7 +13,7 @@ class GameModel {
   final DateTime date;
   final String hour;
   final String description;
-  final int playerCount; 
+  final int playerCount;
   final bool isPublic;
   final double price;
   final double duration;
@@ -29,7 +29,6 @@ class GameModel {
   final String? privateCode;
   final double? fieldRating;
   final String? report;
-  final List<String> usersPaid;
 
   /// Lista de UIDs de los usuarios que se han unido directamente.
   final List<String> usersJoined;
@@ -39,6 +38,13 @@ class GameModel {
   /// El valor (int) es el número de invitados que trae ese usuario.
   /// Ejemplo: {'uid_de_carlos': 2} significa que Carlos trae a 2 invitados.
   final Map<String, int> guests;
+
+  // ▼▼▼ CAMBIO PRINCIPAL ▼▼▼
+  /// Mapa para rastrear el estado del pago de cada usuario.
+  /// Clave: UID del usuario.
+  /// Valor: Estado del pago ('pending', 'paid', 'rejected').
+  /// Ejemplo: {'uid_user1': 'pending', 'uid_user2': 'paid'}
+  final Map<String, String> paymentStatus;
 
   GameModel({
     required this.id,
@@ -66,8 +72,8 @@ class GameModel {
     this.privateCode,
     this.fieldRating,
     this.report,
-    required this.usersPaid,
-    required this.guests, // <-- Añadido al constructor
+    required this.guests,
+    required this.paymentStatus, // <-- CAMBIO: Añadido al constructor
   });
 
   /// Getter para calcular el número total de plazas ocupadas.
@@ -109,9 +115,10 @@ class GameModel {
       privateCode: map['privateCode'],
       fieldRating: map['fieldRating'] != null ? (map['fieldRating'] as num).toDouble() : null,
       report: map['report'],
-      usersPaid: List<String>.from(map['usersPaid'] ?? []),
-      // Parsea el mapa de invitados. Si no existe, devuelve un mapa vacío.
       guests: Map<String, int>.from(map['guests'] ?? {}),
+      // ▼▼▼ CAMBIO ▼▼▼
+      // Parsea el mapa de estado de pagos. Si no existe, devuelve un mapa vacío.
+      paymentStatus: Map<String, String>.from(map['paymentStatus'] ?? {}),
     );
   }
 
@@ -143,8 +150,9 @@ class GameModel {
       'privateCode': privateCode,
       'fieldRating': fieldRating,
       'report': report,
-      'usersPaid': usersPaid,
-      'guests': guests, // <-- Añadido al mapa
+      'guests': guests,
+      // ▼▼▼ CAMBIO ▼▼▼
+      'paymentStatus': paymentStatus, // <-- CAMBIO: Añadido al mapa
     };
   }
 
@@ -175,8 +183,8 @@ class GameModel {
     String? privateCode,
     double? fieldRating,
     String? report,
-    List<String>? usersPaid,
-    Map<String, int>? guests, // <-- Añadido al copyWith
+    Map<String, int>? guests,
+    Map<String, String>? paymentStatus, // <-- CAMBIO: Añadido al copyWith
   }) {
     return GameModel(
       id: id ?? this.id,
@@ -204,8 +212,8 @@ class GameModel {
       privateCode: privateCode ?? this.privateCode,
       fieldRating: fieldRating ?? this.fieldRating,
       report: report ?? this.report,
-      usersPaid: usersPaid ?? this.usersPaid,
-      guests: guests ?? this.guests, // <-- Añadido al copyWith
+      guests: guests ?? this.guests,
+      paymentStatus: paymentStatus ?? this.paymentStatus, // <-- CAMBIO: Añadido al copyWith
     );
   }
 }

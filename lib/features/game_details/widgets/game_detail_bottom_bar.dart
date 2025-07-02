@@ -39,7 +39,7 @@ class GameDetailBottomBar extends StatelessWidget {
       buttonColor = Colors.grey.shade400;
       buttonText = 'Game Full';
     } else {
-      buttonColor = const Color(0xFF10B981); // Color verde
+      buttonColor = const Color(0xFF0CC0DF); // Color verde
       buttonText = 'Join Game';
     }
 

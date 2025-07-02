@@ -29,7 +29,7 @@ class GameDetailHeader extends StatelessWidget {
           // Logo del grupo
           CircleAvatar(
             radius: 25,
-            backgroundColor: Colors.blue.shade900, // Color de ejemplo como en el diseño
+            backgroundColor: Color(0xFF0CC0DF), // Color de ejemplo como en el diseño
             child: const Text('GO', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(width: 12),

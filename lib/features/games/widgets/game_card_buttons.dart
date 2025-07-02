@@ -1,3 +1,5 @@
+// lib/features/games/widgets/game_card_buttons.dart
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:teamup/models/game_model.dart';
@@ -12,7 +14,7 @@ class GameCardButtons extends StatelessWidget {
   final bool showRateButton;
   final void Function(GameModel)? onRate;
   final void Function(GameModel)? onPay;
-  final void Function(GameModel)? onReport; // 💡 1. Añadimos el callback para reportar
+  final void Function(GameModel)? onReport;
 
   const GameCardButtons({
     super.key,
@@ -23,7 +25,7 @@ class GameCardButtons extends StatelessWidget {
     this.showRateButton = false,
     this.onRate,
     this.onPay,
-    this.onReport, // 💡 2. Lo añadimos al constructor
+    this.onReport,
   });
 
   @override
@@ -33,37 +35,75 @@ class GameCardButtons extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    // ▼▼▼ CAMBIO: LÓGICA DE PAGO ACTUALIZADA ▼▼▼
+    final paymentStatus = game.paymentStatus[currentUserId];
     final isUserJoined = game.usersJoined.contains(currentUserId);
 
     // --- Lógica para partidos que ya pasaron ---
     if (isPast) {
-      // 💡 3. Mostramos acciones solo si el usuario participó
       if (isUserJoined) {
         return _buildPastGameActions(context);
       }
-      return const SizedBox.shrink(); // Si no participó, no hay acciones
+      return const SizedBox.shrink();
     }
 
     // --- Lógica para partidos futuros ---
     if (showLeaveButton) {
-      return _buildBookingsActions(context, currentUserId);
+      return _buildBookingsActions(context, paymentStatus);
     }
 
-    if (isUserJoined) {
-      return _buildStatusIndicator(context, currentUserId);
+    // Usamos el estado de pago para decidir qué mostrar
+    switch (paymentStatus) {
+      case 'paid':
+        return _buildStatusIndicator(context, "✅ Pagado y Confirmado", Colors.green.shade700);
+      case 'pending':
+        return _buildStatusIndicator(context, "⏳ Pago Pendiente", Colors.orange.shade800);
+      default: // Si no hay estado (null), significa que no se ha unido
+        final bool isGameFull = game.totalPlayers >= game.playerCount;
+        if (isGameFull) {
+          return _buildGameFullIndicator(context);
+        }
+        return _buildJoinButton(context);
     }
-
-    final bool isGameFull = game.usersJoined.length >= game.playerCount;
-    if (isGameFull) {
-      return _buildGameFullIndicator(context);
-    }
-
-    return _buildJoinButton(context);
   }
 
   // --- WIDGETS DE CONSTRUCCIÓN ---
 
-  /// 💡 4. Nuevo widget para las acciones de partidos pasados
+  Widget _buildStatusIndicator(BuildContext context, String text, Color color) {
+    return Container(
+      alignment: Alignment.center,
+      height: 48,
+      decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.3))
+      ),
+      child: Text(
+        text,
+        style: TextStyle(color: color, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildBookingsActions(BuildContext context, String? paymentStatus) {
+    // En la vista de "Mis Reservas", mostramos el estado y el botón para salir
+    return Row(
+      children: [
+        Expanded(
+            child: switch (paymentStatus) {
+              'paid' => _buildStatusIndicator(context, "✅ Confirmado", Colors.green.shade700),
+              'pending' => _buildStatusIndicator(context, "⏳ Pendiente", Colors.orange.shade800),
+              _ => _buildStatusIndicator(context, "Unido (Gratis)", Colors.blue.shade700),
+            }
+        ),
+        if (onLeave != null) ...[
+          const SizedBox(width: 12),
+          _buildLeaveButton(context, isOutlined: true),
+        ]
+      ],
+    );
+  }
+
   Widget _buildPastGameActions(BuildContext context) {
     return Row(
       children: [
@@ -71,32 +111,6 @@ class GameCardButtons extends StatelessWidget {
         if (onRate != null && onReport != null) const SizedBox(width: 12),
         if (onReport != null) Expanded(child: _buildReportButton(context)),
       ],
-    );
-  }
-
-  Widget _buildBookingsActions(BuildContext context, String currentUserId) {
-    final bool needsToPay = game.price > 0 && !game.usersPaid.contains(currentUserId) && onPay != null;
-    if (needsToPay) {
-      return Row(
-        children: [
-          Expanded(child: _buildPayButton(context)),
-          const SizedBox(width: 12),
-          _buildLeaveButton(context, isOutlined: true),
-        ],
-      );
-    }
-    return _buildLeaveButton(context);
-  }
-
-  Widget _buildStatusIndicator(BuildContext context, String currentUserId) {
-    final bool isUserPaid = game.usersPaid.contains(currentUserId);
-    return Container(
-      alignment: Alignment.center,
-      height: 48,
-      child: Text(
-        isUserPaid ? "Pagado y Confirmado" : "Ya estás unido",
-        style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.bold),
-      ),
     );
   }
 
@@ -108,34 +122,19 @@ class GameCardButtons extends StatelessWidget {
           showModalBottomSheet(
             context: context,
             isScrollControlled: true,
-            shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+            backgroundColor: Colors.transparent, // Hacemos transparente el fondo del Modal
             builder: (_) => JoinGameBottomSheet(game: game),
           );
         },
         style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.black87,
-          backgroundColor: Colors.blue.shade600,
+          foregroundColor: Colors.white,
+          backgroundColor: const Color(0xFF0CC0DF),
           minimumSize: const Size.fromHeight(48),
           side: BorderSide(color: Colors.grey.shade400, width: 1.5),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         child: const Text('Join Game'),
-      ),
-    );
-  }
-
-  Widget _buildPayButton(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: () => onPay!(game),
-      icon: const Icon(Icons.payment, size: 20),
-      label: Text('Pagar \$${game.price.toStringAsFixed(2)}'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF007BFF),
-        foregroundColor: Colors.white,
-        minimumSize: const Size.fromHeight(kButtonHeight),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kBorderRadius)),
-        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -179,7 +178,6 @@ class GameCardButtons extends StatelessWidget {
     );
   }
 
-  /// 💡 5. Nuevo widget para el botón de reportar
   Widget _buildReportButton(BuildContext context) {
     return OutlinedButton.icon(
       onPressed: () => onReport!(game),
@@ -208,4 +206,7 @@ class GameCardButtons extends StatelessWidget {
       ),
     );
   }
+
+// Los widgets no utilizados o que no cambian se omiten para brevedad,
+// como _buildPayButton, que se gestiona en el nuevo flujo.
 }
