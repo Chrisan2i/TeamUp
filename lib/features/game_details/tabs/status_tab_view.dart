@@ -4,14 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:intl/intl.dart';
 import 'package:teamup/models/game_model.dart';
-import 'package:teamup/features/game_details/widgets/roster_section/game_roster_section.dart'; // Tu Roster actual
+import 'package:teamup/features/game_details/widgets/roster_section/game_roster_section.dart';
 
 class StatusTabView extends StatelessWidget {
   final GameModel game;
   const StatusTabView({super.key, required this.game});
 
   String _buildTimeRange(String startHour, double duration) {
-    // ... (la misma función de formato de hora que ya tienes)
     try {
       final parts = startHour.split(':');
       final hour = int.parse(parts[0]);
@@ -25,14 +24,13 @@ class StatusTabView extends StatelessWidget {
 
       final end = TimeOfDay(hour: endHour, minute: finalMinute);
 
-      String format(TimeOfDay t) =>'${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+      String format(TimeOfDay t) => '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
       return '${format(start)} - ${format(end)}';
     } catch (_) {
       return startHour;
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -104,15 +102,16 @@ class StatusTabView extends StatelessWidget {
                 backgroundColor: Colors.grey.shade200,
                 color: const Color(0xFFF97316),
               ),
-              Positioned(
-                left: (MediaQuery.of(context).size.width / 3) * playersToConfirm / spotsLeft - 60, // Lógica aproximada para la posición
-                top: -25,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(8)),
-                  child: Text("$playersToConfirm more to go!", style: const TextStyle(color: Colors.white, fontSize: 12)),
-                ),
-              )
+              if (spotsLeft > 0) // Solo mostrar si hay cupos disponibles
+                Positioned(
+                  left: (MediaQuery.of(context).size.width / 3) * playersToConfirm / spotsLeft - 60,
+                  top: -25,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(8)),
+                    child: Text("$playersToConfirm more to go!", style: const TextStyle(color: Colors.white, fontSize: 12)),
+                  ),
+                )
             ],
           ),
           const SizedBox(height: 16),
@@ -131,8 +130,13 @@ class StatusTabView extends StatelessWidget {
             style: TextStyle(color: Colors.grey.shade600),
           ),
           const SizedBox(height: 32),
-          // Tu Roster
-          GameRosterSection(userIds: game.usersJoined),
+          // Tu Roster - ACTUALIZADO con los nuevos parámetros
+          GameRosterSection(
+            userIds: game.usersJoined,
+            isPrivate: !game.isPublic, // Usamos el campo isPublic para determinar si es privado
+            ownerId: game.ownerId,
+            gameId: game.id,
+          ),
         ],
       ),
     );

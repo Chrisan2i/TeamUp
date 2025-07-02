@@ -17,8 +17,6 @@ class GameService {
     final int minToConfirm = updatedGame.minPlayersToConfirm;
     final int total = updatedGame.playerCount;
 
-    print('🎯 Jugadores unidos: $joined / $total (mínimo para confirmar: $minToConfirm)');
-
     String newStatus = 'scheduled';
     if (joined >= total) {
       newStatus = 'full';
@@ -26,23 +24,15 @@ class GameService {
       newStatus = 'confirmed';
     }
 
-    print('🔄 Estado actual: ${updatedGame.status}, Estado nuevo: $newStatus');
-
     if (updatedGame.status != newStatus) {
       await gameRef.update({'status': newStatus});
-      print('✅ Estado actualizado a $newStatus');
-    } else {
-      print('ℹ️ Estado no cambiado (ya era $newStatus)');
     }
   }
 
-
-  /// Crea un nuevo partido
   Future<void> createGame(GameModel game) async {
     await games.doc(game.id).set(game.toMap());
   }
 
-  /// Obtiene un partido por ID
   Future<GameModel?> getGame(String id) async {
     final doc = await games.doc(id).get();
     if (doc.exists) {
@@ -51,29 +41,45 @@ class GameService {
     return null;
   }
 
-  /// Actualiza un partido completo
   Future<void> updateGame(GameModel game) async {
     await games.doc(game.id).update(game.toMap());
   }
 
-  /// Elimina un partido
   Future<void> deleteGame(String id) async {
     await games.doc(id).delete();
   }
 
-  /// Stream de partidos públicos o de un usuario
   Stream<List<GameModel>> getGames({String? ownerId}) {
-    Query query = games;
+  Query query = games;
 
-    if (ownerId != null) {
-      query = query.where('ownerId', isEqualTo: ownerId);
-    }
-
+  if (ownerId != null) {
     return query
-        .orderBy('date')
+        .where('ownerId', isEqualTo: ownerId)
         .snapshots()
         .map((snapshot) => snapshot.docs
-        .map((doc) => GameModel.fromMap(doc.data() as Map<String, dynamic>))
-        .toList());
+            .map((doc) => GameModel.fromMap(doc.data() as Map<String, dynamic>))
+            .toList()
+          ..sort((a, b) => a.date.compareTo(b.date))); 
+  }
+
+  return query
+      .orderBy('date')
+      .snapshots()
+      .map((snapshot) => snapshot.docs
+          .map((doc) => GameModel.fromMap(doc.data() as Map<String, dynamic>))
+          .toList());
+}
+
+  Future<void> removePlayerFromGame(String gameId, String playerId) async {
+    final gameRef = games.doc(gameId);
+    await gameRef.update({
+      'usersJoined': FieldValue.arrayRemove([playerId])
+    });
+    
+    // Actualizar estado del juego
+    final game = await getGame(gameId);
+    if (game != null) {
+      await updateGameStatus(game);
+    }
   }
 }

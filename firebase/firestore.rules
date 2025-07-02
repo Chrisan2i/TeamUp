@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 🔥 Permitir a TODOS leer y escribir en Firestore (NO SEGURO PARA PRODUCCIÓN)
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

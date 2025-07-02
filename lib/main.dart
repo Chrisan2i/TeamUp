@@ -8,7 +8,7 @@ import 'firebase_options.dart';
 import 'features/games/game_controller.dart';
 import 'features/auth/welcome_screen.dart';
 import 'package:teamup/core/providers/theme_provider.dart';
-
+import 'package:teamup/services/game_service.dart'; 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +27,8 @@ class TeamUpApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => GameController()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()), // 👈 AÑADIDO AQUÍ
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        Provider<GameService>(create: (_) => GameService()), 
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
@@ -42,8 +43,7 @@ class TeamUpApp extends StatelessWidget {
               useMaterial3: true,
               primaryColor: Colors.cyan,
             ),
-            themeMode: themeProvider.themeMode, // 👈 APLICA TEMA SELECCIONADO
-
+            themeMode: themeProvider.themeMode,
             home: StreamBuilder<User?>(
               stream: FirebaseAuth.instance.authStateChanges(),
               builder: (context, snapshot) {
@@ -52,9 +52,9 @@ class TeamUpApp extends StatelessWidget {
                     body: Center(child: CircularProgressIndicator()),
                   );
                 } else if (snapshot.hasData) {
-                  return const GameHomeView(); // Usuario autenticado
+                  return const GameHomeView();
                 } else {
-                  return const WelcomeScreen(); // Usuario no autenticado
+                  return const WelcomeScreen();
                 }
               },
             ),
