@@ -5,9 +5,9 @@ import 'package:teamup/core/widgets/custom_botton_navbar.dart';
 import 'package:teamup/features/add_games/add_game_view.dart';
 import 'package:teamup/features/games/game_home_view.dart';
 import 'package:teamup/features/settings/help_view.dart';
-import 'package:teamup/features/settings/theme_selection_view.dart';
 import 'package:teamup/features/bookings/bookings_view.dart';
 import 'package:teamup/features/chat/views/messages_view.dart';
+import 'package:teamup/features/achievements/achievements_view.dart';
 
 class ProfileView extends StatelessWidget {
   final List<String> initialSelectedCategories;
@@ -61,12 +61,12 @@ class ProfileView extends StatelessWidget {
             backgroundColor: Colors.white,
             elevation: 1,
             leading: IconButton(
-              icon: const Icon(Icons.brightness_6, color: Colors.black),
-              tooltip: 'Cambiar tema',
+              icon: const Icon(Icons.emoji_events_outlined, color: Colors.black),
+              tooltip: 'Logros',
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const ThemeSelectionView()),
+                  MaterialPageRoute(builder: (_) => const AchievementsView()),
                 );
               },
             ),
@@ -104,4 +104,4 @@ class ProfileView extends StatelessWidget {
       },
     );
   }
-}
+} 

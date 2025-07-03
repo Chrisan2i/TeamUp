@@ -16,7 +16,6 @@ import 'package:teamup/core/widgets/custom_botton_navbar.dart';
 import 'package:teamup/features/game_details/game_detail_view.dart';
 import 'package:teamup/features/chat/views/messages_view.dart';
 import 'package:teamup/features/notification/notification_view.dart';
-import 'package:teamup/features/achievements/achievements_view.dart';
 
 class GameHomeView extends StatefulWidget {
   const GameHomeView({super.key});
@@ -75,15 +74,6 @@ class _GameHomeViewState extends State<GameHomeView> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: const Icon(Icons.emoji_events_outlined, color: Colors.black),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AchievementsView()),
-            );
-          },
-        ),
         title: const Text(
           'Juegos',
           style: TextStyle(
@@ -133,13 +123,19 @@ class _GameHomeViewState extends State<GameHomeView> {
         child: Column(
           children: [
             const SizedBox(height: 8),
+            
+            // Selector de fecha (sin contenedor blanco)
             GameDateSelector(onDateSelected: controller.setDate),
             const SizedBox(height: 8),
+            
+            // Barra de búsqueda
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: GameSearchFilterBar(onSearch: controller.setSearchText),
             ),
             const SizedBox(height: 16),
+            
+            // Lista de partidos
             Expanded(
               child: controller.filteredGames.isEmpty
                   ? Center(
