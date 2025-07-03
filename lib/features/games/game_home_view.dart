@@ -14,11 +14,15 @@ import 'package:teamup/features/profile/profile_view.dart';
 import 'package:teamup/models/notification_model.dart';
 import 'package:teamup/services/notification_service.dart';
 
+// Importaciones de la feature de juegos
 import 'game_controller.dart';
-import 'widgets/join_by_code.dart';
 import 'widgets/game_card.dart';
 import 'widgets/game_date_selector.dart';
 import 'widgets/game_search_bar.dart';
+import 'widgets/join_by_code.dart';
+
+// ▼▼▼ NUEVA IMPORTACIÓN PARA LA FUNCIÓN DE WHATSAPP ▼▼▼
+import '../../../core/utils/launcher_helper.dart';
 
 class GameHomeView extends StatefulWidget {
   const GameHomeView({super.key});
@@ -38,7 +42,7 @@ class _GameHomeViewState extends State<GameHomeView> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
+      if (user != null && mounted) {
         context.read<GameController>().setCurrentUser(user.uid);
       }
     });
@@ -86,20 +90,13 @@ class _GameHomeViewState extends State<GameHomeView> {
         ),
         centerTitle: false,
         actions: [
-          // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ BOTÓN "UNIRSE POR CÓDIGO" AÑADIDO AQUÍ ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
           IconButton(
             icon: const Icon(Icons.vpn_key_outlined),
             tooltip: 'Unirse por código',
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const JoinByCodeView()),
-              );
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const JoinByCodeView()));
             },
           ),
-          // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ FIN DEL BOTÓN AÑADIDO ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-          // Botón de notificaciones (existente)
           StreamBuilder<List<NotificationModel>>(
             stream: _unreadNotificationsStream,
             builder: (context, snapshot) {
@@ -111,10 +108,7 @@ class _GameHomeViewState extends State<GameHomeView> {
                   child: const Icon(Icons.notifications_none),
                 ),
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
                 },
               );
             },
@@ -122,26 +116,45 @@ class _GameHomeViewState extends State<GameHomeView> {
           const SizedBox(width: 8),
         ],
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 8),
-
-            GameDateSelector(
-              onDateSelected: controller.setDate,
-              selectedDate: controller.selectedDate,
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 8),
+                GameDateSelector(
+                  onDateSelected: controller.setDate,
+                  selectedDate: controller.selectedDate,
+                ),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: GameSearchFilterBar(),
+                ),
+                Expanded(
+                  child: _buildGameList(controller, theme),
+                ),
+              ],
             ),
-
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: GameSearchFilterBar(),
+          ),
+          // Botón flotante de soporte superpuesto
+          Positioned(
+            bottom: 90, // Distancia desde abajo
+            right: 16,  // Distancia desde la derecha
+            child: FloatingActionButton.small(
+              heroTag: 'support_fab', // Tag único para diferenciarlo del otro FAB
+              onPressed: () {
+                launchWhatsApp(
+                  context: context,
+                  phoneNumber: '+584149205479',
+                  message: '¡Hola! Necesito ayuda con la app TeamUp.',
+                );
+              },
+              backgroundColor: const Color(0xFF25D366), // Color de WhatsApp
+              tooltip: 'Soporte por WhatsApp',
+              child: const Icon(Icons.support_agent_rounded, color: Colors.white),
             ),
-
-            Expanded(
-              child: _buildGameList(controller, theme),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
       bottomNavigationBar: Consumer<ChatNotifier>(
         builder: (context, chatNotifier, child) {
@@ -154,6 +167,7 @@ class _GameHomeViewState extends State<GameHomeView> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
+        heroTag: 'add_game_fab', // Tag único
         onPressed: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const AddGameView()));
         },

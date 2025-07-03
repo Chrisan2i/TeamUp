@@ -2,6 +2,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.READ_CONTACTS" />
+
     <application
         android:label="teamup"
         android:name="${applicationName}"
@@ -20,9 +21,9 @@
                  while the Flutter UI initializes. After that, this theme continues
                  to determine the Window background behind the Flutter UI. -->
             <meta-data
-              android:name="io.flutter.embedding.android.NormalTheme"
-              android:resource="@style/NormalTheme"
-              />
+                android:name="io.flutter.embedding.android.NormalTheme"
+                android:resource="@style/NormalTheme"
+                />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -34,15 +35,55 @@
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
+
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
          https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
+        <!-- Permiso para procesar texto (existente) -->
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+
+        <!-- ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ QUERIES AÑADIDAS PARA URL_LAUNCHER ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ -->
+
+        <!-- Permite a la app abrir enlaces web genéricos (http y https) en el navegador -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="http" />
+        </intent>
+
+        <!-- Permite a la app comprobar si WhatsApp está instalado y abrirlo -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" android:host="wa.me"/>
+        </intent>
+
+        <!-- Si necesitas abrir otros tipos de enlaces, como llamadas o emails, los añadirías aquí -->
+        <!-- Ejemplo para llamadas telefónicas -->
+        <!--
+        <intent>
+            <action android:name="android.intent.action.DIAL" />
+            <data android:scheme="tel" />
+        </intent>
+        -->
+        <!-- Ejemplo para emails -->
+        <!--
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
+        </intent>
+        -->
+
+        <!-- ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ FIN DE LAS QUERIES AÑADIDAS ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ -->
     </queries>
 </manifest>
