@@ -32,21 +32,33 @@ class _AchievementsViewState extends State<AchievementsView> {
     });
   }
 
-  String _getLevel(int games) {
-    if (games >= 100) return 'Diamante';
-    if (games >= 50) return 'Platino';
-    if (games >= 25) return 'Oro';
-    if (games >= 10) return 'Plata';
+  String getUserLevel(int gamesPlayed) {
+    if (gamesPlayed >= 100) return 'Diamante';
+    if (gamesPlayed >= 50) return 'Platino';
+    if (gamesPlayed >= 25) return 'Oro';
+    if (gamesPlayed >= 10) return 'Plata';
     return 'Bronce';
   }
 
-  double _getProgress(int current, int goal) {
-    return (current / goal).clamp(0.0, 1.0);
+  Color getLevelColor(String level) {
+    switch (level) {
+      case 'Plata':
+        return Colors.grey.shade400;
+      case 'Oro':
+        return const Color(0xFFFFD700);
+      case 'Platino':
+        return Colors.lightBlueAccent;
+      case 'Diamante':
+        return Colors.cyanAccent;
+      default:
+        return const Color(0xFFCD7F32); // Bronce
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final level = _getLevel(totalGames);
+    final level = getUserLevel(totalGames);
+    final levelColor = getLevelColor(level);
 
     return Scaffold(
       appBar: AppBar(
@@ -56,60 +68,50 @@ class _AchievementsViewState extends State<AchievementsView> {
         elevation: 0,
       ),
       backgroundColor: const Color(0xFFF8FAFC),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-        child: ListView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const Icon(Icons.military_tech, color: Colors.amber, size: 48),
-                const SizedBox(height: 8),
-                const Text('Nivel actual', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
-                Text(
-                  level,
-                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                ),
-                Text('$totalGames partidos', style: const TextStyle(color: Colors.grey)),
-              ],
+            Icon(Icons.military_tech, size: 80, color: levelColor),
+            const SizedBox(height: 8),
+            Text(
+              'Nivel actual: $level',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: levelColor),
             ),
             const SizedBox(height: 32),
-            _buildProgressAchievement(
+            _buildAchievement(
               icon: Icons.celebration,
+              iconColor: Colors.purple,
               title: 'Primer partido',
-              description: 'Asiste a tu primer partido',
+              description: 'Juega tu primer partido',
               current: totalGames,
               goal: 1,
-              iconColor: Colors.purple,
-              cardColor: const Color(0xFFEDE7F6),
             ),
-            _buildProgressAchievement(
-              icon: Icons.sports_soccer,
+            _buildAchievement(
+              icon: Icons.directions_run,
+              iconColor: Colors.green,
               title: 'Jugador constante',
-              description: 'Asiste a 10 partidos',
+              description: 'Juega 10 partidos',
               current: totalGames,
               goal: 10,
-              iconColor: Colors.green,
-              cardColor: const Color(0xFFE6F4EA),
             ),
-            _buildProgressAchievement(
-              icon: Icons.star,
+            _buildAchievement(
+              icon: Icons.fitness_center,
+              iconColor: Colors.orange,
               title: 'Jugador incansable',
-              description: 'Asiste a 25 partidos',
+              description: 'Juega 25 partidos',
               current: totalGames,
               goal: 25,
-              iconColor: Colors.orange,
-              cardColor: const Color(0xFFFFF3E0),
             ),
-            _buildProgressAchievement(
-              icon: Icons.workspace_premium,
+            _buildAchievement(
+              icon: Icons.emoji_events,
+              iconColor: Colors.blue,
               title: 'Leyenda del campo',
-              description: 'Asiste a 50 partidos',
+              description: 'Juega 50 partidos',
               current: totalGames,
               goal: 50,
-              iconColor: Colors.blue,
-              cardColor: const Color(0xFFE3F2FD),
             ),
           ],
         ),
@@ -117,63 +119,43 @@ class _AchievementsViewState extends State<AchievementsView> {
     );
   }
 
-  Widget _buildProgressAchievement({
+  Widget _buildAchievement({
     required IconData icon,
+    required Color iconColor,
     required String title,
     required String description,
     required int current,
     required int goal,
-    required Color iconColor,
-    required Color cardColor,
   }) {
-    final progress = _getProgress(current, goal);
-    final isComplete = progress >= 1.0;
+    final isCompleted = current >= goal;
+    final progress = (current / goal).clamp(0.0, 1.0);
 
     return Container(
-      decoration: BoxDecoration(
-        gradient: isComplete
-            ? LinearGradient(colors: [cardColor.withOpacity(0.6), cardColor.withOpacity(0.95)])
-            : null,
-        color: isComplete ? null : cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: isComplete
-            ? [BoxShadow(color: iconColor.withOpacity(0.2), blurRadius: 6, offset: Offset(0, 3))]
-            : [],
-      ),
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: iconColor.withOpacity(0.1),
-                child: Icon(icon, color: isComplete ? iconColor : iconColor.withOpacity(0.8)),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    Text(description, style: const TextStyle(fontSize: 13, color: Colors.grey)),
-                  ],
-                ),
-              ),
-              if (isComplete)
-                const Icon(Icons.check_circle, color: Colors.green)
-            ],
-          ),
-          const SizedBox(height: 12),
-          LinearProgressIndicator(
-            value: progress,
-            color: isComplete ? Colors.green : const Color(0xFF0CC0DF),
-            backgroundColor: Colors.grey.shade300,
-          ),
-          const SizedBox(height: 8),
-          Text('$current / $goal completado', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-        ],
+      decoration: BoxDecoration(
+        color: isCompleted ? iconColor.withOpacity(0.1) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isCompleted ? iconColor.withOpacity(0.3) : Colors.grey.shade200,
+        ),
+      ),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: iconColor.withOpacity(0.2),
+          child: Icon(icon, color: iconColor),
+        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(description),
+            const SizedBox(height: 4),
+            LinearProgressIndicator(value: progress, color: iconColor, backgroundColor: Colors.grey.shade300),
+          ],
+        ),
+        trailing: isCompleted
+            ? const Icon(Icons.check_circle, color: Colors.green, size: 28)
+            : Text('$current / $goal', style: const TextStyle(fontWeight: FontWeight.bold)),
       ),
     );
   }
