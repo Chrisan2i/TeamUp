@@ -76,13 +76,22 @@ class _AchievementsViewState extends State<AchievementsView> {
             ),
             const SizedBox(height: 32),
             _buildProgressAchievement(
+              icon: Icons.celebration,
+              title: 'Primer partido',
+              description: 'Asiste a tu primer partido',
+              current: totalGames,
+              goal: 1,
+              iconColor: Colors.purple,
+              cardColor: const Color(0xFFEDE7F6),
+            ),
+            _buildProgressAchievement(
               icon: Icons.sports_soccer,
               title: 'Jugador constante',
               description: 'Asiste a 10 partidos',
               current: totalGames,
               goal: 10,
               iconColor: Colors.green,
-              cardColor: Color(0xFFE6F4EA),
+              cardColor: const Color(0xFFE6F4EA),
             ),
             _buildProgressAchievement(
               icon: Icons.star,
@@ -91,7 +100,7 @@ class _AchievementsViewState extends State<AchievementsView> {
               current: totalGames,
               goal: 25,
               iconColor: Colors.orange,
-              cardColor: Color(0xFFFFF3E0),
+              cardColor: const Color(0xFFFFF3E0),
             ),
             _buildProgressAchievement(
               icon: Icons.workspace_premium,
@@ -100,7 +109,7 @@ class _AchievementsViewState extends State<AchievementsView> {
               current: totalGames,
               goal: 50,
               iconColor: Colors.blue,
-              cardColor: Color(0xFFE3F2FD),
+              cardColor: const Color(0xFFE3F2FD),
             ),
           ],
         ),
@@ -120,47 +129,52 @@ class _AchievementsViewState extends State<AchievementsView> {
     final progress = _getProgress(current, goal);
     final isComplete = progress >= 1.0;
 
-    return Card(
-      color: cardColor,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: isComplete
+            ? LinearGradient(colors: [cardColor.withOpacity(0.6), cardColor.withOpacity(0.95)])
+            : null,
+        color: isComplete ? null : cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: isComplete
+            ? [BoxShadow(color: iconColor.withOpacity(0.2), blurRadius: 6, offset: Offset(0, 3))]
+            : [],
+      ),
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: iconColor.withOpacity(0.1),
-                  child: Icon(icon, color: iconColor),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: iconColor.withOpacity(0.1),
+                child: Icon(icon, color: isComplete ? iconColor : iconColor.withOpacity(0.8)),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(description, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                  ],
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Text(description, style: const TextStyle(fontSize: 13, color: Colors.grey)),
-                    ],
-                  ),
-                ),
-                if (isComplete)
-                  const Icon(Icons.check_circle, color: Colors.green)
-              ],
-            ),
-            const SizedBox(height: 12),
-            LinearProgressIndicator(
-              value: progress,
-              color: isComplete ? Colors.green : const Color(0xFF0CC0DF),
-              backgroundColor: Colors.grey.shade300,
-            ),
-            const SizedBox(height: 8),
-            Text('$current / $goal completado', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-          ],
-        ),
+              ),
+              if (isComplete)
+                const Icon(Icons.check_circle, color: Colors.green)
+            ],
+          ),
+          const SizedBox(height: 12),
+          LinearProgressIndicator(
+            value: progress,
+            color: isComplete ? Colors.green : const Color(0xFF0CC0DF),
+            backgroundColor: Colors.grey.shade300,
+          ),
+          const SizedBox(height: 8),
+          Text('$current / $goal completado', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        ],
       ),
     );
   }
-} 
+}
