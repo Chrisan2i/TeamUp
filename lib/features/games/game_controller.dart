@@ -11,25 +11,27 @@ import '../../models/zone_model.dart';
 
 class GameController extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  bool isLoading = false;
 
+  // --- ESTADO GENERAL ---
+  bool isLoading = false;
   List<GameModel> allGames = [];
   List<GameModel> filteredGames = [];
-
-  // --- Filtros de estado ---
-  late DateTime selectedDate;
-  String searchText = '';
   String currentUserId = '';
   StreamSubscription? _gamesSubscription;
+
+  // --- ESTADO DE LOS FILTROS ---
+  late DateTime selectedDate;
+  String searchText = '';
   Position? _userPosition;
   double _searchRadiusKm = 10;
   String? selectedZoneName;
+  RangeValues _selectedHourRange = const RangeValues(8, 23);
+
+  // --- ESTADO DE CARGA DE DATOS AUXILIARES ---
   bool isLoadingZones = false;
   List<ZoneModel> availableZones = [];
 
-  RangeValues _selectedHourRange = const RangeValues(8, 23);
-
-
+  // --- GETTERS PÚBLICOS (para acceder de forma segura al estado) ---
   double get searchRadiusKm => _searchRadiusKm;
   RangeValues get selectedHourRange => _selectedHourRange;
 
@@ -84,7 +86,12 @@ class GameController extends ChangeNotifier {
     }
   }
 
-  // --- Métodos para actualizar los filtros ---
+
+  void setCurrentUser(String uid) {
+    if (currentUserId == uid) return;
+    currentUserId = uid;
+    applyFilters();
+  }
 
   void setDate(DateTime date) {
     final newSelectedDate = DateTime(date.year, date.month, date.day);
@@ -110,19 +117,40 @@ class GameController extends ChangeNotifier {
     applyFilters();
   }
 
-  void setCurrentUser(String uid) {
-    if (currentUserId == uid) return;
-    currentUserId = uid;
-    applyFilters();
-  }
-
-
   void setHourRange(RangeValues newRange) {
     if (_selectedHourRange == newRange) return;
     _selectedHourRange = newRange;
     applyFilters();
   }
 
+  /// Resetea los filtros avanzados a sus valores por defecto y reaplica los filtros.
+  void resetAdvancedFilters() {
+    bool needsUpdate = false;
+
+    if (selectedZoneName != null) {
+      selectedZoneName = null;
+      needsUpdate = true;
+    }
+    if (_selectedHourRange != const RangeValues(8, 23)) {
+      _selectedHourRange = const RangeValues(8, 23);
+      needsUpdate = true;
+    }
+    if (_searchRadiusKm != 10) {
+      _searchRadiusKm = 10;
+      needsUpdate = true;
+    }
+
+    // Solo notificar y aplicar filtros si algo realmente cambió
+    if (needsUpdate) {
+      applyFilters();
+    }
+  }
+
+  // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ FIN DEL NUEVO MÉTODO ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+  // ===========================================================================
+  // LÓGICA PRINCIPAL DE FILTRADO
+  // ===========================================================================
 
   void applyFilters() {
     final now = DateTime.now();
@@ -130,44 +158,39 @@ class GameController extends ChangeNotifier {
 
     List<GameModel> tempFiltered = allGames;
 
-    // 1. FILTRO POR ZONA
+    // 1. FILTRO POR ZONA (Aplicado primero si existe)
     if (selectedZoneName != null && selectedZoneName!.isNotEmpty) {
       tempFiltered = tempFiltered.where((game) => game.zone == selectedZoneName).toList();
     }
 
-    // 2. FILTRO POR DISTANCIA (si está activo)
-    // if (_userPosition != null) { ... }
-
-    // 3. FILTROS COMBINADOS DENTRO DE `.where()` PARA MEJOR RENDIMIENTO
+    // 2. FILTROS COMBINADOS DENTRO DE `.where()` PARA MEJOR RENDIMIENTO
     tempFiltered = tempFiltered.where((game) {
-      // Filtro de fecha y estado
+      // Filtros básicos de elegibilidad
       final gameDay = DateTime(game.date.year, game.date.month, game.date.day);
       if (gameDay.isBefore(today)) return false;
       if (!game.isPublic) return false;
       if (game.usersJoined.contains(currentUserId)) return false;
+
+      // Filtro de fecha
       if (gameDay != selectedDate) return false;
 
-      // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ LÓGICA DE FILTRADO POR HORA INTEGRADA ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+      // Filtro de RANGO DE HORAS
       try {
         final parts = game.hour.split(':');
         if (parts.length == 2) {
           final hour = int.parse(parts[0]);
           final minute = int.parse(parts[1]);
-          // Convertimos "19:30" a un valor numérico como 19.5 para compararlo
           final gameHourAsDouble = hour + (minute / 60.0);
-
-          // Comprobamos si la hora del partido está DENTRO del rango seleccionado
           if (gameHourAsDouble < _selectedHourRange.start || gameHourAsDouble > _selectedHourRange.end) {
-            return false; // El partido está FUERA del rango, lo descartamos.
+            return false;
           }
         }
       } catch (e) {
-
         debugPrint('Error al parsear la hora del partido ${game.id}: ${game.hour}. Se excluirá del filtro.');
         return false;
       }
 
-      // Filtro de texto
+      // Filtro de BÚSQUEDA POR TEXTO
       if (searchText.isNotEmpty) {
         final search = searchText.toLowerCase();
         final matchesField = game.fieldName.toLowerCase().contains(search);

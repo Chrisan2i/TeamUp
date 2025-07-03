@@ -14,10 +14,15 @@ import 'package:teamup/features/profile/profile_view.dart';
 import 'package:teamup/models/notification_model.dart';
 import 'package:teamup/services/notification_service.dart';
 
+// Importaciones de la feature de juegos
 import 'game_controller.dart';
 import 'widgets/game_card.dart';
 import 'widgets/game_date_selector.dart';
-import 'widgets/game_search_bar.dart'; // <<<--- Asegúrate de que esta sea la nueva barra
+import 'widgets/game_search_bar.dart';
+import 'widgets/join_by_code.dart';
+
+// ▼▼▼ NUEVA IMPORTACIÓN PARA LA FUNCIÓN DE WHATSAPP ▼▼▼
+import '../../../core/utils/launcher_helper.dart';
 
 class GameHomeView extends StatefulWidget {
   const GameHomeView({super.key});
@@ -35,17 +40,12 @@ class _GameHomeViewState extends State<GameHomeView> {
     super.initState();
     _unreadNotificationsStream = _getUnreadNotifications();
 
-    // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ CAMBIO SUTIL PERO IMPORTANTE ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-    // Inicializar el UID del usuario en el controlador tan pronto como sea posible.
-    // Usar `addPostFrameCallback` asegura que el `Provider` ya esté disponible.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        // Obtenemos el controlador sin escuchar cambios, solo para llamar a un método.
+      if (user != null && mounted) {
         context.read<GameController>().setCurrentUser(user.uid);
       }
     });
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ FIN DEL CAMBIO ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
   }
 
   Stream<List<NotificationModel>> _getUnreadNotifications() {
@@ -74,38 +74,41 @@ class _GameHomeViewState extends State<GameHomeView> {
 
   @override
   Widget build(BuildContext context) {
-    // Usamos 'watch' para que la UI se reconstruya cuando los datos del controlador cambien.
     final controller = context.watch<GameController>();
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background, // Usar colores del tema
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        scrolledUnderElevation: 0, // Evita cambio de color en scroll
+        scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
         title: Text(
-          'Partidos', // "Juegos" -> "Partidos" (sugerencia)
+          'Partidos',
           style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
-        centerTitle: false, // Títulos a la izquierda es más estándar en iOS/Android
+        centerTitle: false,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.vpn_key_outlined),
+            tooltip: 'Unirse por código',
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const JoinByCodeView()));
+            },
+          ),
           StreamBuilder<List<NotificationModel>>(
             stream: _unreadNotificationsStream,
             builder: (context, snapshot) {
               final hasUnread = snapshot.hasData && snapshot.data!.isNotEmpty;
               return IconButton(
-                icon: Badge( // Usar el widget Badge es más moderno
+                icon: Badge(
                   isLabelVisible: hasUnread,
                   backgroundColor: theme.colorScheme.error,
-                  child: Icon(Icons.notifications_none, color: theme.iconTheme.color),
+                  child: const Icon(Icons.notifications_none),
                 ),
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
                 },
               );
             },
@@ -113,33 +116,45 @@ class _GameHomeViewState extends State<GameHomeView> {
           const SizedBox(width: 8),
         ],
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 8),
-
-            // Selector de fecha
-            GameDateSelector(
-              onDateSelected: controller.setDate,
-              // Pasamos la fecha seleccionada para que se muestre correctamente
-              selectedDate: controller.selectedDate,
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 8),
+                GameDateSelector(
+                  onDateSelected: controller.setDate,
+                  selectedDate: controller.selectedDate,
+                ),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: GameSearchFilterBar(),
+                ),
+                Expanded(
+                  child: _buildGameList(controller, theme),
+                ),
+              ],
             ),
-
-            // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ CAMBIO PRINCIPAL ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-            // La nueva barra de filtros ya no necesita el callback 'onSearch'.
-            // Su lógica está encapsulada y comunicada a través del GameController.
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: GameSearchFilterBar(),
+          ),
+          // Botón flotante de soporte superpuesto
+          Positioned(
+            bottom: 90, // Distancia desde abajo
+            right: 16,  // Distancia desde la derecha
+            child: FloatingActionButton.small(
+              heroTag: 'support_fab', // Tag único para diferenciarlo del otro FAB
+              onPressed: () {
+                launchWhatsApp(
+                  context: context,
+                  phoneNumber: '+584149205479',
+                  message: '¡Hola! Necesito ayuda con la app TeamUp.',
+                );
+              },
+              backgroundColor: const Color(0xFF25D366), // Color de WhatsApp
+              tooltip: 'Soporte por WhatsApp',
+              child: const Icon(Icons.support_agent_rounded, color: Colors.white),
             ),
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ FIN DEL CAMBIO ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-            // Lista de partidos
-            Expanded(
-              child: _buildGameList(controller, theme),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
       bottomNavigationBar: Consumer<ChatNotifier>(
         builder: (context, chatNotifier, child) {
@@ -152,10 +167,11 @@ class _GameHomeViewState extends State<GameHomeView> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
+        heroTag: 'add_game_fab', // Tag único
         onPressed: () {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const AddGameView()));
         },
-        backgroundColor: const Color(0xFF0CC0DF), // Mantener color de marca
+        backgroundColor: const Color(0xFF0CC0DF),
         elevation: 2,
         tooltip: 'Crear Partido',
         child: const Icon(Icons.add, color: Colors.white),
@@ -163,7 +179,6 @@ class _GameHomeViewState extends State<GameHomeView> {
     );
   }
 
-  // Widget separado para construir la lista de partidos (mejor legibilidad)
   Widget _buildGameList(GameController controller, ThemeData theme) {
     if (controller.isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -171,16 +186,12 @@ class _GameHomeViewState extends State<GameHomeView> {
 
     if (controller.filteredGames.isEmpty) {
       return Center(
-        child: SingleChildScrollView( // Para evitar overflow en pantallas pequeñas
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.event_busy_outlined, // Un ícono más descriptivo
-                size: 48,
-                color: Colors.grey[400],
-              ),
+              Icon(Icons.event_busy_outlined, size: 48, color: Colors.grey[400]),
               const SizedBox(height: 16),
               Text(
                 "No hay partidos para este día",
