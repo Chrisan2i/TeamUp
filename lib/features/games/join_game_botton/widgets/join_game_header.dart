@@ -22,7 +22,7 @@ class JoinGameHeader extends StatelessWidget {
               children: [
                 _buildSpotsAvatars(),
                 const SizedBox(width: 8),
-                Text("$spotsLeft Spots left", style: const TextStyle(color: Color(0xFF8A8A8E), fontWeight: FontWeight.w500)),
+                Text("$spotsLeft plazas restantes", style: const TextStyle(color: Color(0xFF8A8A8E), fontWeight: FontWeight.w500)),
               ],
             )
           ],

@@ -93,7 +93,7 @@ class _JoinGameBottomSheetState extends State<JoinGameBottomSheet> {
                       children: [
                         JoinGameHeader(spotsLeft: spotsLeft),
                         const SizedBox(height: 24),
-                        Text("Join Game (${widget.game.format})", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E))),
+                        Text("Unirse al partido (${widget.game.format})", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1C1C1E))),
                         const SizedBox(height: 16),
                         GameInfoSection(game: widget.game),
                         const SizedBox(height: 30),

@@ -34,13 +34,13 @@ class GameDetailBottomBar extends StatelessWidget {
       buttonText = '';
     } else if (isUserJoined) {
       buttonColor = const Color(0xFFF25C54);
-      buttonText = 'Leave Game';
+      buttonText = 'Abandonar partido';
     } else if (isGameFull) {
       buttonColor = Colors.grey.shade400;
-      buttonText = 'Game Full';
+      buttonText = 'Partido lleno';
     } else {
       buttonColor = const Color(0xFF0CC0DF); // Color verde
-      buttonText = 'Join Game';
+      buttonText = 'Unirse a partido';
     }
 
     return BottomAppBar(

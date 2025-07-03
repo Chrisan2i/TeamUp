@@ -48,7 +48,7 @@ class GameDetailHeader extends StatelessWidget {
           const SizedBox(width: 12),
           // Cupos
           Text(
-            '$spotsFilled/${game.playerCount} Spots Filled',
+            '$spotsFilled/${game.playerCount} Plazas llenas',
             textAlign: TextAlign.end,
             style: const TextStyle(color: Color(0xFFF97316), fontWeight: FontWeight.bold),
           ),

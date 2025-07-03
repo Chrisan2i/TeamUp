@@ -36,7 +36,7 @@ class JoinGameButton extends StatelessWidget {
           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
         )
             : const Text(
-          "Let's Play",
+          "Juguemos!",
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
         ),
       ),

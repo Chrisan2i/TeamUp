@@ -12,7 +12,7 @@ class GameStatusSection extends StatelessWidget {
     final dateFormatted = DateFormat('EEEE, HH:mm').format(game.date);
     final hourRange = game.hour;
     final location = game.fieldName.isNotEmpty ? game.fieldName : game.zone;
-    final level = game.skillLevel.isNotEmpty ? game.skillLevel : 'Intermediate';
+    final level = game.skillLevel.isNotEmpty ? game.skillLevel : 'Intermedio';
 
     final joinedCount = game.usersJoined.length;
     final totalPlayers = game.playerCount;
@@ -73,7 +73,7 @@ class GameStatusSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '$totalPlayers Players (5v5)',
+                    '$totalPlayers Jugadores (5v5)',
                     style: const TextStyle(
                       color: Color(0xFF6B7280),
                       fontSize: 14,
@@ -152,7 +152,7 @@ class GameStatusSection extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      '$spotsLeft more to go!',
+                      'Faltan $spotsLeft más!',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,

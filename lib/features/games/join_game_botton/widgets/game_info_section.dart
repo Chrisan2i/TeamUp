@@ -26,7 +26,7 @@ class GameInfoSection extends StatelessWidget {
             const SizedBox(width: 12),
             // TODO: Implementar una lógica de formato de fecha más robusta
             // Ejemplo: usando el paquete `intl` para mostrar "Hoy", "Mañana", etc.
-            Text("This afternoon", style: TextStyle(fontSize: 16, color: textColor)),
+            Text("Esta tarde", style: TextStyle(fontSize: 16, color: textColor)),
             const Spacer(),
             Icon(Icons.access_time_outlined, size: 22, color: subtextColor),
             const SizedBox(width: 12),

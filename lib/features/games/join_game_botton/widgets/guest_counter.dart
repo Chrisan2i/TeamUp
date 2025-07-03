@@ -19,7 +19,7 @@ class GuestCounter extends StatelessWidget {
     return Center(
       child: Column(
         children: [
-          Text("Want to bring guests?", style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: textColor)),
+          Text("Quieres llevar invitados?", style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: textColor)),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,

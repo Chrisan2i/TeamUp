@@ -24,7 +24,7 @@ class TotalSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("Game Credit:", style: TextStyle(fontSize: 16, color: subtextColor)),
+            Text("Crédito de juego:", style: TextStyle(fontSize: 16, color: subtextColor)),
             Text("\$0", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textColor)),
           ],
         ),
@@ -43,7 +43,7 @@ class TotalSection extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   // Muestra 'player' o 'players' según el número
-                  "/ ${pricePerPlayer.toStringAsFixed(2)} x $peopleCount player${peopleCount > 1 ? 's' : ''}",
+                  "/ ${pricePerPlayer.toStringAsFixed(2)} x $peopleCount jugador${peopleCount > 1 ? 'es' : ''}",
                   style: TextStyle(fontSize: 14, color: subtextColor),
                 ),
               ],
