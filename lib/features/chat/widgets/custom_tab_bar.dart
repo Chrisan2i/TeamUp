@@ -23,14 +23,15 @@ Widget build(BuildContext context) {
         color: const Color(0xFFE2E8F0), // Borde sutil
         width: 1.5,
       ),
-      child: Row(
-        children: [
-          _buildTabItem(0, "DIRECTOS"),
-          _buildTabItem(1, "GRUPOS"),
-        ],
-      ),
-    );
-  }
+    ), // <-- Aquí cierra la decoración
+    child: Row(
+      children: [
+        _buildTabItem(0, "DIRECTOS"),
+        _buildTabItem(1, "GRUPOS"),
+      ],
+    ),
+  );
+}
 
 Widget _buildTabItem(int index, String text) {
   final isSelected = _selectedIndex == index;

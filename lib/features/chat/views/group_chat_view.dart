@@ -75,17 +75,17 @@ Widget build(BuildContext context) {
             height: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-  color: const Color(0xFFF1F5F9),
-  image: widget.groupChat.groupImageUrl != null && 
-         widget.groupChat.groupImageUrl!.isNotEmpty
-      ? DecorationImage(
-          image: NetworkImage(widget.groupChat.groupImageUrl!),
-          fit: BoxFit.cover,
-        )
-      : null,
-),
-            child: widget.groupChat.groupImageUrl == null || 
-                   widget.groupChat.groupImageUrl!.isEmpty
+              color: const Color(0xFFF1F5F9),
+              image: widget.groupChat.groupImageUrl != null &&
+                      widget.groupChat.groupImageUrl!.isNotEmpty
+                  ? DecorationImage(
+                      image: NetworkImage(widget.groupChat.groupImageUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: widget.groupChat.groupImageUrl == null ||
+                    widget.groupChat.groupImageUrl!.isEmpty
                 ? const Icon(Icons.group, size: 20, color: Color(0xFF64748B))
                 : null,
           ),
@@ -100,63 +100,19 @@ Widget build(BuildContext context) {
                 color: Colors.black87,
               ),
             ),
-
-          ],
-        ),
-        actions: [
-          IconButton(icon: const Icon(Icons.info_outline), onPressed: () {
-            // TODO: Lógica para mostrar detalles del grupo
-          }),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('group_chats')
-                  .doc(widget.groupChat.id)
-                  .collection('messages')
-                  .orderBy('timestamp', descending: true)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text("Se el primero en decir algo!"));
-                }
-                final messages = snapshot.data!.docs;
-
-                return ListView.builder(
-                  reverse: true,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final data = messages[index].data();
-                    if (data != null && data is Map<String, dynamic>) {
-                      final message = MessageModel.fromMap(data, messages[index].id);
-                      final isMe = message.senderId == currentUserId;
-                      return MessageBubble(message: message, isMe: isMe);
-                    }
-                    return const SizedBox.shrink();
-                  },
-                );
-              },
-            ),
           ),
         ],
       ),
-      backgroundColor: Colors.white,
-      elevation: 0.5,
       actions: [
         IconButton(
           icon: const Icon(Icons.info_outline, color: Color(0xFF64748B)),
           onPressed: () {
-            // Misma funcionalidad original
+            // TODO: Lógica para mostrar detalles del grupo
           },
         ),
       ],
+      backgroundColor: Colors.white,
+      elevation: 0.5,
     ),
     body: Column(
       children: [
@@ -176,7 +132,7 @@ Widget build(BuildContext context) {
                   ),
                 );
               }
-              
+
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return Center(
                   child: Column(
