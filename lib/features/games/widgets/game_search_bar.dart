@@ -26,11 +26,9 @@ class _GameSearchFilterBarState extends State<GameSearchFilterBar> {
       builder: (_) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ListTile(title: const Text('All types'), onTap: () => Navigator.pop(context, '')),
-          ListTile(title: const Text('Friendly'), onTap: () => Navigator.pop(context, 'friendly')),
-          ListTile(title: const Text('Competitive'), onTap: () => Navigator.pop(context, 'competitive')),
-          ListTile(title: const Text('Tournament'), onTap: () => Navigator.pop(context, 'tournament')),
-          ListTile(title: const Text('Training'), onTap: () => Navigator.pop(context, 'training')),
+          ListTile(title: const Text('Todos los tipos'), onTap: () => Navigator.pop(context, '')),
+          ListTile(title: const Text('Amigable'), onTap: () => Navigator.pop(context, 'friendly')),
+          ListTile(title: const Text('Competitivo'), onTap: () => Navigator.pop(context, 'competitive')),
         ],
       ),
     );

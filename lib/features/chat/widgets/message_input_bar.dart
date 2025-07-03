@@ -78,11 +78,7 @@ Widget build(BuildContext context) {
                 controller: _controller,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
-                  hintText: "Type a message...",
-                  hintStyle: TextStyle(
-                    color: Colors.grey.shade500,
-                    fontSize: 15,
-                  ),
+                  hintText: "Mensaje...",
                   filled: true,
                   fillColor: const Color(0xFFF8FAFC), // Fondo más claro
                   contentPadding: const EdgeInsets.symmetric(

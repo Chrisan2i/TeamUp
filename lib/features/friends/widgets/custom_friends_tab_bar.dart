@@ -22,8 +22,8 @@ class CustomFriendsTabBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _buildTabItem(0, "MY FRIENDS"),
-          _buildTabItem(1, "MY CONTACTS"),
+          _buildTabItem(0, "MIS AMIGOS"),
+          _buildTabItem(1, "MIS CONTACTOS"),
         ],
       ),
     );

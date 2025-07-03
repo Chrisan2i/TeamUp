@@ -65,7 +65,7 @@ class _MessagesViewState extends State<MessagesView> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFF8FAFC),
         automaticallyImplyLeading: false,
-        title: const Text("Messages",
+        title: const Text("Mensajes",
         style: TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.w600,
@@ -91,7 +91,7 @@ class _MessagesViewState extends State<MessagesView> {
               },
             ),
             const SizedBox(height: 16),
-            const CustomSearchBar(hintText: "Search messages"),
+            const CustomSearchBar(hintText: "Buscar"),
             const SizedBox(height: 16),
             Expanded(
               child: IndexedStack(
@@ -144,7 +144,7 @@ class _MessagesViewState extends State<MessagesView> {
         }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return const EmptyStateWidget(
-              icon: Icons.chat_bubble_outline_rounded, message: "No Messages");
+              icon: Icons.chat_bubble_outline_rounded, message: "Sin mensajes ");
         }
         final chatDocs = snapshot.data!.docs;
         return ListView.builder(
@@ -220,7 +220,7 @@ class _MessagesViewState extends State<MessagesView> {
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const EmptyStateWidget(
             icon: Icons.group_outlined,
-            message: "No Groups Yet",
+            message: "Aún no te has unido a ningún grupo",
           );
         }
 

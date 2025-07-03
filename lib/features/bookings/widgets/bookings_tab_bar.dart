@@ -40,13 +40,9 @@ Widget build(BuildContext context) {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF0CC0DF).withOpacity(0.2),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
+            tabs: const [
+              Tab(text: 'Próximos'),
+              Tab(text: 'Pasados'),
             ],
           ),
           indicatorSize: TabBarIndicatorSize.tab,

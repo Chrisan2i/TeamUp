@@ -13,7 +13,7 @@ class GroupsHeader extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         const Text(
-          'Groups',
+          'Grupos',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -23,7 +23,7 @@ class GroupsHeader extends StatelessWidget {
         TextButton(
           onPressed: onCreateGroup,
           child: const Text(
-            'Create group +',
+            'Crear grupo +',
             style: TextStyle(
               color: Color(0xFF0CC0DF),
               fontWeight: FontWeight.w600,

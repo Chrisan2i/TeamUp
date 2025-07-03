@@ -23,22 +23,14 @@ Widget build(BuildContext context) {
         color: const Color(0xFFE2E8F0), // Borde sutil
         width: 1.5,
       ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.blue.withOpacity(0.05),
-          blurRadius: 10,
-          offset: const Offset(0, 2),
-        ),
-      ],
-    ),
-    child: Row(
-      children: [
-        _buildTabItem(0, "DIRECT"),
-        _buildTabItem(1, "GROUPS"),
-      ],
-    ),
-  );
-}
+      child: Row(
+        children: [
+          _buildTabItem(0, "DIRECTOS"),
+          _buildTabItem(1, "GRUPOS"),
+        ],
+      ),
+    );
+  }
 
 Widget _buildTabItem(int index, String text) {
   final isSelected = _selectedIndex == index;

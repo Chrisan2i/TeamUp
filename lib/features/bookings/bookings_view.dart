@@ -40,12 +40,10 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
       setState(() => userId = user.uid);
       await _fetchBookings();
     } else {
-      // Si no hay usuario, no hay nada que cargar
       setState(() => isLoading = false);
     }
   }
 
-  // 💡 MÉTODO OPTIMIZADO: Usa una consulta 'where' para eficiencia.
   Future<void> _fetchBookings() async {
     if (userId == null) return;
 
@@ -59,7 +57,6 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
 
       final joinedGames = snapshot.docs.map((doc) => GameModel.fromMap(doc.data())).toList();
 
-      // Separamos los juegos en "upcoming" y "past"
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
 
@@ -75,9 +72,8 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
         }
       }
 
-      // Ordenamos las listas por fecha
-      upcoming.sort((a, b) => a.date.compareTo(b.date)); // Próximos, del más cercano al más lejano
-      past.sort((a, b) => b.date.compareTo(a.date));     // Pasados, del más reciente al más antiguo
+      upcoming.sort((a, b) => a.date.compareTo(b.date));
+      past.sort((a, b) => b.date.compareTo(a.date));
 
       if (mounted) {
         setState(() {
@@ -87,7 +83,7 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
         });
       }
     } catch (e) {
-      debugPrint("Error fetching bookings: $e");
+      debugPrint("Error al cargar reservas: $e");
       if (mounted) {
         setState(() => isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -108,7 +104,7 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
           ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text("Sí, Salir")
+              child: const Text("Sí, salir")
           ),
         ],
       ),
@@ -116,23 +112,20 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
 
     if (confirm != true) return;
 
-    // Muestra un indicador de carga
     showDialog(context: context, builder: (_) => const Center(child: CircularProgressIndicator()), barrierDismissible: false);
 
     final success = await GamePlayersService().leaveGame(game);
 
-    Navigator.pop(context); // Cierra el indicador de carga
+    Navigator.pop(context);
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Has salido del partido.")));
-      // Refresca la lista de juegos
       await _fetchBookings();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error al salir del partido.")));
     }
   }
 
-  // El resto de la clase no necesita cambios...
   @override
   void dispose() {
     _tabController.dispose();
@@ -159,12 +152,12 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
-        title: const Text('Bookings', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+        title: const Text('Reservas', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF111827))),
         backgroundColor: Colors.white,
         elevation: 0,
         shadowColor: Colors.transparent, // Elimina la línea gris
         centerTitle: true,
-        automaticallyImplyLeading: false, // Opcional: para que no aparezca flecha de atrás
+        automaticallyImplyLeading: false,
         bottom: BookingsTabBar(tabController: _tabController),
       ),
       body: isLoading
@@ -179,13 +172,12 @@ class _BookingsViewState extends State<BookingsView> with SingleTickerProviderSt
             children: [
               BookingsGameList(
                 games: upcomingGames,
-                emptyMessage: "Looks like you haven't booked any games.\nJoin a new game now and it'll show up here!",
+                emptyMessage: "Parece que aún no has reservado ningún partido.\n¡Únete a uno y aparecerá aquí!",
                 onLeave: _leaveGame,
-                // onPay: _handlePayment, // Aquí podrías pasar una función de pago
               ),
               BookingsGameList(
                 games: pastGames,
-                emptyMessage: "No games found in your history yet.",
+                emptyMessage: "Aún no hay partidos en tu historial.",
                 onReport: (game) {
                   print("Reportando partido: ${game.id}");
                 },

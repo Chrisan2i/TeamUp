@@ -100,6 +100,50 @@ Widget build(BuildContext context) {
                 color: Colors.black87,
               ),
             ),
+
+          ],
+        ),
+        actions: [
+          IconButton(icon: const Icon(Icons.info_outline), onPressed: () {
+            // TODO: Lógica para mostrar detalles del grupo
+          }),
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('group_chats')
+                  .doc(widget.groupChat.id)
+                  .collection('messages')
+                  .orderBy('timestamp', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text("Se el primero en decir algo!"));
+                }
+                final messages = snapshot.data!.docs;
+
+                return ListView.builder(
+                  reverse: true,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final data = messages[index].data();
+                    if (data != null && data is Map<String, dynamic>) {
+                      final message = MessageModel.fromMap(data, messages[index].id);
+                      final isMe = message.senderId == currentUserId;
+                      return MessageBubble(message: message, isMe: isMe);
+                    }
+                    return const SizedBox.shrink();
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),

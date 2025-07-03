@@ -21,7 +21,7 @@ class EmptyFriendsState extends StatelessWidget {
           SizedBox(width: 16),
           Expanded(
             child: Text(
-              'No friends yet! Join a game and make some friends',
+              'Sin amigos todavía! Unete a un partido y has nuevos amigos',
               style: TextStyle(
                 color: Color(0xFF64748B),
                 fontSize: 16,
