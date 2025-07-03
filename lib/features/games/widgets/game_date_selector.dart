@@ -1,63 +1,109 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/constant/colors.dart';
-import '../../../core/constant/app_sizes.dart';
-import '../../../core/theme/typography.dart';
-
 class GameDateSelector extends StatefulWidget {
   final Function(DateTime) onDateSelected;
 
-  const GameDateSelector({super.key, required this.onDateSelected});
+
+  final DateTime selectedDate;
+
+  const GameDateSelector({
+    super.key,
+    required this.onDateSelected,
+    required this.selectedDate, // Parámetro requerido para saber qué día resaltar
+  });
 
   @override
   State<GameDateSelector> createState() => _GameDateSelectorState();
 }
 
 class _GameDateSelectorState extends State<GameDateSelector> {
-  int selectedIndex = 0;
+  // El controlador para poder hacer scroll programáticamente.
+  late final ScrollController _scrollController;
+  final List<DateTime> _days = [];
+  // Hacemos la lista más larga para que sea más útil.
+  final int _numberOfDaysToShow = 30;
 
-  final List<DateTime> days = List.generate(
-    7,
-        (i) {
-      final now = DateTime.now().add(Duration(days: i));
-      return DateTime(now.year, now.month, now.day);
-    },
-  );
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
 
- @override
+
+    final today = DateTime.now();
+    for (int i = 0; i < _numberOfDaysToShow; i++) {
+      final date = today.add(Duration(days: i));
+      _days.add(DateTime(date.year, date.month, date.day));
+    }
+
+    // Hacemos scroll a la fecha seleccionada cuando el widget se construye por primera vez.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToSelectedDate());
+  }
+
+  @override
+  void dispose() {
+    // Es importante liberar los recursos del controlador.
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Calcula la posición y anima el scroll para centrar la fecha seleccionada.
+  void _scrollToSelectedDate() {
+    final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    // Encontramos el índice de la fecha seleccionada en nuestra lista.
+    final index = widget.selectedDate.difference(today).inDays;
+
+    if (index >= 0 && index < _days.length && _scrollController.hasClients) {
+      // Ancho del item (56) + ancho del separador (12) = 68
+      const itemWidth = 56.0;
+      const separatorWidth = 12.0;
+      final itemTotalWidth = itemWidth + separatorWidth;
+
+      // Calculamos el offset para centrar el elemento en la pantalla.
+      final screenWidth = MediaQuery.of(context).size.width;
+      final scrollOffset = (index * itemTotalWidth) - (screenWidth / 2) + (itemTotalWidth / 2);
+
+      _scrollController.animateTo(
+        scrollOffset,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 72,
       child: ListView.separated(
+        controller: _scrollController,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         scrollDirection: Axis.horizontal,
-        itemCount: days.length,
+        itemCount: _days.length,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
-          final day = days[index];
-          final isSelected = selectedIndex == index;
+          final day = _days[index];
+
+
+          final isSelected = day.year == widget.selectedDate.year &&
+              day.month == widget.selectedDate.month &&
+              day.day == widget.selectedDate.day;
 
           return GestureDetector(
             onTap: () {
-              setState(() {
-                selectedIndex = index;
-              });
+
               widget.onDateSelected(day);
             },
             child: Container(
               width: 56,
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
-                gradient: isSelected 
+                gradient: isSelected
                     ? const LinearGradient(
-                        colors: [
-                          Color(0xFF0CC0DF), // Color base que solicitaste
-                          Color(0xFF0A9EBF), // Variación más oscura
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      )
+                  colors: [Color(0xFF0CC0DF), Color(0xFF0A9EBF)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                )
                     : null,
                 color: isSelected ? null : Colors.white,
                 borderRadius: BorderRadius.circular(14),
@@ -77,12 +123,12 @@ class _GameDateSelectorState extends State<GameDateSelector> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    DateFormat.E('es').format(day),
+                    // Usamos 'es_ES' para asegurar el formato español.
+                    DateFormat.E('es_ES').format(day).toUpperCase(),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: isSelected ? Colors.white : const Color(0xFF64748B),
-                      height: 1.2,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -92,7 +138,6 @@ class _GameDateSelectorState extends State<GameDateSelector> {
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: isSelected ? Colors.white : const Color(0xFF1E293B),
-                      height: 1.1,
                     ),
                   ),
                 ],

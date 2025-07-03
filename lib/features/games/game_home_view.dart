@@ -1,21 +1,23 @@
+// lib/features/games/views/game_home_view.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:teamup/core/widgets/custom_botton_navbar.dart';
+import 'package:teamup/features/add_games/add_game_view.dart';
+import 'package:teamup/features/bookings/bookings_view.dart';
 import 'package:teamup/features/chat/change_notifier.dart';
+import 'package:teamup/features/chat/views/messages_view.dart';
+import 'package:teamup/features/game_details/game_detail_view.dart';
+import 'package:teamup/features/notification/notification_view.dart';
+import 'package:teamup/features/profile/profile_view.dart';
 import 'package:teamup/models/notification_model.dart';
 import 'package:teamup/services/notification_service.dart';
+
 import 'game_controller.dart';
-import 'widgets/game_date_selector.dart';
-import 'widgets/game_search_bar.dart';
 import 'widgets/game_card.dart';
-import '../../core/constant/app_sizes.dart';
-import '../add_games/add_game_view.dart';
-import '../profile/profile_view.dart';
-import '../bookings/bookings_view.dart';
-import 'package:teamup/core/widgets/custom_botton_navbar.dart';
-import 'package:teamup/features/game_details/game_detail_view.dart';
-import 'package:teamup/features/chat/views/messages_view.dart';
-import 'package:teamup/features/notification/notification_view.dart';
+import 'widgets/game_date_selector.dart';
+import 'widgets/game_search_bar.dart'; // <<<--- Asegúrate de que esta sea la nueva barra
 
 class GameHomeView extends StatefulWidget {
   const GameHomeView({super.key});
@@ -32,6 +34,18 @@ class _GameHomeViewState extends State<GameHomeView> {
   void initState() {
     super.initState();
     _unreadNotificationsStream = _getUnreadNotifications();
+
+    // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ CAMBIO SUTIL PERO IMPORTANTE ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+    // Inicializar el UID del usuario en el controlador tan pronto como sea posible.
+    // Usar `addPostFrameCallback` asegura que el `Provider` ya esté disponible.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        // Obtenemos el controlador sin escuchar cambios, solo para llamar a un método.
+        context.read<GameController>().setCurrentUser(user.uid);
+      }
+    });
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ FIN DEL CAMBIO ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
   }
 
   Stream<List<NotificationModel>> _getUnreadNotifications() {
@@ -60,53 +74,32 @@ class _GameHomeViewState extends State<GameHomeView> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Provider.of<GameController>(context);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null && controller.currentUserId.isEmpty) {
-        controller.setCurrentUser(user.uid);
-      }
-    });
+    // Usamos 'watch' para que la UI se reconstruya cuando los datos del controlador cambien.
+    final controller = context.watch<GameController>();
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.colorScheme.background, // Usar colores del tema
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0, // Evita cambio de color en scroll
         automaticallyImplyLeading: false,
-        title: const Text(
-          'Juegos',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-          ),
+        title: Text(
+          'Partidos', // "Juegos" -> "Partidos" (sugerencia)
+          style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
-        centerTitle: true,
+        centerTitle: false, // Títulos a la izquierda es más estándar en iOS/Android
         actions: [
           StreamBuilder<List<NotificationModel>>(
             stream: _unreadNotificationsStream,
             builder: (context, snapshot) {
               final hasUnread = snapshot.hasData && snapshot.data!.isNotEmpty;
               return IconButton(
-                icon: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    const Icon(Icons.notifications_none, color: Colors.black),
-                    if (hasUnread)
-                      Positioned(
-                        top: 2,
-                        right: 2,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                  ],
+                icon: Badge( // Usar el widget Badge es más moderno
+                  isLabelVisible: hasUnread,
+                  backgroundColor: theme.colorScheme.error,
+                  child: Icon(Icons.notifications_none, color: theme.iconTheme.color),
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -117,81 +110,33 @@ class _GameHomeViewState extends State<GameHomeView> {
               );
             },
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
         child: Column(
           children: [
             const SizedBox(height: 8),
-            
-            // Selector de fecha (sin contenedor blanco)
-            GameDateSelector(onDateSelected: controller.setDate),
-            const SizedBox(height: 8),
-            
-            // Barra de búsqueda
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: GameSearchFilterBar(onSearch: controller.setSearchText),
+
+            // Selector de fecha
+            GameDateSelector(
+              onDateSelected: controller.setDate,
+              // Pasamos la fecha seleccionada para que se muestre correctamente
+              selectedDate: controller.selectedDate,
             ),
-            const SizedBox(height: 16),
-            
+
+            // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ CAMBIO PRINCIPAL ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+            // La nueva barra de filtros ya no necesita el callback 'onSearch'.
+            // Su lógica está encapsulada y comunicada a través del GameController.
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: GameSearchFilterBar(),
+            ),
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ FIN DEL CAMBIO ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
             // Lista de partidos
             Expanded(
-              child: controller.filteredGames.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.sports_soccer,
-                            size: 48,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            "No se encontraron partidos",
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => const AddGameView()),
-                              );
-                            },
-                            child: const Text(
-                              'Crear nuevo partido',
-                              style: TextStyle(color: Color(0xFF0CC0DF)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: controller.filteredGames.length,
-                      itemBuilder: (context, index) {
-                        final game = controller.filteredGames[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: GameCard(
-                            game: game,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => GameDetailView(game: game),
-                                ),
-                              );
-                            },
-                          ),
-                        );
-                      },
-                    ),
+              child: _buildGameList(controller, theme),
             ),
           ],
         ),
@@ -208,16 +153,82 @@ class _GameHomeViewState extends State<GameHomeView> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AddGameView()),
-          );
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const AddGameView()));
         },
-        backgroundColor: const Color(0xFF0CC0DF),
+        backgroundColor: const Color(0xFF0CC0DF), // Mantener color de marca
         elevation: 2,
         tooltip: 'Crear Partido',
         child: const Icon(Icons.add, color: Colors.white),
       ),
+    );
+  }
+
+  // Widget separado para construir la lista de partidos (mejor legibilidad)
+  Widget _buildGameList(GameController controller, ThemeData theme) {
+    if (controller.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (controller.filteredGames.isEmpty) {
+      return Center(
+        child: SingleChildScrollView( // Para evitar overflow en pantallas pequeñas
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.event_busy_outlined, // Un ícono más descriptivo
+                size: 48,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "No hay partidos para este día",
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium?.copyWith(color: Colors.grey),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                "Prueba a cambiar de día o ajusta los filtros.",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey, fontSize: 14),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text('Crear un partido'),
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const AddGameView()));
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0CC0DF),
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: controller.filteredGames.length,
+      itemBuilder: (context, index) {
+        final game = controller.filteredGames[index];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: GameCard(
+            game: game,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => GameDetailView(game: game)),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
