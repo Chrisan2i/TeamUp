@@ -29,7 +29,6 @@ class _GameSearchFilterBarState extends State<GameSearchFilterBar> {
           ListTile(title: const Text('Todos los tipos'), onTap: () => Navigator.pop(context, '')),
           ListTile(title: const Text('Amigable'), onTap: () => Navigator.pop(context, 'friendly')),
           ListTile(title: const Text('Competitivo'), onTap: () => Navigator.pop(context, 'competitive')),
-          ListTile(title: const Text('Entrenamiento'), onTap: () => Navigator.pop(context, 'training')),
         ],
       ),
     );

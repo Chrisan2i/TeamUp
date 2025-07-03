@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:teamup/features/games/game_home_view.dart';
 
 class BookingsEmptyCard extends StatelessWidget {
   final String message;
@@ -20,7 +21,7 @@ class BookingsEmptyCard extends StatelessWidget {
               const Icon(Icons.sports_soccer, size: 80, color: Colors.grey),
               const SizedBox(height: 20),
               const Text(
-                'No hay partidos reservados...todavía!',
+                'No hay partidos reservados... ¡todavía!',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -38,7 +39,10 @@ class BookingsEmptyCard extends StatelessWidget {
                 width: 140,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/home');
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const GameHomeView()),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF007BFF),
