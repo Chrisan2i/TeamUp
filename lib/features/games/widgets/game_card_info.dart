@@ -74,7 +74,7 @@ class GameCardInfo extends StatelessWidget {
                   ),
                   if (remainingSpots > 0)
                     Text(
-                      '$remainingSpots Spot${remainingSpots == 1 ? '' : 's'} left!',
+                      '$remainingSpots Plaza${remainingSpots == 1 ? '' : 's'} restantes!',
                       style: const TextStyle(fontSize: 13, color: Colors.red, fontWeight: FontWeight.w500),
                     ),
                 ],
@@ -84,7 +84,7 @@ class GameCardInfo extends StatelessWidget {
           const SizedBox(height: 16),
           // "GAME DETAILS"
           const Text(
-            'GAME DETAILS',
+            'Detalles del partido',
             style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
           ),
           const SizedBox(height: 8),
@@ -102,7 +102,7 @@ class GameCardInfo extends StatelessWidget {
                 ],
               ),
               Text(
-                'Price: \$${game.price.toStringAsFixed(2)}',
+                'Precio: \$${game.price.toStringAsFixed(2)}',
                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black87),
               ),
             ],
